@@ -793,6 +793,125 @@ def build_public_view_state() -> dict:
     }
 
 
+def build_internal_view_state() -> dict:
+    """Return internal control-view state without exposing secret values."""
+    now = datetime.now()
+    manager = load_manager_state()
+    office_name = get_office_name_from_identity() or PUBLIC_OFFICE_INFO["name"]
+    roles = manager.get("roles") or {}
+
+    role_cards = []
+    for role_key in ("dev", "ops", "research"):
+        role_state = roles.get(role_key) or _default_role_state(role_key)
+        role_cards.append({
+            "key": role_key,
+            "name": role_state["name"],
+            "role": role_state["role"],
+            "profile": role_state["profile"],
+            "state": role_state.get("state", "idle"),
+            "public_status_label": role_state.get("public_status_label") or _public_status_for_role(role_key, role_state.get("state", "idle")),
+            "detail": str(role_state.get("detail") or ""),
+            "updated_at": role_state.get("updated_at") or now.isoformat(),
+            "allowed_tools": list(role_state.get("allowed_tools") or []),
+            "last_event_type": role_state.get("last_event_type"),
+            "last_source": role_state.get("last_source"),
+        })
+
+    agent_cards = []
+    for agent in load_agents_state():
+        agent_cards.append({
+            "agentId": agent.get("agentId"),
+            "name": agent.get("name"),
+            "isMain": bool(agent.get("isMain")),
+            "state": agent.get("state", "idle"),
+            "area": agent.get("area"),
+            "source": agent.get("source"),
+            "authStatus": agent.get("authStatus"),
+            "updated_at": agent.get("updated_at"),
+            "lastPushAt": agent.get("lastPushAt"),
+        })
+
+    runtime_cfg = load_runtime_config()
+    bg_history_count = 0
+    if os.path.isdir(BG_HISTORY_DIR):
+        try:
+            bg_history_count = len([x for x in os.listdir(BG_HISTORY_DIR) if x.endswith(".webp")])
+        except Exception:
+            bg_history_count = 0
+
+    home_favorites_count = len(_load_home_favorites_index().get("items", []))
+
+    assets_snapshot = {
+        "auth_required": True,
+        "auth_status": {
+            "authed": _is_asset_editor_authed(),
+            "drawer_default_pass": ASSET_DRAWER_PASS_DEFAULT == "1234",
+        },
+        "gemini": {
+            "script_ready": os.path.exists(GEMINI_SCRIPT),
+            "python_ready": os.path.exists(GEMINI_PYTHON),
+            "model": _normalize_user_model(runtime_cfg.get("gemini_model") or "nanobanana-pro"),
+            "api_key_configured": bool((runtime_cfg.get("gemini_api_key") or "").strip()),
+        },
+        "background": {
+            "active_file_present": os.path.exists(os.path.join(FRONTEND_DIR, "office_bg_small.webp")),
+            "reference_present": bool(ROOM_REFERENCE_IMAGE and os.path.exists(ROOM_REFERENCE_IMAGE)),
+            "history_count": bg_history_count,
+            "favorites_count": home_favorites_count,
+        },
+        "layout": {
+            "positions_count": len(load_asset_positions() or {}),
+            "defaults_count": len(load_asset_defaults() or {}),
+            "template_zip_present": os.path.exists(ASSET_TEMPLATE_ZIP),
+        },
+        "legacy_surfaces": {
+            "desktop_pet_present": os.path.exists(os.path.join(ROOT_DIR, "desktop-pet", "src", "index.html")),
+            "electron_shell_present": os.path.exists(os.path.join(ROOT_DIR, "electron-shell", "main.js")),
+        },
+    }
+
+    recent_activity = []
+    for item in list(manager.get("activity") or [])[:8]:
+        role_key = item.get("role")
+        recent_activity.append({
+            "role": role_key,
+            "agent": ROLE_DEFINITIONS.get(role_key, {}).get("name", UNIVERSAL_FALLBACK["name"]),
+            "event_type": item.get("event_type"),
+            "source": item.get("source"),
+            "state": item.get("state"),
+            "summary": str(item.get("summary") or ""),
+            "updated_at": item.get("updated_at"),
+            "route_reason": item.get("route_reason"),
+        })
+
+    recent_intake = list(manager.get("intake") or [])[:6]
+
+    return {
+        "office": {
+            "name": office_name,
+            "mode": "internal-control-view",
+            "public_host": PUBLIC_OFFICE_INFO["human_host"],
+            "gateway_host": PUBLIC_OFFICE_INFO["gateway_host"],
+        },
+        "manager": {
+            "updated_at": manager.get("updated_at") or now.isoformat(),
+            "gateway": manager.get("gateway", {}),
+            "routing": manager.get("routing", {}),
+            "fallback_worker": manager.get("fallback_worker", {}),
+        },
+        "roles": role_cards,
+        "agents": agent_cards,
+        "activity": recent_activity,
+        "intake": recent_intake,
+        "assets": assets_snapshot,
+        "policies": {
+            "public_state_source": "manager-generated",
+            "public_view_policy": "read-only public-safe",
+            "internal_view_policy": "internal-only operational snapshot",
+        },
+    }
+
+
 def load_asset_positions():
     return _store_load_asset_positions(ASSET_POSITIONS_FILE)
 
@@ -1721,6 +1840,12 @@ def public_state():
 def manager_state():
     """Read-only manager state for internal inspection."""
     return jsonify(load_manager_state())
+
+
+@app.route("/internal-state", methods=["GET"])
+def internal_state():
+    """Read-only internal control state for the internal view."""
+    return jsonify(build_internal_view_state())
 
 
 @app.route("/manager/event", methods=["POST"])
