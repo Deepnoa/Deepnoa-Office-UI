@@ -816,6 +816,20 @@ def build_internal_view_state() -> dict:
             "last_event_type": role_state.get("last_event_type"),
             "last_source": role_state.get("last_source"),
         })
+    fallback = manager.get("fallback_worker", {}) or {}
+    role_cards.append({
+        "key": "main",
+        "name": fallback.get("name", "Universal Worker"),
+        "role": fallback.get("role", "Fallback"),
+        "profile": fallback.get("profile", UNIVERSAL_FALLBACK["profile"]),
+        "state": "available" if fallback.get("status") == "available" else "active",
+        "public_status_label": "Fallback ready" if fallback.get("status") == "available" else "Fallback active",
+        "detail": "Receives work only when explicit role routing does not match or a routed worker fails.",
+        "updated_at": fallback.get("updated_at") or manager.get("updated_at") or now.isoformat(),
+        "allowed_tools": list(fallback.get("allowed_tools") or []),
+        "last_event_type": fallback.get("last_event_type"),
+        "last_source": fallback.get("last_source"),
+    })
 
     agent_cards = []
     for agent in load_agents_state():
@@ -2235,6 +2249,31 @@ def assets_restore_last_generated_background():
             "from": os.path.relpath(latest, ROOT_DIR),
             "msg": "已回退到最近一次生成底图",
         })
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/background-history/list", methods=["GET"])
+def assets_background_history_list():
+    guard = _require_asset_editor_auth()
+    if guard:
+        return guard
+    try:
+        items = []
+        if os.path.isdir(BG_HISTORY_DIR):
+            for name in os.listdir(BG_HISTORY_DIR):
+                if not (name.startswith("office_bg_small-") and name.endswith(".webp")):
+                    continue
+                abs_path = os.path.join(BG_HISTORY_DIR, name)
+                st = os.stat(abs_path)
+                items.append({
+                    "name": name,
+                    "path": os.path.relpath(abs_path, ROOT_DIR),
+                    "size": st.st_size,
+                    "mtime": datetime.fromtimestamp(st.st_mtime).isoformat(),
+                })
+        items.sort(key=lambda x: x["mtime"], reverse=True)
+        return jsonify({"ok": True, "items": items[:20]})
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)}), 500
 
