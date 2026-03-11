@@ -26,6 +26,7 @@ import base64
 import json
 import mimetypes
 import os
+import socket
 import sys
 import tempfile
 import shutil
@@ -37,6 +38,18 @@ try:
     HAS_GENAI = True
 except ImportError:
     HAS_GENAI = False
+
+
+_ORIGINAL_GETADDRINFO = socket.getaddrinfo
+
+
+def _prefer_ipv4_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    """Prefer IPv4 for Gemini API calls on hosts where IPv6 stalls."""
+    preferred_family = socket.AF_INET if family in (0, socket.AF_UNSPEC) else family
+    return _ORIGINAL_GETADDRINFO(host, port, preferred_family, type, proto, flags)
+
+
+socket.getaddrinfo = _prefer_ipv4_getaddrinfo
 
 
 def detect_mime(path: str) -> str:
