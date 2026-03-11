@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deepnoa AI Office</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #09111e;
+      --bg-soft: #121d2e;
+      --panel: rgba(13, 22, 37, 0.82);
+      --panel-border: rgba(120, 161, 215, 0.18);
+      --text: #edf4ff;
+      --muted: #8ea6c8;
+      --line: rgba(255, 255, 255, 0.08);
+      --accent: #7ee2c2;
+      --accent-strong: #28d2a3;
+      --warm: #ffc46b;
+      --danger: #ff6b7d;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(63, 104, 170, 0.34), transparent 28%),
+        radial-gradient(circle at top right, rgba(32, 210, 163, 0.16), transparent 26%),
+        linear-gradient(180deg, #0b1525 0%, var(--bg) 58%, #08101b 100%);
+      color: var(--text);
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,0.4), transparent 85%);
+    }
+
+    .shell {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 32px 24px 48px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr;
+      gap: 20px;
+      align-items: stretch;
+      margin-bottom: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    .hero-main {
+      position: relative;
+      padding: 28px;
+      min-height: 280px;
+    }
+
+    .hero-main::after {
+      content: "";
+      position: absolute;
+      inset: auto -120px -120px auto;
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, rgba(126,226,194,0.22), transparent 70%);
+      filter: blur(8px);
+    }
+
+    .eyebrow,
+    .mono {
+      font-family: "IBM Plex Mono", monospace;
+      letter-spacing: 0.06em;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 12px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      font-size: clamp(36px, 6vw, 68px);
+      line-height: 0.94;
+      margin: 0 0 18px;
+      max-width: 9ch;
+    }
+
+    .hero-copy {
+      max-width: 52ch;
+      color: #d5e4fb;
+      line-height: 1.6;
+      font-size: 15px;
+      margin-bottom: 26px;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .pill {
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 999px;
+      padding: 10px 14px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.03);
+      font-size: 13px;
+    }
+
+    .hero-side {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .status-card {
+      padding: 18px 18px 16px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .status-label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .status-value {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .status-detail {
+      color: #cedcf1;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .section {
+      padding: 22px;
+    }
+
+    .section h2 {
+      margin: 0 0 16px;
+      font-size: 22px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .section-copy {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .agent-list,
+    .activity-list,
+    .systems-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .agent-card,
+    .activity-card,
+    .systems-card {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.025);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .agent-top,
+    .activity-top,
+    .systems-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .agent-name,
+    .activity-name {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .agent-role {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .status-badge {
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-family: "IBM Plex Mono", monospace;
+      background: rgba(126,226,194,0.12);
+      color: var(--accent);
+      border: 1px solid rgba(126,226,194,0.25);
+      white-space: nowrap;
+    }
+
+    .status-badge.attention {
+      background: rgba(255,107,125,0.14);
+      color: #ff92a0;
+      border-color: rgba(255,107,125,0.22);
+    }
+
+    .status-badge.syncing {
+      background: rgba(255,196,107,0.14);
+      color: var(--warm);
+      border-color: rgba(255,196,107,0.22);
+    }
+
+    .agent-desc,
+    .activity-summary {
+      color: #cfddf3;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .subline {
+      margin-top: 10px;
+      color: #88a0bf;
+      font-size: 12px;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 20px;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 12px 0;
+      font-size: 14px;
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .grid,
+      .footer-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .shell {
+        padding: 20px 16px 40px;
+      }
+
+      .hero-main,
+      .hero-side,
+      .section {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <article class="panel hero-main">
+        <div class="eyebrow">Deepnoa public mission control</div>
+        <h1 id="office-name">Deepnoa AI Office</h1>
+        <p class="hero-copy" id="office-subtitle">
+          Public-safe visibility into how Deepnoa's AI office is operating right now.
+        </p>
+        <div class="hero-meta">
+          <div class="pill mono" id="human-host">deepnoa.com</div>
+          <div class="pill mono" id="gateway-host">bot.deepnoa.com</div>
+          <div class="pill mono">Public-safe view only</div>
+        </div>
+      </article>
+
+      <aside class="panel hero-side">
+        <div class="status-card">
+          <div class="status-label">Reception / gateway</div>
+          <div class="status-value" id="gateway-status">Standby</div>
+          <div class="status-detail" id="gateway-detail">Loading public gateway state…</div>
+          <div class="subline" id="gateway-updated">Updated --</div>
+        </div>
+        <div class="status-card">
+          <div class="status-label">System health</div>
+          <div class="status-value" id="health-status">Nominal</div>
+          <div class="status-detail" id="health-detail">
+            Connected systems and public-safe telemetry only.
+          </div>
+          <div class="subline" id="health-updated">Latest update --</div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="grid">
+      <article class="panel section">
+        <div class="section-head">
+          <div>
+            <h2>Agent organization</h2>
+            <div class="section-copy">A public-facing view of Deepnoa's AI departments and their current state.</div>
+          </div>
+        </div>
+        <div class="agent-list" id="agent-list"></div>
+      </article>
+
+      <article class="panel section">
+        <div class="section-head">
+          <div>
+            <h2>Live activity</h2>
+            <div class="section-copy">Recent public-safe activity summaries derived from the AI office runtime.</div>
+          </div>
+        </div>
+        <div class="activity-list" id="activity-list"></div>
+      </article>
+    </section>
+
+    <section class="footer-grid">
+      <article class="panel section">
+        <div class="section-head">
+          <div>
+            <h2>Recent work</h2>
+            <div class="section-copy">Shareable task summaries without private logs, secrets, or internal paths.</div>
+          </div>
+        </div>
+        <div class="activity-list" id="recent-work-list"></div>
+      </article>
+
+      <article class="panel section">
+        <div class="section-head">
+          <div>
+            <h2>Connected systems</h2>
+            <div class="section-copy">Only high-level connectivity and public-safe health are shown here.</div>
+          </div>
+        </div>
+        <div class="systems-list" id="systems-list"></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const safeDate = (value) => {
+      if (!value) return "--";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleString();
+    };
+
+    const badgeClass = (label) => {
+      const normalized = String(label || "").toLowerCase();
+      if (normalized.includes("attention")) return "status-badge attention";
+      if (normalized.includes("sync")) return "status-badge syncing";
+      return "status-badge";
+    };
+
+    function renderEmpty(target, message) {
+      target.innerHTML = `<div class="empty">${message}</div>`;
+    }
+
+    function renderAgents(agents) {
+      const target = document.getElementById("agent-list");
+      if (!agents || !agents.length) {
+        renderEmpty(target, "No public agent data available.");
+        return;
+      }
+      target.innerHTML = agents.map((agent) => `
+        <article class="agent-card">
+          <div class="agent-top">
+            <div>
+              <div class="agent-name">${agent.name}</div>
+              <div class="agent-role">${agent.role}</div>
+            </div>
+            <div class="${badgeClass(agent.status_label)}">${agent.status_label}</div>
+          </div>
+          <div class="agent-desc">${agent.description}</div>
+          <div class="subline">${agent.detail}</div>
+        </article>
+      `).join("");
+    }
+
+    function renderActivity(items, targetId, emptyMessage) {
+      const target = document.getElementById(targetId);
+      if (!items || !items.length) {
+        renderEmpty(target, emptyMessage);
+        return;
+      }
+      target.innerHTML = items.map((item) => `
+        <article class="activity-card">
+          <div class="activity-top">
+            <div class="activity-name">${item.agent || item.title}</div>
+            <div class="${badgeClass(item.status_label || 'Standby')}">${item.status_label || "Public"}</div>
+          </div>
+          <div class="activity-summary">${item.summary}</div>
+          <div class="subline">${safeDate(item.updated_at)}</div>
+        </article>
+      `).join("");
+    }
+
+    function renderSystems(items) {
+      const target = document.getElementById("systems-list");
+      if (!items || !items.length) {
+        renderEmpty(target, "No system connectivity status available.");
+        return;
+      }
+      target.innerHTML = items.map((item) => `
+        <article class="systems-card">
+          <div class="systems-top">
+            <div class="activity-name">${item.name}</div>
+            <div class="${badgeClass(item.status)}">${item.status}</div>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    async function loadPublicState() {
+      const response = await fetch(`/public-state?v={{VERSION_TIMESTAMP}}`, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error("Failed to load public state");
+      }
+      return response.json();
+    }
+
+    async function boot() {
+      try {
+        const data = await loadPublicState();
+        document.getElementById("office-name").textContent = data.office?.name || "Deepnoa AI Office";
+        document.getElementById("office-subtitle").textContent = data.office?.subtitle || "";
+        document.getElementById("human-host").textContent = data.office?.human_host || "deepnoa.com";
+        document.getElementById("gateway-host").textContent = data.office?.gateway_host || "bot.deepnoa.com";
+        document.getElementById("gateway-status").textContent = data.gateway?.status || "Standby";
+        document.getElementById("gateway-detail").textContent = data.gateway?.detail || "No public-safe gateway detail available.";
+        document.getElementById("gateway-updated").textContent = `Updated ${safeDate(data.gateway?.updated_at)}`;
+        document.getElementById("health-status").textContent = data.health?.status || "nominal";
+        document.getElementById("health-detail").textContent = `${data.health?.agent_count || 0} public agents visible · ${data.health?.public_log_policy || "public-safe only"}`;
+        document.getElementById("health-updated").textContent = `Latest update ${safeDate(data.health?.latest_update)}`;
+
+        renderAgents(data.agents || []);
+        renderActivity(data.activity || [], "activity-list", "No public-safe activity available.");
+        renderActivity(data.recent_work || [], "recent-work-list", "No recent public-safe work items available.");
+        renderSystems(data.systems || []);
+      } catch (error) {
+        console.error(error);
+        renderEmpty(document.getElementById("agent-list"), "Failed to load agent organization.");
+        renderEmpty(document.getElementById("activity-list"), "Failed to load live activity.");
+        renderEmpty(document.getElementById("recent-work-list"), "Failed to load recent work.");
+        renderEmpty(document.getElementById("systems-list"), "Failed to load system status.");
+      }
+    }
+
+    boot();
+    setInterval(boot, 15000);
+  </script>
+</body>
+</html>

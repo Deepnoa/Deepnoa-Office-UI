@@ -1,0 +1,14 @@
+{
+  "name": "deepnoa-office-ui",
+  "productName": "Deepnoa Office UI",
+  "private": true,
+  "version": "0.1.0",
+  "main": "main.js",
+  "scripts": {
+    "dev": "electron .",
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "^40.6.1"
+  }
+}

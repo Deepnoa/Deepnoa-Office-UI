@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deepnoa AI Gateway</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07111d;
+      --panel: rgba(10, 20, 35, 0.82);
+      --line: rgba(130, 164, 214, 0.18);
+      --text: #eef6ff;
+      --muted: #8ea4c1;
+      --accent: #82f2cb;
+      --warn: #ffd08a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Space Grotesk", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(50, 110, 192, 0.28), transparent 32%),
+        linear-gradient(180deg, #0a1422 0%, #07111d 60%, #060e18 100%);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .shell {
+      width: min(1100px, 100%);
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 28px;
+      box-shadow: 0 30px 100px rgba(0,0,0,.34);
+      backdrop-filter: blur(16px);
+    }
+    .eyebrow, .mono { font-family: "IBM Plex Mono", monospace; }
+    .eyebrow {
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: clamp(34px, 6vw, 64px);
+      line-height: .96;
+      margin: 0 0 16px;
+      max-width: 8ch;
+    }
+    .copy {
+      color: #d5e4fb;
+      line-height: 1.65;
+      margin-bottom: 24px;
+    }
+    .stack { display: grid; gap: 14px; }
+    .card {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 20px;
+      padding: 16px;
+      background: rgba(255,255,255,.025);
+    }
+    .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+    .value { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .detail { color: #d0def4; line-height: 1.5; }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .pill {
+      border-radius: 999px;
+      padding: 10px 12px;
+      border: 1px solid rgba(255,255,255,.09);
+      color: var(--muted);
+      background: rgba(255,255,255,.03);
+      font-size: 13px;
+    }
+    .role-list { display: grid; gap: 12px; }
+    .role-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .role-item:last-child { border-bottom: 0; padding-bottom: 0; }
+    .role-name { font-weight: 700; margin-bottom: 4px; }
+    .role-copy { color: var(--muted); font-size: 14px; line-height: 1.45; }
+    .status {
+      align-self: start;
+      white-space: nowrap;
+      border: 1px solid rgba(130,242,203,.24);
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-family: "IBM Plex Mono", monospace;
+      background: rgba(130,242,203,.1);
+    }
+    .nav {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .nav a {
+      color: var(--text);
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,.08);
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.03);
+    }
+    @media (max-width: 900px) {
+      .shell { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="panel">
+      <div class="eyebrow">bot.deepnoa.com / gateway</div>
+      <h1>Deepnoa AI Gateway</h1>
+      <p class="copy">
+        A public-facing reception layer for Deepnoa's AI company. The gateway accepts inbound tasks,
+        routes them to dedicated internal roles, and exposes only public-safe status back out.
+      </p>
+      <div class="stack">
+        <div class="card">
+          <div class="label">Current reception status</div>
+          <div class="value" id="gateway-status">Routing</div>
+          <div class="detail" id="gateway-detail">Loading public-safe routing state…</div>
+          <div class="pill-row">
+            <div class="pill mono">Manager-first router</div>
+            <div class="pill mono">Universal fallback retained</div>
+            <div class="pill mono">Public-safe output only</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="label">Routing policy</div>
+          <div class="detail">
+            GitHub work flows to <strong>dev</strong>, cron and system checks flow to <strong>ops</strong>,
+            and public research requests flow to <strong>research</strong>. Unmatched work falls back to the universal worker.
+          </div>
+        </div>
+      </div>
+      <div class="nav">
+        <a href="/">Open AI Office</a>
+        <a href="/internal">Internal office view</a>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="eyebrow">role map</div>
+      <div class="role-list" id="role-list"></div>
+    </aside>
+  </main>
+
+  <script>
+    async function boot() {
+      const response = await fetch(`/public-state?v={{VERSION_TIMESTAMP}}`, { cache: "no-store" });
+      const data = await response.json();
+      document.getElementById("gateway-status").textContent = data.gateway?.status || "Routing";
+      document.getElementById("gateway-detail").textContent = data.gateway?.detail || "No public-safe detail available.";
+      const roles = (data.agents || []).filter((item) => item.key !== "reception");
+      document.getElementById("role-list").innerHTML = roles.map((role) => `
+        <div class="role-item">
+          <div>
+            <div class="role-name">${role.name}</div>
+            <div class="role-copy">${role.description}</div>
+          </div>
+          <div class="status">${role.status_label}</div>
+        </div>
+      `).join("");
+    }
+    boot();
+    setInterval(boot, 15000);
+  </script>
+</body>
+</html>
