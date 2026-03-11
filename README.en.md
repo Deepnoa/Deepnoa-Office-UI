@@ -4,10 +4,25 @@
 
 ![Deepnoa Office UI Cover](docs/screenshots/readme-cover-2.jpg)
 
-**A pixel-art AI office dashboard** — visualize your AI assistant's work status in real time, so you can see at a glance who's doing what, what they did yesterday, and whether they're online.
+**A public-safe AI Office and Gateway view for Deepnoa** — expose role-based agent activity without exposing internal logs, secrets, or private company data.
 
-Supports multi-agent collaboration, trilingual UI (CN/EN/JP), AI-powered room design, and desktop pet mode.
-Best experienced with [OpenClaw](https://github.com/openclaw/openclaw), but also works standalone as a status dashboard.
+Current structure:
+- `/` public-safe AI Office view
+- `/gateway` public-safe intake and routing view
+- `/internal` internal-only legacy placeholder
+
+Role execution:
+- `GitHub -> dev`
+- `cron / monitoring -> ops`
+- `public intake -> research`
+- `main -> fallback`
+
+Role prompts and verification:
+- prompts: [`openclaw-role-prompts/`](./openclaw-role-prompts)
+- sync: `python3 scripts/sync_role_prompts.py`
+- verify: `python3 scripts/verify_role_prompts.py`
+
+Final role boundaries are documented in [`docs/ROLE_ARCHITECTURE.md`](./docs/ROLE_ARCHITECTURE.md).
 
 > This project was co-created by **[Ring Hyacinth](https://x.com/ring_hyacinth)** and **[Simon Lee](https://x.com/simonxxoo)**, and is continuously maintained and improved together with community contributors ([@Zhaohan-Wang](https://github.com/Zhaohan-Wang), [@Jah-yee](https://github.com/Jah-yee), [@liaoandi](https://github.com/liaoandi)).
 > Issues and PRs are welcome — thank you to everyone who contributes.

@@ -26,6 +26,7 @@ cloudflared.pid
 cloudflared.out
 healthcheck.log
 backend.log
+.role-verify/
 
 # Generated / mutable assets (local only)
 assets/bg-history/

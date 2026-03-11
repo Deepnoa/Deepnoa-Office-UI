@@ -498,6 +498,7 @@ def _default_manager_state() -> dict:
             "status": "available",
         },
         "activity": [],
+        "intake": [],
     }
 
 
@@ -576,6 +577,12 @@ def _sanitize_public_detail(detail: str) -> str:
     return text[:140]
 
 
+def _sanitize_intake_text(detail: str) -> str:
+    text = _sanitize_public_detail(detail)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text[:220]
+
+
 def _sanitize_public_activity(source: str, event_type: str, role_key: str, detail: str) -> str:
     role_name = ROLE_DEFINITIONS.get(role_key, {}).get("name", "Agent")
     safe_detail = _sanitize_public_detail(detail)
@@ -590,6 +597,29 @@ def _sanitize_public_activity(source: str, event_type: str, role_key: str, detai
     if safe_detail == "No public-safe task detail available.":
         return f"{role_name} is processing a routed task."
     return safe_detail
+
+
+def _dedupe_public_activity(items: list[dict], limit: int = 6) -> list[dict]:
+    deduped = []
+    seen = set()
+    for item in items:
+        key = (item.get("agent"), item.get("status_label"), item.get("summary"))
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(item)
+        if len(deduped) >= limit:
+            break
+    return deduped
+
+
+def _classify_public_intake_role(message: str) -> str:
+    text = (message or "").lower()
+    if re.search(r"\b(deploy|release|github|code|bug|feature|pull request|repo)\b", text):
+        return "dev"
+    if re.search(r"\b(monitor|uptime|system|ops|incident|alert)\b", text):
+        return "ops"
+    return "research"
 
 
 def _public_status_for_role(role_key: str, state: str) -> str:
@@ -707,6 +737,7 @@ def build_public_view_state() -> dict:
             "summary": _sanitize_public_detail(str(item.get("summary") or "")),
             "updated_at": item.get("updated_at") or now.isoformat(),
         })
+    public_activity = _dedupe_public_activity(public_activity, limit=6)
 
     latest_update = _parse_iso8601(manager.get("updated_at")) or now
     health_state = "nominal"
@@ -721,6 +752,15 @@ def build_public_view_state() -> dict:
             "updated_at": entry["updated_at"],
         }
         for entry in public_activity[:4]
+    ]
+    public_intake = [
+        {
+            "id": item.get("id"),
+            "role": item.get("role"),
+            "summary": _sanitize_public_detail(item.get("summary") or ""),
+            "updated_at": item.get("updated_at"),
+        }
+        for item in list(manager.get("intake") or [])[:4]
     ]
 
     return {
@@ -749,6 +789,7 @@ def build_public_view_state() -> dict:
         },
         "routing": manager.get("routing", {}),
         "fallback_worker": manager.get("fallback_worker", {}),
+        "intake": public_intake,
     }
 
 
@@ -1691,6 +1732,56 @@ def manager_event():
             return jsonify({"ok": False, "msg": "invalid json"}), 400
         result = apply_manager_event(payload)
         return jsonify(result)
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/gateway/intake", methods=["POST"])
+def gateway_intake():
+    """Accept a minimal public-safe intake request without exposing internal state."""
+    try:
+        payload = request.get_json(silent=True) or request.form.to_dict()
+        if not isinstance(payload, dict):
+            return jsonify({"ok": False, "msg": "invalid request"}), 400
+
+        message = _sanitize_intake_text(str(payload.get("message") or ""))
+        if not message or message == "No public-safe task detail available.":
+            return jsonify({"ok": False, "msg": "message required"}), 400
+
+        requester = _sanitize_intake_text(str(payload.get("name") or "").strip()) or "Public visitor"
+        role = _classify_public_intake_role(message)
+        timestamp = datetime.now().isoformat()
+        intake_id = f"intake-{int(datetime.now().timestamp() * 1000)}"
+
+        manager = load_manager_state()
+        manager["updated_at"] = timestamp
+        manager["gateway"] = {
+            "status": "Routing",
+            "detail": "Routing a public-safe intake through the reception layer.",
+            "updated_at": timestamp,
+        }
+        manager["intake"] = [{
+            "id": intake_id,
+            "role": role,
+            "summary": f"{requester}: {message}",
+            "updated_at": timestamp,
+        }] + list(manager.get("intake") or [])[:9]
+        save_manager_state(manager)
+
+        apply_manager_event({
+            "role": role,
+            "source": "public",
+            "event_type": "public_summary",
+            "state": "researching" if role == "research" else "executing",
+            "detail": message,
+        })
+
+        return jsonify({
+            "ok": True,
+            "request_id": intake_id,
+            "routed_role": role,
+            "message": "Public-safe request received by the gateway.",
+        })
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)}), 500
 

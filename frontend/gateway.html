@@ -109,6 +109,51 @@
       gap: 10px;
       margin-top: 20px;
     }
+    form.stack { margin-top: 18px; }
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+    .field input,
+    .field textarea {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font: inherit;
+    }
+    .field textarea { min-height: 120px; resize: vertical; }
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: 1px solid rgba(130,242,203,.24);
+      color: var(--accent);
+      background: rgba(130,242,203,.08);
+      border-radius: 999px;
+      padding: 10px 16px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .hint { color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .intake-list { display: grid; gap: 10px; margin-top: 18px; }
+    .intake-item {
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding: 14px;
+      background: rgba(255,255,255,.02);
+    }
+    .intake-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
     .nav a {
       color: var(--text);
       text-decoration: none;
@@ -149,6 +194,27 @@
             and public research requests flow to <strong>research</strong>. Unmatched work falls back to the universal worker.
           </div>
         </div>
+        <div class="card">
+          <div class="label">Public-safe intake</div>
+          <div class="detail">
+            This intake only creates a sanitized routing request. It does not expose internal tools, logs, secrets, or private workspaces.
+          </div>
+          <form class="stack" id="intake-form">
+            <div class="field">
+              <label for="intake-name">Name</label>
+              <input id="intake-name" name="name" type="text" maxlength="80" placeholder="Public visitor">
+            </div>
+            <div class="field">
+              <label for="intake-message">Request</label>
+              <textarea id="intake-message" name="message" maxlength="500" placeholder="Ask for a public research brief, gateway introduction, or safe company summary."></textarea>
+            </div>
+            <div class="actions">
+              <button type="submit">Send to gateway</button>
+              <div class="hint" id="intake-status">Public-safe only. Internal execution details stay private.</div>
+            </div>
+          </form>
+          <div class="intake-list" id="intake-list"></div>
+        </div>
       </div>
       <div class="nav">
         <a href="/">Open AI Office</a>
@@ -178,9 +244,46 @@
           <div class="status">${role.status_label}</div>
         </div>
       `).join("");
+      const intake = data.intake || [];
+      document.getElementById("intake-list").innerHTML = intake.length ? intake.map((item) => `
+        <div class="intake-item">
+          <div class="intake-top">
+            <div class="role-name">${item.role || "research"}</div>
+            <div class="status">queued</div>
+          </div>
+          <div class="role-copy">${item.summary}</div>
+        </div>
+      `).join("") : `<div class="hint">No recent public-safe intake requests.</div>`;
+    }
+
+    async function submitIntake(event) {
+      event.preventDefault();
+      const status = document.getElementById("intake-status");
+      const payload = {
+        name: document.getElementById("intake-name").value.trim(),
+        message: document.getElementById("intake-message").value.trim(),
+      };
+      status.textContent = "Routing request…";
+      try {
+        const response = await fetch("/gateway/intake", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+          throw new Error(data.msg || "Gateway intake failed");
+        }
+        status.textContent = `Accepted by ${data.routed_role}. Public-safe request id: ${data.request_id}`;
+        document.getElementById("intake-form").reset();
+        await boot();
+      } catch (error) {
+        status.textContent = error.message || "Gateway intake failed";
+      }
     }
     boot();
     setInterval(boot, 15000);
+    document.getElementById("intake-form").addEventListener("submit", submitIntake);
   </script>
 </body>
 </html>
