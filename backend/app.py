@@ -2267,8 +2267,10 @@ def assets_background_history_list():
                 abs_path = os.path.join(BG_HISTORY_DIR, name)
                 st = os.stat(abs_path)
                 items.append({
+                    "id": name.replace(".webp", ""),
                     "name": name,
-                    "path": os.path.relpath(abs_path, ROOT_DIR),
+                    "url": f"/assets/background-history/file/{name}",
+                    "thumb_url": f"/assets/background-history/file/{name}",
                     "size": st.st_size,
                     "mtime": datetime.fromtimestamp(st.st_mtime).isoformat(),
                 })
@@ -2276,6 +2278,14 @@ def assets_background_history_list():
         return jsonify({"ok": True, "items": items[:20]})
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/assets/background-history/file/<path:filename>", methods=["GET"])
+def assets_background_history_file(filename):
+    guard = _require_asset_editor_auth()
+    if guard:
+        return guard
+    return send_from_directory(BG_HISTORY_DIR, filename)
 
 
 @app.route("/assets/home-favorites/list", methods=["GET"])
@@ -2297,7 +2307,7 @@ def assets_home_favorites_list():
             fn = os.path.basename(rel)
             out.append({
                 "id": it.get("id"),
-                "path": rel,
+                "name": fn,
                 "url": f"/assets/home-favorites/file/{fn}",
                 "thumb_url": f"/assets/home-favorites/file/{fn}",
                 "created_at": it.get("created_at") or "",
@@ -2355,7 +2365,7 @@ def assets_home_favorites_save_current():
 
         idx["items"] = items
         _save_home_favorites_index(idx)
-        return jsonify({"ok": True, "id": item_id, "path": os.path.relpath(dst, ROOT_DIR), "msg": "已收藏当前地图"})
+        return jsonify({"ok": True, "id": item_id, "msg": "已收藏当前地图"})
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)}), 500
 
@@ -2422,7 +2432,7 @@ def assets_home_favorites_apply():
         shutil.copy2(src, str(target))
 
         st = target.stat()
-        return jsonify({"ok": True, "path": "office_bg_small.webp", "size": st.st_size, "from": hit.get("path"), "msg": "已应用收藏地图"})
+        return jsonify({"ok": True, "path": "office_bg_small.webp", "size": st.st_size, "from_id": hit.get("id"), "msg": "已应用收藏地图"})
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)}), 500
 

@@ -194,8 +194,26 @@
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.06);
     }
+    .thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      display: block;
+    }
+    .thumb.small {
+      max-width: 220px;
+    }
     .mini-item .title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
     .mini-item .meta { color: var(--muted); font-size: 12px; }
+    .mini-item .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
     @media (max-width: 1120px) {
       .hero, .grid-main, .grid-secondary { grid-template-columns: 1fr; }
     }
@@ -300,6 +318,21 @@
                 <button id="restoreLatestButton" class="button secondary mono" type="button">Restore Latest Generated</button>
               </div>
               <div class="status-line" id="bgActionStatus" style="margin-top:12px">No background action yet.</div>
+            </div>
+
+            <div class="card">
+              <div class="row-top">
+                <div>
+                  <div class="name">Current Background</div>
+                  <div class="sub">Internal-only preview of the active office background plus favorite save action.</div>
+                </div>
+              </div>
+              <img id="currentBgPreview" class="thumb" alt="Current internal background preview">
+              <div class="action-row" style="margin-top:12px">
+                <button id="saveFavoriteButton" class="button mono" type="button">Save Current to Favorites</button>
+                <button id="refreshPreviewButton" class="button secondary mono" type="button">Refresh Preview</button>
+              </div>
+              <div class="status-line" id="favoriteActionStatus" style="margin-top:12px">No favorites action yet.</div>
             </div>
 
             <div class="card">
@@ -622,6 +655,8 @@
       if (!auth.authed) {
         document.getElementById("layoutStatusLine").className = "status-line warn";
         document.getElementById("layoutStatusLine").textContent = "Authenticate to inspect positions, defaults, favorites, and history.";
+        document.getElementById("favoriteActionStatus").className = "status-line warn";
+        document.getElementById("favoriteActionStatus").textContent = "Authenticate to use favorites controls.";
         renderEmpty(document.getElementById("favoritesList"), "Authenticate to load favorites.");
         renderEmpty(document.getElementById("historyList"), "Authenticate to load background history.");
         return;
@@ -641,12 +676,18 @@
         document.getElementById("layoutStatusLine").textContent = "Guarded layout and background listings loaded.";
         renderMiniList("favoritesList", (favorites.items || []).slice(0, 6), "No favorites saved.", (item) => `
           <div class="mini-item">
-            <div class="title">${escapeHtml(item.path || item.id || "favorite")}</div>
+            <img class="thumb small" src="${escapeHtml(item.thumb_url)}?t=${Date.now()}" alt="Favorite background">
+            <div class="title">${escapeHtml(item.id || item.name || "favorite")}</div>
             <div class="meta">${escapeHtml(fmt(item.created_at))}</div>
+            <div class="actions">
+              <button class="button mono" type="button" onclick="applyFavorite('${escapeHtml(item.id)}')">Apply</button>
+              <button class="button secondary mono" type="button" onclick="deleteFavorite('${escapeHtml(item.id)}')">Delete</button>
+            </div>
           </div>
         `);
         renderMiniList("historyList", (history.items || []).slice(0, 6), "No background history available.", (item) => `
           <div class="mini-item">
+            <img class="thumb small" src="${escapeHtml(item.thumb_url)}?t=${Date.now()}" alt="Background history preview">
             <div class="title">${escapeHtml(item.name || "history item")}</div>
             <div class="meta">${escapeHtml(fmt(item.mtime))} / ${escapeHtml(String(item.size || 0))} bytes</div>
           </div>
@@ -670,6 +711,7 @@
           clearInterval(state.bgPollTimer);
           document.getElementById("bgActionStatus").className = "status-line";
           document.getElementById("bgActionStatus").textContent = data.msg || "Background generation completed.";
+          document.getElementById("currentBgPreview").src = `/static/office_bg_small.webp?t=${Date.now()}`;
           await refreshGuardedAssetData();
           await render();
         } catch (error) {
@@ -706,11 +748,63 @@
         const data = await fetchJson(path, { method: "POST" });
         document.getElementById("bgActionStatus").className = "status-line";
         document.getElementById("bgActionStatus").textContent = data.msg || "Background action completed.";
+        document.getElementById("currentBgPreview").src = `/static/office_bg_small.webp?t=${Date.now()}`;
         await refreshGuardedAssetData();
         await render();
       } catch (error) {
         document.getElementById("bgActionStatus").className = "status-line danger";
         document.getElementById("bgActionStatus").textContent = error.message || "Background action failed.";
+      }
+    }
+
+    async function saveCurrentFavorite() {
+      const auth = state.assetAuth || await refreshAssetAuthStatus();
+      if (!auth.authed) {
+        document.getElementById("favoriteActionStatus").className = "status-line warn";
+        document.getElementById("favoriteActionStatus").textContent = "Authenticate before saving favorites.";
+        return;
+      }
+      try {
+        const data = await fetchJson("/assets/home-favorites/save-current", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+        document.getElementById("favoriteActionStatus").className = "status-line";
+        document.getElementById("favoriteActionStatus").textContent = data.msg || "Saved current background to favorites.";
+        await refreshGuardedAssetData();
+      } catch (error) {
+        document.getElementById("favoriteActionStatus").className = "status-line danger";
+        document.getElementById("favoriteActionStatus").textContent = error.message || "Failed to save current background.";
+      }
+    }
+
+    async function applyFavorite(id) {
+      try {
+        const data = await fetchJson("/assets/home-favorites/apply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id }),
+        });
+        document.getElementById("favoriteActionStatus").className = "status-line";
+        document.getElementById("favoriteActionStatus").textContent = data.msg || "Favorite applied.";
+        document.getElementById("currentBgPreview").src = `/static/office_bg_small.webp?t=${Date.now()}`;
+        await refreshGuardedAssetData();
+      } catch (error) {
+        document.getElementById("favoriteActionStatus").className = "status-line danger";
+        document.getElementById("favoriteActionStatus").textContent = error.message || "Failed to apply favorite.";
+      }
+    }
+
+    async function deleteFavorite(id) {
+      try {
+        const data = await fetchJson("/assets/home-favorites/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id }),
+        });
+        document.getElementById("favoriteActionStatus").className = "status-line";
+        document.getElementById("favoriteActionStatus").textContent = data.msg || "Favorite deleted.";
+        await refreshGuardedAssetData();
+      } catch (error) {
+        document.getElementById("favoriteActionStatus").className = "status-line danger";
+        document.getElementById("favoriteActionStatus").textContent = error.message || "Failed to delete favorite.";
       }
     }
 
@@ -725,6 +819,7 @@
         document.getElementById("gatewayStatus").textContent = data.manager?.gateway?.status || "Standby";
         document.getElementById("gatewayDetail").textContent = data.manager?.gateway?.detail || "No gateway detail available.";
         document.getElementById("updatedAtPill").textContent = `updated / ${fmt(data.manager?.updated_at)}`;
+        document.getElementById("currentBgPreview").src = `/static/office_bg_small.webp?t=${Date.now()}`;
         const fallback = data.manager?.fallback_worker || {};
         document.getElementById("fallbackSummary").textContent = `${fallback.name || "Fallback"} / ${fallback.status || "available"} / ${(fallback.allowed_tools || []).join(", ") || "no tools listed"}`;
         renderRoles(data.roles);
@@ -749,6 +844,10 @@
     document.getElementById("restoreReferenceButton").addEventListener("click", () => runBackgroundAction("restore-reference"));
     document.getElementById("restoreLatestButton").addEventListener("click", () => runBackgroundAction("restore-latest"));
     document.getElementById("refreshLayoutButton").addEventListener("click", refreshGuardedAssetData);
+    document.getElementById("saveFavoriteButton").addEventListener("click", saveCurrentFavorite);
+    document.getElementById("refreshPreviewButton").addEventListener("click", () => {
+      document.getElementById("currentBgPreview").src = `/static/office_bg_small.webp?t=${Date.now()}`;
+    });
 
     render();
     setInterval(render, 15000);

@@ -17,6 +17,7 @@ state.json
 agents-state.json
 manager-state.json
 runtime-config.json
+.office-runtime.env
 *.log
 *.out
 *.pid
@@ -31,7 +32,10 @@ backend.log
 # Generated / mutable assets (local only)
 assets/bg-history/
 assets/home-favorites/
+assets/room-reference.png
+assets/room-reference.webp
 frontend/office_bg.png
+frontend/office_bg_small.webp
 frontend/*.bak
 layers/
 desktop-pet/src-tauri/icons/*Logo.png
