@@ -25,8 +25,17 @@
 
 ## Public-State Rules
 
-- `public-state` is generated from manager state only.
+- Canonical public route is `GET /api/public/state`.
+- Deprecated compatibility route is `GET /public-state`.
+- Deprecated-route hit logging now writes to `deprecated-route-access.jsonl` and should be checked before compatibility removal.
+- Public state is bridge-generated from:
+  - `manager-state.json`
+  - `agents-state.json`
+  - `state.json`
+  - OpenClaw cron jobs metadata when available
+  - GitHub worker/deploy log mtimes when available
 - Raw internal logs are never exposed.
+- Public payloads never include approval ids, approval contents, or event provenance labels.
 - Public summaries must not include:
   - private repo names
   - internal file paths
@@ -43,3 +52,55 @@
   - public-safe intake and routing view
 - `/internal`
   - internal-only legacy view placeholder, not part of the public experience
+
+## Approval Contract
+
+- Canonical approval statuses:
+  - `pending`
+  - `approved`
+  - `rejected`
+  - `expired`
+- `approval.requested`
+  - starts the approval lifecycle
+  - does not terminate the task lifecycle
+- `approval.resolved`
+  - terminates the approval lifecycle
+  - should be ordered before any related `task.failed` or `task.completed`
+- `rejected`
+  - remains distinct from `task.failed`
+  - becomes task failure only when runtime also emits or the bridge receives `task.failed`
+- provenance labels in internal state:
+  - `actual`
+  - `derived`
+  - `backfilled`
+
+## Internal View Interpretation
+
+- The internal surface should be read top-down by operational urgency:
+  - pending approvals
+  - blocked tasks
+  - failed tasks
+  - degraded or error connectors
+  - recently completed tasks
+  - low-priority activity
+- `approval.resolved(rejected)` is not identical to `task.failed`
+  - rejection explains approval outcome
+  - `task.failed` explains task termination
+- task rows should surface linked approval state when present so operators can see whether a task is blocked by approval, ended after rejection, or failed independently
+- runtime payload summaries that remain English are an upstream localization issue
+  - frontend translates labels and enums only
+  - upstream producers or bridge summaries should own summary-text localization
+
+## Internal Drilldown Direction
+
+- Keep the lifecycle-priority overview visible at all times.
+- Selecting an approval, task, alert, or connector should open a persistent detail pane instead of replacing the overview.
+- Task drilldown should show:
+  - linked approval state
+  - recent lifecycle events
+  - per-event provenance
+  - connector and alert impact
+  - raw internal summary
+- Approval drilldown should stay distinct from task failure:
+  - `approval.resolved(rejected)` explains the approval outcome
+  - `task.failed` explains whether the task later terminated

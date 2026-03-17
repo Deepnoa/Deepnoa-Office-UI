@@ -2,11 +2,22 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
+import hashlib
 import json
 import os
+import pathlib
 import subprocess
 import sys
+import time
 from urllib import request
+
+
+SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from openclaw_payload_mapper import extract_approval_events
 
 
 def post_manager_event(base_url: str, payload: dict) -> None:
@@ -18,6 +29,16 @@ def post_manager_event(base_url: str, payload: dict) -> None:
     )
     with request.urlopen(req, timeout=5):
         pass
+
+
+def iso_now() -> str:
+    return datetime.now(timezone.utc).astimezone().isoformat()
+
+
+def build_task_id(agent: str, source: str, message: str) -> str:
+    stamp = iso_now()
+    digest = hashlib.sha1(f"{agent}::{source}::{message}::{stamp}".encode("utf-8")).hexdigest()[:12]
+    return f"task_{digest}"
 
 
 def run_agent(agent: str, message: str, timeout: int) -> subprocess.CompletedProcess[str]:
@@ -55,6 +76,28 @@ def is_success(result: subprocess.CompletedProcess[str]) -> bool:
     return True
 
 
+def parse_result_payload(result: subprocess.CompletedProcess[str]) -> dict:
+    try:
+        return json.loads(result.stdout or "{}")
+    except Exception:
+        return {}
+
+
+def emit_task_lifecycle(base_url: str, *, source: str, agent: str, task_id: str, detail: str) -> None:
+    timestamp = iso_now()
+    for event_type in ("task.created", "task.assigned", "task.started"):
+        post_manager_event(base_url, {
+            "role": agent,
+            "source": source,
+            "event_type": event_type,
+            "state": "executing",
+            "detail": detail,
+            "task_id": task_id,
+            "provenance": "actual",
+            "timestamp": timestamp,
+        })
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run a specific Openclaw role agent with manager updates.")
     parser.add_argument("--agent", required=True)
@@ -69,36 +112,65 @@ def main() -> int:
     parser.add_argument("--failure-detail", required=True)
     parser.add_argument("--timeout", type=int, default=180)
     args = parser.parse_args()
-
+    task_id = build_task_id(args.agent, args.source, args.message)
+    started_at = time.time()
+    emit_task_lifecycle(args.base_url, source=args.source, agent=args.agent, task_id=task_id, detail=args.start_detail)
     post_manager_event(args.base_url, {
         "role": args.agent,
         "source": args.source,
         "event_type": args.event_type,
         "state": args.state,
         "detail": args.start_detail,
+        "task_id": task_id,
+        "provenance": "actual",
+        "timestamp": iso_now(),
     })
 
     primary = run_agent(args.agent, args.message, args.timeout)
+    primary_payload = parse_result_payload(primary)
+    for approval_event in extract_approval_events(
+        primary_payload,
+        source=args.source,
+        agent=args.agent,
+        task_id=task_id,
+        started_at=started_at,
+    ):
+        post_manager_event(args.base_url, approval_event)
     if is_success(primary):
         post_manager_event(args.base_url, {
             "role": args.agent,
             "source": args.source,
-            "event_type": args.event_type,
+            "event_type": "task.completed",
             "state": "idle",
             "detail": args.success_detail,
+            "task_id": task_id,
+            "provenance": "actual",
+            "timestamp": iso_now(),
         })
         sys.stdout.write(primary.stdout)
         return 0
 
     if args.fallback_agent and args.fallback_agent != args.agent:
         fallback = run_agent(args.fallback_agent, args.message, args.timeout)
+        fallback_payload = parse_result_payload(fallback)
+        for approval_event in extract_approval_events(
+            fallback_payload,
+            source="fallback",
+            agent=args.fallback_agent,
+            task_id=task_id,
+            started_at=started_at,
+        ):
+            post_manager_event(args.base_url, approval_event)
         if is_success(fallback):
             post_manager_event(args.base_url, {
                 "role": args.fallback_agent,
                 "source": "fallback",
-                "event_type": args.event_type,
+                "event_type": "task.completed",
                 "state": "idle",
                 "detail": args.success_detail,
+                "task_id": task_id,
+                "provenance": "actual",
+                "timestamp": iso_now(),
             })
             sys.stdout.write(fallback.stdout)
             return 0
@@ -106,9 +178,12 @@ def main() -> int:
     post_manager_event(args.base_url, {
         "role": args.agent,
         "source": args.source,
-        "event_type": args.event_type,
+        "event_type": "task.failed",
         "state": "error",
         "detail": args.failure_detail,
+        "task_id": task_id,
+        "provenance": "actual",
+        "timestamp": iso_now(),
     })
     if primary.stdout:
         sys.stdout.write(primary.stdout)

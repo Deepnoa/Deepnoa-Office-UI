@@ -15,6 +15,18 @@ import threading
 from pathlib import Path
 from security_utils import is_production_mode, is_strong_secret, is_strong_drawer_pass
 from memo_utils import get_yesterday_date_str, sanitize_content, extract_memo_from_file
+from services.openclaw_bridge import (
+    build_internal_state_payload,
+    build_openclaw_bridge_snapshot,
+    build_public_state_payload,
+)
+from services.schemas import (
+    DEPRECATED_ROUTE_META,
+    EVENT_HISTORY_RETENTION,
+    build_events_contract,
+    normalize_event_payload,
+    normalize_internal_state,
+)
 from store_utils import (
     load_agents_state as _store_load_agents_state,
     save_agents_state as _store_save_agents_state,
@@ -39,6 +51,7 @@ MEMORY_DIR = os.path.join(os.path.dirname(ROOT_DIR), "memory")
 FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
 FRONTEND_INDEX_FILE = os.path.join(FRONTEND_DIR, "index.html")
 FRONTEND_PUBLIC_FILE = os.path.join(FRONTEND_DIR, "public.html")
+FRONTEND_SCENE_FILE = os.path.join(FRONTEND_DIR, "scene.html")
 FRONTEND_GATEWAY_FILE = os.path.join(FRONTEND_DIR, "gateway.html")
 FRONTEND_ELECTRON_STANDALONE_FILE = os.path.join(FRONTEND_DIR, "electron-standalone.html")
 STATE_FILE = os.path.join(ROOT_DIR, "state.json")
@@ -51,8 +64,12 @@ ASSET_TEMPLATE_ZIP = os.path.join(ROOT_DIR, "assets-replace-template.zip")
 WORKSPACE_DIR = os.path.dirname(ROOT_DIR)
 OPENCLAW_WORKSPACE = os.environ.get("OPENCLAW_WORKSPACE") or os.path.join(os.path.expanduser("~"), ".openclaw", "workspace")
 IDENTITY_FILE = os.path.join(OPENCLAW_WORKSPACE, "IDENTITY.md")
+OPENCLAW_CRON_JOBS_FILE = os.path.join(os.path.expanduser("~"), ".openclaw", "cron", "jobs.json")
+GITHUB_WORKER_LOG_FILE = os.path.join(os.path.expanduser("~"), "bot", "github_queue_local", "log", "worker.log")
+GITHUB_DEPLOY_LOG_FILE = os.path.join(os.path.expanduser("~"), "bot", "github_queue_local", "log", "deploy.log")
 GEMINI_SCRIPT = os.path.join(WORKSPACE_DIR, "skills", "gemini-image-generate", "scripts", "gemini_image_generate.py")
 GEMINI_PYTHON = os.path.join(WORKSPACE_DIR, "skills", "gemini-image-generate", ".venv", "bin", "python")
+DEPRECATED_ROUTE_ACCESS_LOG_FILE = os.path.join(ROOT_DIR, "deprecated-route-access.jsonl")
 ROOM_REFERENCE_IMAGE = (
     os.path.join(ROOT_DIR, "assets", "room-reference.webp")
     if os.path.exists(os.path.join(ROOT_DIR, "assets", "room-reference.webp"))
@@ -344,9 +361,11 @@ ensure_electron_standalone_snapshot()
 
 
 _INDEX_HTML_CACHE = None
+_INDEX_HTML_CACHE_MTIME = None
 
 
 @app.route("/", methods=["GET"])
+@app.route("/office", methods=["GET"])
 def index():
     """Serve the Deepnoa public-safe mission control view."""
     with open(FRONTEND_PUBLIC_FILE, "r", encoding="utf-8") as f:
@@ -356,16 +375,30 @@ def index():
     return resp
 
 
+@app.route("/scene", methods=["GET"])
+@app.route("/live-office", methods=["GET"])
+def scene_view():
+    """Serve the minimal public office scene for embeds and homepage use."""
+    with open(FRONTEND_SCENE_FILE, "r", encoding="utf-8") as f:
+        html = f.read()
+    resp = make_response(html.replace("{{VERSION_TIMESTAMP}}", VERSION_TIMESTAMP))
+    resp.headers["Content-Type"] = "text/html; charset=utf-8"
+    return resp
+
+
 @app.route("/internal", methods=["GET"])
+@app.route("/internal/assets", methods=["GET"])
 def internal_index():
     """Serve the original pixel office UI for internal viewing only."""
     _maybe_apply_random_home_favorite()
 
-    global _INDEX_HTML_CACHE
-    if _INDEX_HTML_CACHE is None:
+    global _INDEX_HTML_CACHE, _INDEX_HTML_CACHE_MTIME
+    current_mtime = os.path.getmtime(FRONTEND_INDEX_FILE)
+    if _INDEX_HTML_CACHE is None or _INDEX_HTML_CACHE_MTIME != current_mtime:
         with open(FRONTEND_INDEX_FILE, "r", encoding="utf-8") as f:
             raw_html = f.read()
         _INDEX_HTML_CACHE = raw_html.replace("{{VERSION_TIMESTAMP}}", VERSION_TIMESTAMP)
+        _INDEX_HTML_CACHE_MTIME = current_mtime
 
     resp = make_response(_INDEX_HTML_CACHE)
     resp.headers["Content-Type"] = "text/html; charset=utf-8"
@@ -447,6 +480,8 @@ def save_agents_state(agents):
 
 
 def _state_bucket(state: str) -> str:
+    if state in {"blocked", "awaiting_approval", "offline", "degraded"}:
+        return "attention"
     if state == "error":
         return "attention"
     if state in {"writing", "researching", "executing", "syncing"}:
@@ -525,6 +560,18 @@ def save_manager_state(state: dict):
         json.dump(state, f, ensure_ascii=False, indent=2)
 
 
+def _bridge_input_paths() -> dict:
+    return {
+        "manager_state_path": MANAGER_STATE_FILE,
+        "agents_state_path": AGENTS_STATE_FILE,
+        "primary_state_path": STATE_FILE,
+        "cron_jobs_path": OPENCLAW_CRON_JOBS_FILE,
+        "github_worker_log": GITHUB_WORKER_LOG_FILE,
+        "github_deploy_log": GITHUB_DEPLOY_LOG_FILE,
+        "office_identity_path": IDENTITY_FILE,
+    }
+
+
 if not os.path.exists(MANAGER_STATE_FILE):
     save_manager_state(_default_manager_state())
 
@@ -546,6 +593,10 @@ def _agent_status_badge(state: str) -> str:
         "executing": "Running",
         "syncing": "Syncing",
         "error": "Attention",
+        "blocked": "Blocked",
+        "awaiting_approval": "Awaiting approval",
+        "offline": "Offline",
+        "degraded": "Degraded",
     }.get(state, "Standby")
 
 
@@ -633,23 +684,24 @@ def route_manager_event(payload: dict) -> tuple[str, str]:
         return explicit_role, "explicit"
     event_type = str(payload.get("event_type") or "").strip().lower()
     source = str(payload.get("source") or "").strip().lower()
-    if event_type == "github_webhook" or source == "github":
+    if event_type in {"github_webhook", "task.created", "task.assigned", "task.started", "task.completed", "task.failed"} or source == "github":
         return "dev", "rule"
-    if event_type in {"cron_check", "system_check"} or source in {"cron", "ops", "system"}:
+    if event_type in {"cron_check", "system_check", "connector.status.changed", "runtime.alert"} or source in {"cron", "ops", "system"}:
         return "ops", "rule"
-    if event_type in {"research_task", "public_summary"} or source in {"research", "public"}:
+    if event_type in {"research_task", "public_summary", "approval.requested", "approval.resolved", "channel.message.received"} or source in {"research", "public"}:
         return "research", "rule"
     return UNIVERSAL_FALLBACK["key"], "fallback"
 
 
 def apply_manager_event(payload: dict) -> dict:
     manager = load_manager_state()
+    normalized_event = normalize_event_payload(payload)
     routed_role, route_reason = route_manager_event(payload)
-    state = str(payload.get("state") or "idle").strip().lower() or "idle"
+    state = normalize_internal_state(normalized_event.get("state"))
     detail = str(payload.get("detail") or payload.get("summary") or "").strip()
-    source = str(payload.get("source") or "manager").strip().lower() or "manager"
-    event_type = str(payload.get("event_type") or "manual").strip().lower() or "manual"
-    timestamp = datetime.now().isoformat()
+    source = str(normalized_event.get("source") or "manager").strip().lower() or "manager"
+    event_type = str(normalized_event.get("event_type") or "manual").strip().lower() or "manual"
+    timestamp = str(normalized_event.get("timestamp") or datetime.now().isoformat())
     safe_summary = _sanitize_public_activity(source, event_type, routed_role if routed_role in ROLE_DEFINITIONS else "ops", detail)
 
     manager["updated_at"] = timestamp
@@ -674,7 +726,7 @@ def apply_manager_event(payload: dict) -> dict:
         manager["fallback_worker"]["updated_at"] = timestamp
 
     activity_item = {
-        "id": f"{timestamp}-{len(manager['activity'])}",
+        "id": normalized_event["event_id"],
         "role": routed_role,
         "route_reason": route_reason,
         "source": source,
@@ -682,8 +734,12 @@ def apply_manager_event(payload: dict) -> dict:
         "state": state,
         "summary": safe_summary,
         "updated_at": timestamp,
+        "task_id": normalized_event.get("task_id"),
+        "severity": normalized_event.get("severity"),
+        "provenance": normalized_event.get("provenance"),
+        "approval_status": normalized_event.get("approval_status"),
     }
-    manager["activity"] = [activity_item] + list(manager.get("activity") or [])[:19]
+    manager["activity"] = [activity_item] + list(manager.get("activity") or [])[:EVENT_HISTORY_RETENTION - 1]
     save_manager_state(manager)
     return {
         "ok": True,
@@ -694,157 +750,39 @@ def apply_manager_event(payload: dict) -> dict:
 
 
 def build_public_view_state() -> dict:
-    now = datetime.now()
     manager = load_manager_state()
+    bridge = build_openclaw_bridge_snapshot(
+        manager_state=manager,
+        agents_state=load_agents_state(),
+        primary_state=load_state(),
+        public_systems=PUBLIC_SYSTEMS,
+        sanitize_public_detail=_sanitize_public_detail,
+        input_paths=_bridge_input_paths(),
+    )
     office_name = get_office_name_from_identity() or PUBLIC_OFFICE_INFO["name"]
-    roles = manager.get("roles") or {}
-    activity = list(manager.get("activity") or [])
-    public_agents = []
-
-    public_agents.append({
-        "key": "reception",
-        "name": "Reception AI",
-        "role": "Gateway",
-        "description": "Public AI Gateway that routes inbound work to dedicated internal roles.",
-        "state": "idle",
-        "status_label": manager.get("gateway", {}).get("status", "Standby"),
-        "detail": _sanitize_public_detail(manager.get("gateway", {}).get("detail", "")),
-        "updated_at": manager.get("gateway", {}).get("updated_at", now.isoformat()),
-    })
-
-    for role_key in ("dev", "research", "ops"):
-        role_state = roles.get(role_key) or _default_role_state(role_key)
-        public_agents.append({
-            "key": role_key,
-            "name": role_state["name"],
-            "role": role_state["role"],
-            "description": role_state["profile"],
-            "state": role_state.get("state", "idle"),
-            "status_label": role_state.get("public_status_label") or _public_status_for_role(role_key, role_state.get("state", "idle")),
-            "detail": _sanitize_public_detail(role_state.get("detail", "")),
-            "updated_at": role_state.get("updated_at", now.isoformat()),
-        })
-
-    public_activity = []
-    for item in activity[:6]:
-        role_key = item.get("role") if item.get("role") in ROLE_DEFINITIONS else "ops"
-        agent_name = ROLE_DEFINITIONS.get(role_key, {}).get("name", "Universal Worker")
-        state = str(item.get("state") or "idle")
-        public_activity.append({
-            "agent": agent_name,
-            "state": state,
-            "status_label": _public_status_for_role(role_key, state) if role_key in ROLE_DEFINITIONS else "Fallback handling",
-            "summary": _sanitize_public_detail(str(item.get("summary") or "")),
-            "updated_at": item.get("updated_at") or now.isoformat(),
-        })
-    public_activity = _dedupe_public_activity(public_activity, limit=6)
-
-    latest_update = _parse_iso8601(manager.get("updated_at")) or now
-    health_state = "nominal"
-    age = (now - latest_update.replace(tzinfo=None) if latest_update.tzinfo else now - latest_update).total_seconds()
-    if age > 180:
-        health_state = "stale"
-
-    recent_work = [
-        {
-            "title": f"{entry['agent']} · {entry['status_label']}",
-            "summary": entry["summary"],
-            "updated_at": entry["updated_at"],
-        }
-        for entry in public_activity[:4]
-    ]
-    public_intake = [
-        {
-            "id": item.get("id"),
-            "role": item.get("role"),
-            "summary": _sanitize_public_detail(item.get("summary") or ""),
-            "updated_at": item.get("updated_at"),
-        }
-        for item in list(manager.get("intake") or [])[:4]
-    ]
-
-    return {
-        "office": {
-            "name": office_name,
-            "subtitle": PUBLIC_OFFICE_INFO["subtitle"],
-            "human_host": PUBLIC_OFFICE_INFO["human_host"],
-            "gateway_host": PUBLIC_OFFICE_INFO["gateway_host"],
-        },
-        "gateway": {
-            "label": PUBLIC_OFFICE_INFO["gateway_label"],
-            "status": manager.get("gateway", {}).get("status", "Standby"),
-            "detail": _sanitize_public_detail(manager.get("gateway", {}).get("detail", "")),
-            "updated_at": manager.get("gateway", {}).get("updated_at", now.isoformat()),
-        },
-        "agents": public_agents,
-        "activity": public_activity,
-        "recent_work": recent_work,
-        "systems": PUBLIC_SYSTEMS,
-        "health": {
-            "status": health_state,
-            "agent_count": len([k for k in roles if k in ROLE_DEFINITIONS]),
-            "latest_update": latest_update.isoformat(),
-            "public_log_policy": "public-safe only",
-            "manager_mode": "manager-first",
-        },
-        "routing": manager.get("routing", {}),
-        "fallback_worker": manager.get("fallback_worker", {}),
-        "intake": public_intake,
-    }
+    return build_public_state_payload(
+        office_name=office_name,
+        public_office_info=PUBLIC_OFFICE_INFO,
+        public_systems=PUBLIC_SYSTEMS,
+        manager_state=manager,
+        role_definitions=ROLE_DEFINITIONS,
+        bridge=bridge,
+        sanitize_public_detail=_sanitize_public_detail,
+    )
 
 
 def build_internal_view_state() -> dict:
     """Return internal control-view state without exposing secret values."""
-    now = datetime.now()
     manager = load_manager_state()
+    bridge = build_openclaw_bridge_snapshot(
+        manager_state=manager,
+        agents_state=load_agents_state(),
+        primary_state=load_state(),
+        public_systems=PUBLIC_SYSTEMS,
+        sanitize_public_detail=_sanitize_public_detail,
+        input_paths=_bridge_input_paths(),
+    )
     office_name = get_office_name_from_identity() or PUBLIC_OFFICE_INFO["name"]
-    roles = manager.get("roles") or {}
-
-    role_cards = []
-    for role_key in ("dev", "ops", "research"):
-        role_state = roles.get(role_key) or _default_role_state(role_key)
-        role_cards.append({
-            "key": role_key,
-            "name": role_state["name"],
-            "role": role_state["role"],
-            "profile": role_state["profile"],
-            "state": role_state.get("state", "idle"),
-            "public_status_label": role_state.get("public_status_label") or _public_status_for_role(role_key, role_state.get("state", "idle")),
-            "detail": str(role_state.get("detail") or ""),
-            "updated_at": role_state.get("updated_at") or now.isoformat(),
-            "allowed_tools": list(role_state.get("allowed_tools") or []),
-            "last_event_type": role_state.get("last_event_type"),
-            "last_source": role_state.get("last_source"),
-        })
-    fallback = manager.get("fallback_worker", {}) or {}
-    role_cards.append({
-        "key": "main",
-        "name": fallback.get("name", "Universal Worker"),
-        "role": fallback.get("role", "Fallback"),
-        "profile": fallback.get("profile", UNIVERSAL_FALLBACK["profile"]),
-        "state": "available" if fallback.get("status") == "available" else "active",
-        "public_status_label": "Fallback ready" if fallback.get("status") == "available" else "Fallback active",
-        "detail": "Receives work only when explicit role routing does not match or a routed worker fails.",
-        "updated_at": fallback.get("updated_at") or manager.get("updated_at") or now.isoformat(),
-        "allowed_tools": list(fallback.get("allowed_tools") or []),
-        "last_event_type": fallback.get("last_event_type"),
-        "last_source": fallback.get("last_source"),
-    })
-
-    agent_cards = []
-    for agent in load_agents_state():
-        agent_cards.append({
-            "agentId": agent.get("agentId"),
-            "name": agent.get("name"),
-            "isMain": bool(agent.get("isMain")),
-            "state": agent.get("state", "idle"),
-            "area": agent.get("area"),
-            "source": agent.get("source"),
-            "authStatus": agent.get("authStatus"),
-            "updated_at": agent.get("updated_at"),
-            "lastPushAt": agent.get("lastPushAt"),
-        })
-
     runtime_cfg = load_runtime_config()
     bg_history_count = 0
     if os.path.isdir(BG_HISTORY_DIR):
@@ -884,46 +822,46 @@ def build_internal_view_state() -> dict:
         },
     }
 
-    recent_activity = []
-    for item in list(manager.get("activity") or [])[:8]:
-        role_key = item.get("role")
-        recent_activity.append({
-            "role": role_key,
-            "agent": ROLE_DEFINITIONS.get(role_key, {}).get("name", UNIVERSAL_FALLBACK["name"]),
-            "event_type": item.get("event_type"),
-            "source": item.get("source"),
-            "state": item.get("state"),
-            "summary": str(item.get("summary") or ""),
-            "updated_at": item.get("updated_at"),
-            "route_reason": item.get("route_reason"),
-        })
+    return build_internal_state_payload(
+        office_name=office_name,
+        public_office_info=PUBLIC_OFFICE_INFO,
+        manager_state=manager,
+        role_definitions=ROLE_DEFINITIONS,
+        universal_fallback=UNIVERSAL_FALLBACK,
+        bridge=bridge,
+        assets_snapshot=assets_snapshot,
+    )
 
-    recent_intake = list(manager.get("intake") or [])[:6]
 
-    return {
-        "office": {
-            "name": office_name,
-            "mode": "internal-control-view",
-            "public_host": PUBLIC_OFFICE_INFO["human_host"],
-            "gateway_host": PUBLIC_OFFICE_INFO["gateway_host"],
-        },
-        "manager": {
-            "updated_at": manager.get("updated_at") or now.isoformat(),
-            "gateway": manager.get("gateway", {}),
-            "routing": manager.get("routing", {}),
-            "fallback_worker": manager.get("fallback_worker", {}),
-        },
-        "roles": role_cards,
-        "agents": agent_cards,
-        "activity": recent_activity,
-        "intake": recent_intake,
-        "assets": assets_snapshot,
-        "policies": {
-            "public_state_source": "manager-generated",
-            "public_view_policy": "read-only public-safe",
-            "internal_view_policy": "internal-only operational snapshot",
-        },
+def _record_deprecated_route_hit(route_path: str, replacement: str):
+    hit = {
+        "timestamp": datetime.now().isoformat(),
+        "route": route_path,
+        "replacement": replacement,
+        "remote_addr": request.headers.get("X-Forwarded-For") or request.remote_addr,
+        "method": request.method,
+        "query_string": request.query_string.decode("utf-8", errors="ignore"),
+        "user_agent": request.headers.get("User-Agent", ""),
+        "referer": request.headers.get("Referer", ""),
     }
+    app.logger.warning("Deprecated route hit: %s -> %s", route_path, replacement)
+    try:
+        with open(DEPRECATED_ROUTE_ACCESS_LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(json.dumps(hit, ensure_ascii=True) + "\n")
+    except Exception as exc:
+        app.logger.warning("Failed to persist deprecated route log for %s: %s", route_path, exc)
+
+
+def _json_with_optional_deprecation(payload: dict, route_path: str | None = None):
+    response = jsonify(payload)
+    if route_path and route_path in DEPRECATED_ROUTE_META:
+        meta = DEPRECATED_ROUTE_META[route_path]
+        _record_deprecated_route_hit(route_path, meta["replacement"])
+        response.headers["Deprecation"] = "true"
+        response.headers["Sunset"] = "2026-06-30"
+        response.headers["Link"] = f'<{meta["replacement"]}>; rel="successor-version"'
+        response.headers["Warning"] = f'299 - "{route_path} is deprecated; use {meta["replacement"]}"'
+    return response
 
 
 def load_asset_positions():
@@ -1846,7 +1784,13 @@ def health():
 
 @app.route("/public-state", methods=["GET"])
 def public_state():
-    """Return only public-safe office data for the Deepnoa AI Office view."""
+    """Deprecated compatibility route. Use /api/public/state."""
+    return _json_with_optional_deprecation(build_public_view_state(), "/public-state")
+
+
+@app.route("/api/public/state", methods=["GET"])
+def api_public_state():
+    """Stable public polling endpoint for the public office view."""
     return jsonify(build_public_view_state())
 
 
@@ -1858,8 +1802,22 @@ def manager_state():
 
 @app.route("/internal-state", methods=["GET"])
 def internal_state():
-    """Read-only internal control state for the internal view."""
+    """Deprecated compatibility route. Use /api/internal/state."""
+    return _json_with_optional_deprecation(build_internal_view_state(), "/internal-state")
+
+
+@app.route("/api/internal/state", methods=["GET"])
+def api_internal_state():
+    """Stable internal polling endpoint for the internal ops view."""
     return jsonify(build_internal_view_state())
+
+
+@app.route("/api/internal/events", methods=["GET"])
+def api_internal_events():
+    """Return normalized internal events, optionally filtered by timestamp."""
+    since = (request.args.get("since") or "").strip()
+    data = build_internal_view_state()
+    return jsonify(build_events_contract(events=list(data.get("events") or []), since=since))
 
 
 @app.route("/manager/event", methods=["POST"])

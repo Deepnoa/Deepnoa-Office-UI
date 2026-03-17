@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from urllib import request
 
 
@@ -15,6 +16,9 @@ def main() -> int:
     parser.add_argument("--state", default="idle")
     parser.add_argument("--detail", default="")
     parser.add_argument("--role")
+    parser.add_argument("--task-id")
+    parser.add_argument("--provenance", default="actual")
+    parser.add_argument("--approval-status", default="")
     args = parser.parse_args()
 
     payload = {
@@ -22,9 +26,15 @@ def main() -> int:
         "event_type": args.event_type,
         "state": args.state,
         "detail": args.detail,
+        "provenance": args.provenance,
     }
     if args.role:
         payload["role"] = args.role
+    if args.task_id:
+        payload["task_id"] = args.task_id
+    if args.approval_status:
+        payload["approval_status"] = args.approval_status
+    payload.setdefault("timestamp", time.strftime("%Y-%m-%dT%H:%M:%S"))
 
     req = request.Request(
         f"{args.base_url.rstrip('/')}/manager/event",

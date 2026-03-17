@@ -1,0 +1,1903 @@
+<!DOCTYPE html>
+<html lang="ja" translate="no" class="notranslate">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google" content="notranslate">
+  <title>Deepnoa AI Office Scene</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #08111d;
+      --surface: rgba(10, 18, 30, 0.42);
+      --surface-line: rgba(255, 255, 255, 0.1);
+      --text: #eff6ff;
+      --muted: #99adc9;
+      --accent: #7ee2c2;
+      --danger: #ff6b7d;
+      --scene-shadow: 0 34px 90px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top left, rgba(73, 122, 197, 0.22), transparent 30%),
+        linear-gradient(180deg, #0b1525 0%, #08111d 100%);
+      color: var(--text);
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+
+    body.embed-mode {
+      padding: 0;
+      background: #08111d;
+    }
+
+    .scene-shell {
+      position: relative;
+      width: min(100%, 1440px);
+      aspect-ratio: 16 / 9;
+      min-height: min(100vh - 36px, 420px);
+      border-radius: 28px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.09);
+      box-shadow: var(--scene-shadow);
+      background: #0d1624;
+    }
+
+    body.embed-mode .scene-shell {
+      width: 100vw;
+      min-height: 100vh;
+      border-radius: 0;
+      border: 0;
+      box-shadow: none;
+    }
+
+    .background-layer,
+    .zone-layer,
+    .accent-layer,
+    .shadow-layer,
+    .sprite-layer,
+    .occluder-layer,
+    .ui-layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    .background-layer {
+      background:
+        linear-gradient(180deg, rgba(8, 14, 25, 0.08), rgba(8, 14, 25, 0.36)),
+        url('/static/office_bg_small.webp?v={{VERSION_TIMESTAMP}}') center 46% / 110% auto no-repeat,
+        linear-gradient(180deg, #17263b 0%, #0a121d 100%);
+    }
+
+    .background-layer::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(126, 226, 194, 0.14), transparent 21%),
+        radial-gradient(circle at 84% 20%, rgba(94, 145, 255, 0.16), transparent 18%),
+        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02) 35%, rgba(3,7,12,0.18));
+      pointer-events: none;
+    }
+
+    .zone-layer {
+      pointer-events: none;
+      opacity: 0.018;
+    }
+
+    .zone {
+      position: absolute;
+      border-radius: 28px;
+      border: 1px solid rgba(116, 150, 196, 0.1);
+      background: rgba(255, 255, 255, 0.03);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+    }
+
+    .zone.walkway {
+      left: 17%;
+      right: 15%;
+      bottom: 10%;
+      height: 18%;
+      border-style: solid;
+      border-color: rgba(120, 167, 214, 0.12);
+      background:
+        linear-gradient(180deg, rgba(173, 204, 232, 0.06), rgba(255,255,255,0.02)),
+        repeating-linear-gradient(90deg, rgba(120,167,214,0.02) 0 22px, rgba(255,255,255,0.006) 22px 44px);
+    }
+
+    .zone.work-left {
+      left: 10%;
+      top: 18%;
+      width: 31%;
+      height: 28%;
+    }
+
+    .zone.work-right {
+      right: 10%;
+      top: 18%;
+      width: 31%;
+      height: 28%;
+    }
+
+    .zone.meeting {
+      left: 38%;
+      top: 16%;
+      width: 24%;
+      height: 20%;
+      border-color: rgba(126, 226, 194, 0.12);
+      background: rgba(126, 226, 194, 0.06);
+    }
+
+    .zone.corridor {
+      left: 45%;
+      top: 26%;
+      width: 10%;
+      height: 40%;
+      border-color: rgba(120, 167, 214, 0.08);
+      background: rgba(120, 167, 214, 0.03);
+    }
+
+    .accent-layer {
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 22% 72%, rgba(255, 221, 139, 0.07), transparent 14%),
+        radial-gradient(circle at 49% 28%, rgba(126, 226, 194, 0.08), transparent 14%),
+        radial-gradient(circle at 74% 70%, rgba(110, 160, 255, 0.08), transparent 14%);
+      mix-blend-mode: screen;
+    }
+
+    .shadow-layer {
+      overflow: hidden;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .agent-shadow {
+      position: absolute;
+      width: 26px;
+      height: 8px;
+      transform: translate(-50%, -50%);
+      border-radius: 999px;
+      background: rgba(72, 96, 133, 0.16);
+      filter: blur(1.6px);
+      will-change: transform;
+    }
+
+    .sprite-layer {
+      overflow: hidden;
+      z-index: 3;
+      pointer-events: auto;
+    }
+
+    .occluder-layer {
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .occluder {
+      position: absolute;
+      background: linear-gradient(180deg, rgba(247, 252, 255, 0.2), rgba(232, 242, 250, 0.14));
+      border: 1px solid rgba(104, 128, 164, 0.08);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+      opacity: 0.42;
+    }
+
+    .occluder.left-row-lower {
+      left: 13.8%;
+      top: 41.8%;
+      width: 26%;
+      height: 5.8%;
+      clip-path: polygon(1% 0, 96% 0, 100% 55%, 4% 100%);
+    }
+
+    .occluder.left-row-upper {
+      left: 24.8%;
+      top: 28.8%;
+      width: 23.6%;
+      height: 5.6%;
+      clip-path: polygon(1% 0, 97% 0, 100% 56%, 4% 100%);
+    }
+
+    .occluder.right-cluster {
+      left: 59.4%;
+      top: 24.8%;
+      width: 27%;
+      height: 5.8%;
+      clip-path: polygon(2% 0, 97% 0, 100% 56%, 5% 100%);
+    }
+
+    .occluder.console-front {
+      left: 43%;
+      top: 50.5%;
+      width: 21.6%;
+      height: 8.2%;
+      border-radius: 0 0 40px 40px;
+      clip-path: polygon(6% 10%, 94% 10%, 100% 54%, 79% 100%, 21% 100%, 0 54%);
+    }
+
+    .occluder.sofa-front {
+      left: 25%;
+      top: 70.2%;
+      width: 28%;
+      height: 6.8%;
+      border-radius: 30px;
+      clip-path: polygon(8% 6%, 92% 6%, 100% 54%, 90% 100%, 10% 100%, 0 54%);
+    }
+
+    .agent {
+      position: absolute;
+      width: 72px;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      will-change: transform;
+      --outline: #4c6388;
+      z-index: 1;
+      pointer-events: auto;
+      cursor: pointer;
+      transition: filter 140ms ease, opacity 140ms ease;
+    }
+
+    .agent:hover,
+    .agent.is-selected {
+      filter: brightness(1.03);
+    }
+
+    .staff {
+      position: relative;
+      width: 32px;
+      height: 42px;
+      margin: 0 auto;
+      filter: drop-shadow(0 6px 10px rgba(34, 50, 78, 0.16));
+      animation: walk-bob 1s ease-in-out infinite;
+    }
+
+    .agent.is-paused .staff,
+    .agent.is-error .staff {
+      animation: paused-breathe 2.8s ease-in-out infinite;
+    }
+
+    .agent.is-error .staff {
+      animation: none;
+    }
+
+    .staff-part {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .staff-head {
+      top: 2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 4px;
+      background: #ffd8be;
+      box-shadow: 0 0 0 1.5px var(--outline);
+    }
+
+    .staff-hair {
+      top: 0;
+      width: 14px;
+      height: 5px;
+      border-radius: 4px 4px 2px 2px;
+      background: var(--hair, #202a39);
+      box-shadow: 0 0 0 1px rgba(76, 99, 136, 0.55);
+    }
+
+    .staff-body {
+      top: 16px;
+      width: 18px;
+      height: 13px;
+      border-radius: 5px 5px 4px 4px;
+      background: var(--tone, #8bc5ff);
+      box-shadow:
+        0 0 0 1.5px var(--outline),
+        -10px 3px 0 -7px var(--tone, #8bc5ff),
+        10px 3px 0 -7px var(--tone, #8bc5ff),
+        -10px 3px 0 -5.5px var(--outline),
+        10px 3px 0 -5.5px var(--outline);
+    }
+
+    .staff-accent {
+      top: 19px;
+      width: 8px;
+      height: 5px;
+      border-radius: 3px;
+      background: var(--accent-tone, #e5f2ff);
+      box-shadow:
+        0 0 0 1px rgba(235, 246, 255, 0.55);
+    }
+
+    .staff-accent::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: -8px;
+      width: 4px;
+      height: 8px;
+      border-radius: 2px;
+      background: var(--accent-tone, #e5f2ff);
+      box-shadow: 0 0 0 1px rgba(76, 99, 136, 0.42);
+    }
+
+    .staff-feet {
+      top: 31px;
+      width: 14px;
+      height: 8px;
+      background: transparent;
+      box-shadow:
+        -4px 0 0 0 var(--leg, #243246),
+        4px 0 0 0 var(--leg, #243246);
+    }
+
+    .agent.role-dev { --tone: #7fb8f6; --accent-tone: #dfeefe; --hair: #33496a; --leg: #40587c; }
+    .agent.role-ops { --tone: #f3bb69; --accent-tone: #fdf0cc; --hair: #44556f; --leg: #65523e; }
+    .agent.role-research { --tone: #98d8be; --accent-tone: #e9fbf1; --hair: #39536e; --leg: #42615a; }
+    .agent.role-visitor {
+      --tone: #bfc9da;
+      --accent-tone: #edf2f8;
+      --hair: #4e5d73;
+      --leg: #58657a;
+      width: 62px;
+      opacity: 0.92;
+    }
+    .agent.role-visitor .staff {
+      transform: scale(0.9);
+      filter: drop-shadow(0 5px 8px rgba(34, 50, 78, 0.12));
+    }
+    .agent.role-visitor .agent-badge {
+      background: #9eb4d4;
+    }
+
+    .agent .state-glow {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 58px;
+      height: 58px;
+      transform: translate(-50%, -50%);
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(255,255,255,0.16), transparent 65%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .agent-badge {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.72);
+      background: var(--state-color, #7ee2c2);
+      box-shadow: 0 0 0 3px rgba(11, 21, 37, 0.28);
+    }
+
+    .agent.is-researching .state-glow,
+    .agent.is-syncing .state-glow {
+      opacity: 0.6;
+    }
+
+    .agent.is-error .state-glow {
+      opacity: 0.8;
+      background: radial-gradient(circle, rgba(255, 107, 125, 0.28), transparent 68%);
+      animation: error-pulse 1.1s ease-in-out infinite;
+    }
+
+    .ui-layer {
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .scene-brand,
+    .scene-live,
+    .scene-legend {
+      position: absolute;
+      border-radius: 16px;
+      border: 1px solid var(--surface-line);
+      background: var(--surface);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+    }
+
+    .scene-brand {
+      top: 16px;
+      left: 16px;
+      padding: 9px 11px;
+      max-width: min(34vw, 260px);
+    }
+
+    .scene-kicker {
+      color: var(--accent);
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .scene-title {
+      font-size: clamp(15px, 1.7vw, 20px);
+      font-weight: 700;
+      line-height: 1.05;
+      margin: 0;
+    }
+
+    .scene-subtitle {
+      color: #d5e4fb;
+      font-size: 11px;
+      line-height: 1.35;
+      margin-top: 3px;
+    }
+
+    .scene-legend {
+      left: 16px;
+      bottom: 16px;
+      padding: 7px 9px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-width: min(72vw, 560px);
+    }
+
+    .legend-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .legend-chip::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--chip, #7ee2c2);
+    }
+
+    .legend-chip.idle { --chip: #7ee2c2; }
+    .legend-chip.executing { --chip: #ffc46b; }
+    .legend-chip.researching { --chip: #8bc5ff; }
+    .legend-chip.syncing { --chip: #c4a2ff; }
+    .legend-chip.error { --chip: #ff6b7d; }
+    .legend-chip.is-active {
+      color: #eff6ff;
+      background: rgba(255,255,255,0.1);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset;
+    }
+
+    .scene-live {
+      right: 16px;
+      bottom: 16px;
+      padding: 8px 10px;
+      text-align: right;
+      min-width: 118px;
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #d7e9ff;
+    }
+
+    .live-pill::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(126, 226, 194, 0.6);
+      animation: live-blink 1.3s ease-in-out infinite;
+    }
+
+    .live-sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .scene-tooltip,
+    .scene-detail {
+      position: absolute;
+      border-radius: 16px;
+      border: 1px solid var(--surface-line);
+      background: rgba(8, 14, 24, 0.76);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.26);
+      pointer-events: none;
+    }
+
+    .scene-tooltip {
+      z-index: 6;
+      min-width: 170px;
+      max-width: 240px;
+      padding: 9px 11px;
+      opacity: 0;
+      transform: translate(-50%, -120%);
+      transition: opacity 120ms ease;
+    }
+
+    .scene-tooltip.is-visible {
+      opacity: 1;
+    }
+
+    .tooltip-name,
+    .detail-name {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .tooltip-meta,
+    .detail-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 5px;
+    }
+
+    .status-pill,
+    .role-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+      color: #eff6ff;
+      background: rgba(255,255,255,0.07);
+    }
+
+    .status-pill::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--pill-color, #7ee2c2);
+    }
+
+    .tooltip-summary,
+    .detail-summary {
+      margin-top: 7px;
+      color: #dbe8f8;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .scene-detail {
+      z-index: 5;
+      right: 16px;
+      top: 16px;
+      width: min(290px, calc(100% - 32px));
+      padding: 12px 13px;
+      pointer-events: auto;
+    }
+
+    .scene-detail.is-empty {
+      opacity: 0.84;
+    }
+
+    .detail-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .detail-close {
+      appearance: none;
+      border: 0;
+      background: rgba(255,255,255,0.06);
+      color: #dce8f8;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 78px 1fr;
+      gap: 6px 10px;
+      margin-top: 10px;
+      font-size: 11px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .detail-label {
+      color: #9eb2ce;
+      font-family: "IBM Plex Mono", monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      font-size: 10px;
+    }
+
+    .detail-value {
+      color: #eef6ff;
+      min-width: 0;
+      word-break: break-word;
+    }
+
+    .is-hidden {
+      display: none !important;
+    }
+
+    @keyframes walk-bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-1px); }
+    }
+
+    @keyframes paused-breathe {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-0.5px); }
+    }
+
+    @keyframes live-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+
+    @keyframes error-pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.82; }
+      50% { transform: translate(-50%, -50%) scale(1.06); opacity: 0.56; }
+    }
+
+    @media (max-width: 900px) {
+      body {
+        padding: 10px;
+      }
+
+      .scene-shell {
+        border-radius: 22px;
+        min-height: auto;
+      }
+
+      .scene-brand {
+        max-width: 72vw;
+      }
+
+      .scene-legend {
+        max-width: calc(100% - 32px);
+      }
+
+      .scene-detail {
+        top: auto;
+        right: 12px;
+        bottom: 62px;
+        width: min(280px, calc(100% - 24px));
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="scene-shell">
+    <div class="background-layer"></div>
+    <img id="scene-walkmask" src="/static/scene-walkmask.png?v={{VERSION_TIMESTAMP}}" alt="" hidden>
+
+    <div class="zone-layer" aria-hidden="true">
+      <div class="zone work-left"></div>
+      <div class="zone meeting"></div>
+      <div class="zone work-right"></div>
+      <div class="zone corridor"></div>
+      <div class="zone walkway"></div>
+    </div>
+
+    <div class="accent-layer" aria-hidden="true"></div>
+    <div class="shadow-layer" id="shadow-layer"></div>
+    <div class="sprite-layer" id="sprite-layer"></div>
+    <div class="occluder-layer" aria-hidden="true">
+      <div class="occluder left-row-lower"></div>
+      <div class="occluder left-row-upper"></div>
+      <div class="occluder right-cluster"></div>
+      <div class="occluder console-front"></div>
+      <div class="occluder sofa-front"></div>
+    </div>
+
+    <div class="ui-layer">
+      <div class="scene-brand" id="scene-brand">
+        <div class="scene-kicker" data-i18n="scene.kicker">Deepnoa AI Office</div>
+        <div class="scene-title" data-i18n="scene.title">Live Office Scene</div>
+      </div>
+
+      <div class="scene-legend" id="scene-legend" aria-label="legend">
+        <div class="legend-chip idle" data-i18n="legend.idle">idle</div>
+        <div class="legend-chip executing" data-i18n="legend.executing">executing</div>
+        <div class="legend-chip researching" data-i18n="legend.researching">researching</div>
+        <div class="legend-chip syncing" data-i18n="legend.syncing">syncing</div>
+        <div class="legend-chip error" data-i18n="legend.error">error</div>
+      </div>
+
+      <div class="scene-live" id="scene-live">
+        <div class="live-pill" data-i18n="scene.live">Live</div>
+        <div class="live-sub" id="live-sub" data-i18n="scene.loading">Loading office scene…</div>
+      </div>
+
+      <div class="scene-tooltip is-hidden" id="scene-tooltip" aria-hidden="true"></div>
+      <div class="scene-detail is-empty" id="scene-detail"></div>
+    </div>
+  </main>
+
+  <script>
+    const I18N = {
+      ja: {
+        "scene.kicker": "Deepnoa AI Office",
+        "scene.title": "AI Office Scene",
+        "scene.live": "Live",
+        "scene.loading": "オフィスシーンを読み込み中…",
+        "scene.updated": "更新",
+        "scene.no_agents": "表示できるエージェントがいません",
+        "legend.idle": "待機",
+        "legend.executing": "実行中",
+        "legend.researching": "調査中",
+        "legend.syncing": "同期中",
+        "legend.error": "異常",
+        "role.dev": "情報システム",
+        "role.ops": "業務管理",
+        "role.research": "経営企画",
+        "agent.dev": "情報システム担当",
+        "agent.ops": "業務管理担当",
+        "agent.research": "経営企画担当",
+        "status.idle": "待機中",
+        "status.executing": "実行中",
+        "status.researching": "調査中",
+        "status.syncing": "同期中",
+        "status.routing": "移送中",
+        "status.writing": "作業中",
+        "status.error": "異常",
+        "detail.placeholder.name": "エージェントを選択",
+        "detail.placeholder.summary": "staff を押すと、いまの役割と作業内容を確認できます。",
+        "detail.role": "役割",
+        "detail.status": "状態",
+        "detail.summary": "現在の作業",
+        "detail.updated": "最終更新",
+        "detail.source": "ソース",
+        "detail.close": "閉じる",
+        "visitor.name": "来訪者",
+        "visitor.role": "社外",
+        "visitor.state": "来訪中",
+        "visitor.summary.inquiry": "問い合わせ中",
+        "visitor.summary.request": "依頼中",
+        "ops.event.inquiry": "問い合わせ対応中",
+        "ops.event.request": "依頼受付中",
+      },
+      en: {
+        "scene.kicker": "Deepnoa AI Office",
+        "scene.title": "AI Office Scene",
+        "scene.live": "Live",
+        "scene.loading": "Loading office scene…",
+        "scene.updated": "Updated",
+        "scene.no_agents": "No visible agents",
+        "legend.idle": "idle",
+        "legend.executing": "executing",
+        "legend.researching": "researching",
+        "legend.syncing": "syncing",
+        "legend.error": "error",
+        "role.dev": "Information Systems",
+        "role.ops": "Operations",
+        "role.research": "Strategy",
+        "agent.dev": "Information Systems Lead",
+        "agent.ops": "Operations Coordinator",
+        "agent.research": "Strategy Planner",
+        "status.idle": "standing by",
+        "status.executing": "working",
+        "status.researching": "researching",
+        "status.syncing": "syncing",
+        "status.routing": "routing",
+        "status.writing": "working",
+        "status.error": "error",
+        "detail.placeholder.name": "Select an agent",
+        "detail.placeholder.summary": "Click a staff member to see the current role and work summary.",
+        "detail.role": "Role",
+        "detail.status": "Status",
+        "detail.summary": "Current work",
+        "detail.updated": "Updated",
+        "detail.source": "Source",
+        "detail.close": "Close",
+        "visitor.name": "Visitor",
+        "visitor.role": "External",
+        "visitor.state": "visiting",
+        "visitor.summary.inquiry": "making an inquiry",
+        "visitor.summary.request": "sending a request",
+        "ops.event.inquiry": "handling an inquiry",
+        "ops.event.request": "accepting a request",
+      },
+      zh: {
+        "scene.kicker": "Deepnoa AI Office",
+        "scene.title": "AI Office Scene",
+        "scene.live": "Live",
+        "scene.loading": "正在加载办公室场景…",
+        "scene.updated": "更新",
+        "scene.no_agents": "当前没有可显示的代理",
+        "legend.idle": "idle",
+        "legend.executing": "executing",
+        "legend.researching": "researching",
+        "legend.syncing": "syncing",
+        "legend.error": "error",
+        "role.dev": "信息系统",
+        "role.ops": "业务管理",
+        "role.research": "经营企划",
+        "agent.dev": "信息系统负责人",
+        "agent.ops": "业务管理负责人",
+        "agent.research": "经营企划负责人",
+        "status.idle": "待机中",
+        "status.executing": "执行中",
+        "status.researching": "调查中",
+        "status.syncing": "同步中",
+        "status.routing": "路由中",
+        "status.writing": "处理中",
+        "status.error": "异常",
+        "detail.placeholder.name": "选择一个代理",
+        "detail.placeholder.summary": "点击 staff 可查看当前角色和工作摘要。",
+        "detail.role": "角色",
+        "detail.status": "状态",
+        "detail.summary": "当前工作",
+        "detail.updated": "更新时间",
+        "detail.source": "来源",
+        "detail.close": "关闭",
+        "visitor.name": "来访者",
+        "visitor.role": "外部",
+        "visitor.state": "来访中",
+        "visitor.summary.inquiry": "咨询中",
+        "visitor.summary.request": "请求中",
+        "ops.event.inquiry": "处理中咨询",
+        "ops.event.request": "受理请求中",
+      }
+    };
+
+    const DEFAULT_LANG = "ja";
+    const LANG_KEY = "deepnoa_ui_lang";
+    const params = new URLSearchParams(window.location.search);
+    const WALKMAP = {
+      image: "/static/scene-walkmask.png?v={{VERSION_TIMESTAMP}}",
+      points: {
+        left_door: { x: 0.395, y: 0.49, pause: 0.7 },
+        right_door: { x: 0.615, y: 0.49, pause: 0.7 },
+        center_north: { x: 0.50, y: 0.35, pause: 0.6 },
+        center_mid: { x: 0.50, y: 0.50, pause: 0.6 },
+        center_south: { x: 0.50, y: 0.68, pause: 0.6 },
+        lounge_entry: { x: 0.355, y: 0.745, pause: 0.7 },
+        right_lower_hall: { x: 0.655, y: 0.665, pause: 0.6 },
+        left_upper_aisle: { x: 0.22, y: 0.255, pause: 0.8 },
+        left_mid_aisle: { x: 0.22, y: 0.405, pause: 0.8 },
+        left_lower_aisle: { x: 0.21, y: 0.555, pause: 0.8 },
+        dev_desk_upper: { x: 0.265, y: 0.255, pause: 4.2 },
+        dev_desk_mid: { x: 0.265, y: 0.405, pause: 4.8 },
+        dev_desk_lower: { x: 0.255, y: 0.555, pause: 4.4 },
+        ops_ring_top: { x: 0.50, y: 0.405, pause: 4.4 },
+        ops_ring_left: { x: 0.455, y: 0.485, pause: 4.2 },
+        ops_ring_right: { x: 0.545, y: 0.485, pause: 4.2 },
+        ops_ring_bottom: { x: 0.50, y: 0.565, pause: 5.2 },
+        research_meeting_edge: { x: 0.73, y: 0.295, pause: 4.8 },
+        research_meeting_lower: { x: 0.73, y: 0.405, pause: 4.8 },
+        research_right_desk: { x: 0.74, y: 0.64, pause: 4.4 },
+        research_right_front: { x: 0.66, y: 0.64, pause: 3.2 },
+        lounge_front: { x: 0.23, y: 0.80, pause: 3.8 },
+        entry_inner: { x: 0.50, y: 0.79, pause: 2.8 },
+        entry_guest: { x: 0.545, y: 0.835, pause: 8.8 },
+        entry_guest_ops: { x: 0.58, y: 0.765, pause: 6.8 },
+      },
+    };
+
+    const routeProfiles = {
+      dev: {
+        home: "dev_desk_mid",
+        idle: ["dev_desk_mid", "left_mid_aisle"],
+        executing: ["dev_desk_mid"],
+        writing: ["dev_desk_upper", "dev_desk_mid"],
+        syncing: ["dev_desk_mid", "left_mid_aisle", "left_door", "center_mid", "left_door", "left_mid_aisle"],
+        routing: ["dev_desk_mid", "left_mid_aisle", "left_door", "center_mid", "left_door", "left_mid_aisle"],
+        error: ["dev_desk_mid"],
+      },
+      ops: {
+        home: "ops_ring_bottom",
+        idle: ["ops_ring_bottom", "center_south"],
+        executing: ["ops_ring_bottom", "ops_ring_right"],
+        writing: ["ops_ring_bottom", "ops_ring_left"],
+        syncing: ["ops_ring_bottom", "center_south", "center_mid", "center_north", "center_mid", "center_south"],
+        routing: ["ops_ring_bottom", "center_south", "center_mid", "center_north", "center_mid", "center_south"],
+        error: ["ops_ring_bottom"],
+      },
+      research: {
+        home: "research_right_desk",
+        idle: ["research_right_desk", "research_right_front"],
+        executing: ["research_right_desk"],
+        researching: ["research_meeting_edge", "research_meeting_lower", "right_door", "research_meeting_lower"],
+        syncing: ["research_right_desk", "right_lower_hall", "right_door", "center_mid", "right_door", "right_lower_hall"],
+        routing: ["research_right_desk", "right_lower_hall", "right_door", "center_mid", "right_door", "right_lower_hall"],
+        error: ["research_right_desk"],
+      },
+      default: {
+        home: "center_mid",
+        idle: ["center_mid"],
+        executing: ["center_mid"],
+        researching: ["center_mid"],
+        syncing: ["center_mid", "center_south"],
+        routing: ["center_mid", "center_south"],
+        error: ["center_mid"],
+      },
+    };
+
+    const STATE_COLORS = {
+      idle: "#7ee2c2",
+      executing: "#ffc46b",
+      researching: "#8bc5ff",
+      syncing: "#c4a2ff",
+      routing: "#c4a2ff",
+      writing: "#ffc46b",
+      error: "#ff6b7d",
+    };
+
+    const VISITOR_EVENT = {
+      cycleSeconds: 54,
+      activeSeconds: 28,
+      startOffset: 24,
+      supportRoute: ["ops_ring_bottom", "center_south", "entry_inner", "entry_guest_ops", "entry_guest_ops", "entry_inner", "center_south"],
+    };
+
+    const sceneState = {
+      lang: DEFAULT_LANG,
+      agents: [],
+      agentMap: new Map(),
+      visitor: null,
+      frameHandle: null,
+      pollHandle: null,
+      hoveredKey: null,
+      selectedKey: null,
+      lastVisitorSignature: "",
+      walkmask: {
+        ready: false,
+        width: 0,
+        height: 0,
+        data: null,
+      },
+    };
+
+    function resolveLang() {
+      const qs = params.get("lang");
+      const stored = window.localStorage.getItem(LANG_KEY);
+      const candidate = String(qs || stored || DEFAULT_LANG).toLowerCase();
+      return ["ja", "en", "zh"].includes(candidate) ? candidate : DEFAULT_LANG;
+    }
+
+    function isEnabled(key, defaultValue = true) {
+      const value = params.get(key);
+      if (value == null) return defaultValue;
+      return !["0", "false", "off", "no"].includes(String(value).toLowerCase());
+    }
+
+    function applyEmbedOptions() {
+      const embed = isEnabled("embed", false);
+      const showLegend = isEnabled("legend", true);
+      const showLive = isEnabled("live", true);
+      const showBrand = isEnabled("brand", true);
+      document.body.classList.toggle("embed-mode", embed);
+      document.getElementById("scene-legend").classList.toggle("is-hidden", !showLegend);
+      document.getElementById("scene-live").classList.toggle("is-hidden", !showLive);
+      document.getElementById("scene-brand").classList.toggle("is-hidden", !showBrand);
+    }
+
+    function t(key, fallback = "") {
+      return (I18N[sceneState.lang] && I18N[sceneState.lang][key]) || fallback || key;
+    }
+
+    function applyI18n() {
+      document.documentElement.lang = sceneState.lang;
+      for (const node of document.querySelectorAll("[data-i18n]")) {
+        node.textContent = t(node.dataset.i18n, node.textContent);
+      }
+    }
+
+    function safeDate(value) {
+      if (!value) return "--";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleTimeString(sceneState.lang === "zh" ? "zh-CN" : sceneState.lang === "ja" ? "ja-JP" : "en-US");
+    }
+
+    function roleClass(key) {
+      if (key === "dev") return "role-dev";
+      if (key === "ops") return "role-ops";
+      if (key === "visitor") return "role-visitor";
+      return "role-research";
+    }
+
+    function stateClass(state) {
+      const normalized = String(state || "idle").toLowerCase();
+      if (normalized === "error") return "is-error";
+      if (normalized === "researching") return "is-researching";
+      if (normalized === "syncing" || normalized === "routing") return "is-syncing";
+      return "";
+    }
+
+    function roleLabel(key) {
+      return t(`role.${String(key || "research").toLowerCase()}`, key || "agent");
+    }
+
+    function agentDisplayName(key, fallback = "") {
+      return t(`agent.${String(key || "research").toLowerCase()}`, fallback || key || "agent");
+    }
+
+    function stateLabel(state) {
+      const normalized = String(state || "idle").toLowerCase();
+      return t(`status.${normalized}`, normalized);
+    }
+
+    function stateColor(state) {
+      return STATE_COLORS[String(state || "idle").toLowerCase()] || STATE_COLORS.idle;
+    }
+
+    function getEntityRole(entity) {
+      return entity && entity.roleLabelText ? entity.roleLabelText : roleLabel(entity && entity.key);
+    }
+
+    function getEntityStatus(entity) {
+      return entity && entity.stateLabelText ? entity.stateLabelText : stateLabel(entity && entity.state);
+    }
+
+    function getEntityStateColor(entity) {
+      return entity && entity.stateColorValue ? entity.stateColorValue : stateColor(entity && entity.state);
+    }
+
+    function compactText(value) {
+      return String(value || "").replace(/\s+/g, " ").trim();
+    }
+
+    function translateSummary(summary, agentKey = "", state = "") {
+      const raw = compactText(summary);
+      if (!raw || sceneState.lang !== "ja") {
+        return raw;
+      }
+      const key = String(agentKey || "").toLowerCase();
+
+      const patterns = [
+        { re: /^Checking GitHub PRs$/i, text: "GitHubのPRを確認中" },
+        { re: /^Processing tasks?$/i, text: "タスクを処理中" },
+        { re: /^Syncing data$/i, text: "データを同期中" },
+        { re: /^Waiting for input$/i, text: "入力待ち" },
+        { re: /^Routing requests?$/i, text: "リクエストを振り分け中" },
+        { re: /^Routing request$/i, text: "リクエストを振り分け中" },
+        { re: /^Analyzing logs$/i, text: "ログを分析中" },
+        { re: /^Generating response$/i, text: "応答を生成中" },
+        { re: /^Reviewing documents?$/i, text: "資料を確認中" },
+        { re: /^Writing update$/i, text: "更新内容を作成中" },
+        { re: /^Monitoring connectors?$/i, text: "接続状態を確認中" },
+        { re: /^Waiting for approval$/i, text: "承認待ち" },
+        { re: /^Waiting for review$/i, text: "レビュー待ち" },
+        { re: /^Queue is idle$/i, text: "キューは待機中" },
+        { re: /^Preparing reply$/i, text: "返信を準備中" },
+        { re: /^Drafting response$/i, text: "応答を下書き中" },
+        { re: /^Collecting context$/i, text: "関連情報を整理中" },
+        { re: /^Updating status$/i, text: "状態を更新中" },
+        { re: /^Checking runtime health$/i, text: "稼働状況を確認中" },
+        { re: /^Syncing workspace$/i, text: "workspaceを同期中" },
+        { re: /^(\d+)\s+scheduled system checks? currently need attention\.?$/i, text: (_, count) => `定期システムチェック${count}件が要確認` },
+        { re: /^scheduled system checks? currently need attention\.?$/i, text: "定期システムチェックが要確認" },
+        { re: /^runtime health issue$/i, text: "稼働状況に異常" },
+        { re: /^connector issues$/i, text: "接続状態に異常" },
+        { re: /^attention required$/i, text: "確認が必要" },
+      ];
+
+      for (const pattern of patterns) {
+        if (pattern.re.test(raw)) {
+          if (typeof pattern.text === "function") {
+            return raw.replace(pattern.re, pattern.text);
+          }
+          return pattern.text;
+        }
+      }
+
+      const publicRewrites = [
+        [/GitHubキュー/gi, key === "dev" ? "システム更新" : "業務キュー"],
+        [/GitHubのPR/gi, "システム更新"],
+        [/APIリクエスト/gi, key === "ops" ? "業務リクエスト" : "システムリクエスト"],
+        [/接続状態/gi, "システム状況"],
+        [/稼働状況/gi, key === "research" ? "事業状況" : "稼働状況"],
+        [/ログ/gi, key === "research" ? "情報" : "稼働状況"],
+        [/タスク/gi, key === "ops" ? "業務" : key === "research" ? "情報整理" : "システム更新"],
+        [/資料/gi, key === "research" ? "情報" : "資料"],
+        [/応答/gi, key === "research" ? "情報整理" : "応答"],
+        [/workspace/gi, "作業内容"],
+      ];
+
+      const lower = raw.toLowerCase();
+      const nounPatterns = [
+        { re: /github pr|pull request|prs?\b/, text: "GitHubのPR" },
+        { re: /github webhook queue|github queue|deployment flow/, text: "GitHubキュー" },
+        { re: /api request|api call|api/, text: "APIリクエスト" },
+        { re: /request logs?|logs?/i, text: "ログ" },
+        { re: /queue|job queue|task queue/, text: "キュー" },
+        { re: /tasks?|jobs?|work items?/, text: "タスク" },
+        { re: /data|workspace|state/, text: "データ" },
+        { re: /documents?|docs?|files?/, text: "資料" },
+        { re: /connector|connectors/, text: "接続状態" },
+        { re: /runtime health|health/, text: "稼働状況" },
+        { re: /scheduled system checks?|system checks?/, text: "定期システムチェック" },
+        { re: /response|reply|message/, text: "応答" },
+        { re: /context/, text: "関連情報" },
+        { re: /status/, text: "状態" },
+        { re: /approval|review/, text: "承認" },
+      ];
+
+      const actionPatterns = [
+        { re: /\banaly(s|z)ing\b|\binspecting\b|\bdiagnosing\b/, text: "分析中" },
+        { re: /\bchecking\b|\breviewing\b|\bverifying\b|\blooking at\b/, text: "確認中" },
+        { re: /\bgenerating\b|\bcreating\b|\bbuilding\b|\bdrafting\b|\bcomposing\b/, text: "生成中" },
+        { re: /\bprocessing\b|\bworking\b|\bhandling\b|\brunning\b|\bexecuting\b/, text: "処理中" },
+        { re: /\bsyncing\b|\bsynchronizing\b/, text: "同期中" },
+        { re: /\bupdating\b|\brefreshing\b/, text: "更新中" },
+        { re: /\bwaiting\b|\bidle\b|\bstanding by\b/, text: "待機中" },
+        { re: /\brouting\b|\bdispatching\b|\bforwarding\b/, text: "振分中" },
+        { re: /\bmonitoring\b|\bwatching\b|\bobserving\b/, text: "監視中" },
+        { re: /\bcollecting\b|\bgathering\b/, text: "整理中" },
+        { re: /\bpreparing\b|\breadying\b/, text: "準備中" },
+        { re: /\bneed attention\b|\bneeds attention\b|\brequires attention\b|\battention required\b/, text: "要確認" },
+        { re: /\bdegraded\b|\bissue\b|\bissues\b/, text: "異常" },
+      ];
+
+      const countMatch = raw.match(/\b(\d+)\b/);
+      const countText = countMatch ? countMatch[1] : "";
+
+      let subject = "";
+      for (const pattern of nounPatterns) {
+        if (pattern.re.test(lower)) {
+          subject = pattern.text;
+          break;
+        }
+      }
+
+      let action = "";
+      for (const pattern of actionPatterns) {
+        if (pattern.re.test(lower)) {
+          action = pattern.text;
+          break;
+        }
+      }
+
+      if (subject && action) {
+        if (action === "分析中" && subject === "ログ") return key === "research" ? "情報整理中" : "稼働状況を確認中";
+        if (action === "確認中" && subject === "GitHubのPR") return "システム更新を確認中";
+        if (action === "処理中" && subject === "GitHubキュー") return "システム更新を処理中";
+        if (subject === "承認" && action === "待機中") return "承認待ち";
+        if (action === "要確認" && countText) return `${subject}${countText}件が要確認`;
+        if (action === "要確認") return `${subject}が要確認`;
+        if (action === "異常") return `${subject}に異常`;
+        let phrase = `${subject}を${action}`.replace("を待機中", "待機中");
+        for (const [re, text] of publicRewrites) {
+          phrase = phrase.replace(re, text);
+        }
+        return phrase;
+      }
+      if (subject) {
+        if (subject === "承認") return "承認待ち";
+        if (countText && /need attention|requires attention|attention required/i.test(raw)) return `${subject}${countText}件が要確認`;
+        if (/degraded|issue|issues/i.test(raw)) return `${subject}に異常`;
+        let phrase = `${subject}を確認中`;
+        for (const [re, text] of publicRewrites) {
+          phrase = phrase.replace(re, text);
+        }
+        return phrase;
+      }
+      if (action) {
+        if (key === "research" && action === "分析中") return "情報整理中";
+        if (key === "dev" && action === "処理中") return "システム更新を処理中";
+        if (key === "ops" && action === "処理中") return "業務を処理中";
+        return action;
+      }
+
+      let translated = raw;
+      const replacements = [
+        [/GitHub webhook queue is being processed and deployment flow is active\./i, "GitHubキューを処理中"],
+        [/Processing GitHub webhook queue/i, "GitHubキューを処理中"],
+        [/deployment flow is active/i, "デプロイを進行中"],
+        [/Checking GitHub PRs/i, "GitHubのPRを確認中"],
+        [/Processing tasks?/i, "タスクを処理中"],
+        [/Syncing data/i, "データを同期中"],
+        [/Waiting for input/i, "入力待ち"],
+        [/Routing requests?/i, "リクエストを振り分け中"],
+        [/Analyzing logs/i, "ログを分析中"],
+        [/Generating response/i, "応答を生成中"],
+        [/Reviewing documents?/i, "資料を確認中"],
+        [/Waiting for approval/i, "承認待ち"],
+        [/Waiting for review/i, "レビュー待ち"],
+        [/Collecting context/i, "関連情報を整理中"],
+        [/Updating status/i, "状態を更新中"],
+        [/Checking runtime health/i, "稼働状況を確認中"],
+        [/Syncing workspace/i, "workspaceを同期中"],
+        [/Monitoring connectors?/i, "接続状態を確認中"],
+        [/(\d+)\s+scheduled system checks? currently need attention\.?/i, (_, count) => `定期システムチェック${count}件が要確認`],
+        [/scheduled system checks? currently need attention\.?/i, "定期システムチェックが要確認"],
+        [/runtime health issue/i, "稼働状況に異常"],
+        [/connector issues?/i, "接続状態に異常"],
+        [/need attention/i, "要確認"],
+        [/requires attention/i, "要確認"],
+        [/attention required/i, "確認が必要"],
+        [/degraded/i, "異常"],
+      ];
+      for (const [re, text] of replacements) {
+        translated = translated.replace(re, text);
+      }
+
+      translated = translated
+        .replace(/\bis being processed\b/gi, "を処理中")
+        .replace(/\bis active\b/gi, "が進行中")
+        .replace(/\bprocessing\b/gi, "処理中")
+        .replace(/\bchecking\b/gi, "確認中")
+        .replace(/\bsyncing\b/gi, "同期中")
+        .replace(/\bgenerating\b/gi, "生成中")
+        .replace(/\banalyzing\b/gi, "分析中")
+        .replace(/\bwaiting\b/gi, "待機中")
+        .replace(/\brouting\b/gi, "振分中")
+        .replace(/\bdispatching\b/gi, "振分中")
+        .replace(/\bworking\b/gi, "処理中")
+        .replace(/\bhandling\b/gi, "処理中")
+        .replace(/\bupdating\b/gi, "更新中")
+        .replace(/\bcreating\b/gi, "生成中")
+        .replace(/\bbuilding\b/gi, "生成中")
+        .replace(/\breviewing\b/gi, "確認中");
+
+      translated = compactText(translated.replace(/\.$/, ""));
+      for (const [re, text] of publicRewrites) {
+        translated = translated.replace(re, text);
+      }
+      if (translated && /中$|待ち$/.test(translated)) {
+        return translated;
+      }
+
+      const firstKeyword = [
+        [/\banaly(s|z)ing\b/i, "分析中"],
+        [/\bchecking\b|\breviewing\b|\bverifying\b/i, "確認中"],
+        [/\bprocessing\b|\bworking\b|\bhandling\b|\brunning\b|\bexecuting\b/i, "処理中"],
+        [/\bgenerating\b|\bcreating\b|\bbuilding\b|\bdrafting\b/i, "生成中"],
+        [/\bsyncing\b|\bsynchronizing\b/i, "同期中"],
+        [/\bupdating\b|\brefreshing\b/i, "更新中"],
+        [/\bwaiting\b|\bidle\b|\bstanding by\b/i, "待機中"],
+        [/\brouting\b|\bdispatching\b|\bforwarding\b/i, "振分中"],
+      ];
+      for (const [re, text] of firstKeyword) {
+        if (re.test(raw)) return text;
+      }
+
+      if (state === "researching" || key === "research") return "情報整理中";
+      if (state === "executing" || key === "dev") return "システム更新を処理中";
+      if (key === "ops") return "業務を確認中";
+      return raw;
+    }
+
+    function getSpeed(state) {
+      const normalized = String(state || "").toLowerCase();
+      if (normalized === "executing") return 0.03;
+      if (normalized === "researching") return 0.035;
+      if (normalized === "syncing" || normalized === "routing") return 0.055;
+      if (normalized === "writing") return 0.028;
+      if (normalized === "error") return 0;
+      return 0.016;
+    }
+
+    function getVisitorScenario(nowSeconds = Date.now() / 1000) {
+      const phase = (nowSeconds + VISITOR_EVENT.startOffset) % VISITOR_EVENT.cycleSeconds;
+      if (phase > VISITOR_EVENT.activeSeconds) {
+        return { active: false };
+      }
+      const cycleIndex = Math.floor((nowSeconds + VISITOR_EVENT.startOffset) / VISITOR_EVENT.cycleSeconds);
+      const kind = cycleIndex % 2 === 0 ? "inquiry" : "request";
+      const point = snapToWalkmap(WALKMAP.points.entry_guest || { x: 0.545, y: 0.835 });
+      return {
+        active: true,
+        kind,
+        point,
+        name: t("visitor.name", "Visitor"),
+        roleLabelText: t("visitor.role", "External"),
+        stateLabelText: t("visitor.state", "visiting"),
+        displayDetail: t(`visitor.summary.${kind}`, kind),
+        stateColorValue: "#9eb4d4",
+      };
+    }
+
+    async function ensureWalkmaskLoaded() {
+      if (sceneState.walkmask.ready) return;
+      const img = document.getElementById("scene-walkmask");
+      if (!img.complete) {
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0);
+      sceneState.walkmask = {
+        ready: true,
+        width: canvas.width,
+        height: canvas.height,
+        data: ctx.getImageData(0, 0, canvas.width, canvas.height).data,
+      };
+    }
+
+    function sampleWalkmask(normalizedPoint) {
+      if (!sceneState.walkmask.ready || !sceneState.walkmask.data) return 255;
+      const px = Math.max(0, Math.min(sceneState.walkmask.width - 1, Math.round(normalizedPoint.x * (sceneState.walkmask.width - 1))));
+      const py = Math.max(0, Math.min(sceneState.walkmask.height - 1, Math.round(normalizedPoint.y * (sceneState.walkmask.height - 1))));
+      const idx = (py * sceneState.walkmask.width + px) * 4;
+      return sceneState.walkmask.data[idx];
+    }
+
+    function snapToWalkmap(point) {
+      if (sampleWalkmask(point) >= 180) {
+        return point;
+      }
+      let bestPoint = point;
+      let bestDist = Infinity;
+      const maxRadius = 36;
+      const xStep = 1 / Math.max(1, sceneState.walkmask.width - 1);
+      const yStep = 1 / Math.max(1, sceneState.walkmask.height - 1);
+      for (let radius = 1; radius <= maxRadius; radius += 1) {
+        for (let dx = -radius; dx <= radius; dx += 1) {
+          for (let dy = -radius; dy <= radius; dy += 1) {
+            if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
+            const candidate = {
+              x: Math.max(0, Math.min(1, point.x + dx * xStep)),
+              y: Math.max(0, Math.min(1, point.y + dy * yStep)),
+            };
+            if (sampleWalkmask(candidate) < 180) continue;
+            const dist = Math.hypot(candidate.x - point.x, candidate.y - point.y);
+            if (dist < bestDist) {
+              bestPoint = candidate;
+              bestDist = dist;
+            }
+          }
+        }
+        if (bestDist < Infinity) break;
+      }
+      return bestPoint;
+    }
+
+    function nudgeTowardWalkable(point, radius = 10) {
+      if (sampleWalkmask(point) >= 180) return point;
+      let bestPoint = point;
+      let bestScore = Infinity;
+      const xStep = 1 / Math.max(1, sceneState.walkmask.width - 1);
+      const yStep = 1 / Math.max(1, sceneState.walkmask.height - 1);
+      for (let dx = -radius; dx <= radius; dx += 1) {
+        for (let dy = -radius; dy <= radius; dy += 1) {
+          const candidate = {
+            x: Math.max(0, Math.min(1, point.x + dx * xStep)),
+            y: Math.max(0, Math.min(1, point.y + dy * yStep)),
+          };
+          if (sampleWalkmask(candidate) < 180) continue;
+          const score = Math.hypot(dx, dy);
+          if (score < bestScore) {
+            bestScore = score;
+            bestPoint = candidate;
+          }
+        }
+      }
+      return bestPoint;
+    }
+
+    function resolveRoutePoints(pointIds) {
+      return (pointIds || []).map((id) => {
+        const source = WALKMAP.points[id] || { x: 0.5, y: 0.5, pause: 1 };
+        const snapped = snapToWalkmap(source);
+        return { ...source, x: snapped.x, y: snapped.y, id };
+      });
+    }
+
+    function computeRoutePosition(route, progress) {
+      if (!route || !route.length) return { x: 0.5, y: 0.5, paused: false };
+      if (route.length === 1) return { x: route[0].x, y: route[0].y, paused: true };
+      const segments = [];
+      let total = 0;
+      for (let i = 0; i < route.length; i += 1) {
+        const start = route[i];
+        const end = route[(i + 1) % route.length];
+        const dist = Math.hypot(end.x - start.x, end.y - start.y);
+        const move = Math.max(dist / 0.08, 0.45);
+        const pause = Math.max(start.pause || 0, 0);
+        segments.push({ type: "move", start, end, duration: move });
+        total += move;
+        if (pause) {
+          segments.push({ type: "pause", point: start, duration: pause });
+          total += pause;
+        }
+      }
+      let cursor = (progress % total + total) % total;
+      for (const segment of segments) {
+        if (cursor > segment.duration) {
+          cursor -= segment.duration;
+          continue;
+        }
+        if (segment.type === "pause") {
+          return { x: segment.point.x, y: segment.point.y, paused: true };
+        }
+        const ratio = segment.duration ? cursor / segment.duration : 0;
+        return {
+          x: segment.start.x + (segment.end.x - segment.start.x) * ratio,
+          y: segment.start.y + (segment.end.y - segment.start.y) * ratio,
+          paused: false,
+        };
+      }
+      return { x: route[0].x, y: route[0].y, paused: false };
+    }
+
+    function motion(agent, time) {
+      const state = String(agent.state || "idle").toLowerCase();
+      const speed = getSpeed(state);
+      if (!speed) {
+        const anchor = agent.anchor || agent.route[0] || { x: 0.5, y: 0.5 };
+        const snapped = snapToWalkmap(anchor);
+        return { x: snapped.x, y: snapped.y, paused: true };
+      }
+      const wave = time + agent.phase;
+      const base = computeRoutePosition(agent.route, wave * speed * 10);
+      let x = base.x;
+      let y = base.y;
+      if (state === "researching") {
+        y += Math.sin(wave * 0.75) * 0.0025;
+      } else if (state === "executing") {
+        x += Math.sin(wave * 1.2) * 0.0016;
+        y += Math.cos(wave * 0.9) * 0.0012;
+      } else if (state === "syncing" || state === "routing") {
+        x += Math.cos(wave * 1.1) * 0.003;
+        y += Math.sin(wave * 0.95) * 0.002;
+      } else if (state === "idle") {
+        y += Math.sin(wave * 0.55) * 0.0011;
+      } else if (state === "writing") {
+        x += Math.sin(wave * 0.7) * 0.0016;
+        y += Math.cos(wave * 0.55) * 0.0012;
+      }
+      const corrected = nudgeTowardWalkable({ x, y }, 8);
+      return { x: corrected.x, y: corrected.y, paused: base.paused };
+    }
+
+    function resolveBehaviorProfile(agent) {
+      const profile = routeProfiles[agent.key] || routeProfiles.default;
+      const state = String(agent.state || "idle").toLowerCase();
+      const routeKey = profile[state] ? state : state === "writing" && profile.executing ? "executing" : "idle";
+      const route = resolveRoutePoints(profile[routeKey] || profile.idle || [profile.home || "center_mid"]);
+      const anchorSource = WALKMAP.points[profile.home] || route[0] || { x: 0.5, y: 0.5 };
+      const anchor = snapToWalkmap(anchorSource);
+      return { route, anchor };
+    }
+
+    function getSceneEntityByKey(key) {
+      if (!key) return null;
+      if (key === "visitor") return sceneState.visitor;
+      return sceneState.agentMap.get(key) || null;
+    }
+
+    function summarizeAgent(agent) {
+      return agent.detail || agent.status_label || agent.summary || agent.state || "idle";
+    }
+
+    function buildSceneAgents(agents) {
+      const priority = ["dev", "ops", "research"];
+      return (agents || [])
+        .filter((agent) => agent.key !== "reception")
+        .sort((a, b) => {
+          const ai = priority.indexOf(a.key);
+          const bi = priority.indexOf(b.key);
+          return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+        })
+        .slice(0, 3)
+        .map((agent, index) => {
+          const key = agent.key || `agent-${index}`;
+          const state = agent.state || "idle";
+          const behavior = resolveBehaviorProfile({ ...agent, key, state });
+          return {
+            key,
+            name: agentDisplayName(key, agent.name || agent.key || `agent-${index}`),
+            role: agent.role || roleLabel(key),
+            roleLabelText: roleLabel(key),
+            state,
+            route: behavior.route,
+            baseRoute: behavior.route,
+            anchor: behavior.anchor,
+            baseAnchor: behavior.anchor,
+            phase: index * 1.1,
+            detail: summarizeAgent(agent),
+            baseDetail: translateSummary(summarizeAgent(agent), key, state),
+            displayDetail: translateSummary(summarizeAgent(agent), key, state),
+            updated_at: agent.updated_at || agent.last_seen || agent.last_update || "",
+            source: agent.source || "",
+          };
+        });
+    }
+
+    function renderDetailPanel(agent) {
+      const detail = document.getElementById("scene-detail");
+      if (!agent) {
+        detail.classList.add("is-empty");
+        detail.innerHTML = `
+          <div class="detail-name">${t("detail.placeholder.name", "Select an agent")}</div>
+          <div class="detail-summary">${t("detail.placeholder.summary", "Click a staff member to see the current role and work summary.")}</div>
+        `;
+        return;
+      }
+      detail.classList.remove("is-empty");
+      detail.innerHTML = `
+        <div class="detail-head">
+          <div>
+            <div class="detail-name">${agent.name}</div>
+            <div class="detail-meta">
+              <span class="role-pill">${getEntityRole(agent)}</span>
+              <span class="status-pill" style="--pill-color:${getEntityStateColor(agent)}">${getEntityStatus(agent)}</span>
+            </div>
+          </div>
+          <button class="detail-close" type="button" aria-label="${t("detail.close", "Close")}">×</button>
+        </div>
+        <div class="detail-summary">${agent.displayDetail || agent.detail}</div>
+        <div class="detail-grid">
+          <div class="detail-label">${t("detail.role", "Role")}</div>
+          <div class="detail-value">${getEntityRole(agent)}</div>
+          <div class="detail-label">${t("detail.status", "Status")}</div>
+          <div class="detail-value">${getEntityStatus(agent)}</div>
+          <div class="detail-label">${t("detail.summary", "Current work")}</div>
+          <div class="detail-value">${agent.displayDetail || agent.detail}</div>
+          <div class="detail-label">${t("detail.updated", "Updated")}</div>
+          <div class="detail-value">${safeDate(agent.updated_at)}</div>
+          ${agent.source ? `<div class="detail-label">${t("detail.source", "Source")}</div><div class="detail-value">${agent.source}</div>` : ""}
+        </div>
+      `;
+      const closeButton = detail.querySelector(".detail-close");
+      if (closeButton) {
+        closeButton.addEventListener("click", () => {
+          sceneState.selectedKey = null;
+          syncSelection();
+        });
+      }
+    }
+
+    function renderTooltip(agent, point) {
+      const tooltip = document.getElementById("scene-tooltip");
+      if (!agent || !point) {
+        tooltip.classList.add("is-hidden");
+        tooltip.classList.remove("is-visible");
+        tooltip.innerHTML = "";
+        return;
+      }
+      tooltip.innerHTML = `
+        <div class="tooltip-name">${agent.name}</div>
+        <div class="tooltip-meta">
+              <span class="role-pill">${getEntityRole(agent)}</span>
+          <span class="status-pill" style="--pill-color:${getEntityStateColor(agent)}">${getEntityStatus(agent)}</span>
+        </div>
+        <div class="tooltip-summary">${agent.displayDetail || agent.detail}</div>
+      `;
+      tooltip.style.left = `${point.x}px`;
+      tooltip.style.top = `${Math.max(48, point.y - 14)}px`;
+      tooltip.classList.remove("is-hidden");
+      tooltip.classList.add("is-visible");
+    }
+
+    function syncSelection() {
+      if (sceneState.selectedKey) {
+        sceneState.hoveredKey = null;
+        renderTooltip(null);
+      }
+      for (const agent of sceneState.agents) {
+        if (agent.node) {
+          agent.node.classList.toggle("is-selected", sceneState.selectedKey === agent.key);
+        }
+      }
+      if (sceneState.visitor && sceneState.visitor.node) {
+        sceneState.visitor.node.classList.toggle("is-selected", sceneState.selectedKey === "visitor");
+      }
+      const selected = getSceneEntityByKey(sceneState.selectedKey);
+      renderDetailPanel(selected || null);
+    }
+
+    function syncLegend() {
+      const activeStates = new Set(sceneState.agents.map((agent) => String(agent.state || "idle").toLowerCase()));
+      for (const chip of document.querySelectorAll(".legend-chip")) {
+        const state = Array.from(chip.classList).find((name) => STATE_COLORS[name]);
+        chip.classList.toggle("is-active", !!state && activeStates.has(state));
+      }
+    }
+
+    function bindAgentInteractions() {
+      const shell = document.querySelector(".scene-shell");
+      for (const agent of sceneState.agents) {
+        if (!agent.node) continue;
+        agent.node.addEventListener("pointerenter", () => {
+          sceneState.hoveredKey = agent.key;
+          renderTooltip(agent, agent.lastScreenPoint || { x: 120, y: 120 });
+        });
+        agent.node.addEventListener("pointerleave", () => {
+          if (sceneState.hoveredKey === agent.key) {
+            sceneState.hoveredKey = null;
+            renderTooltip(null);
+          }
+        });
+        agent.node.addEventListener("click", () => {
+          sceneState.selectedKey = sceneState.selectedKey === agent.key ? null : agent.key;
+          if (sceneState.selectedKey) {
+            sceneState.hoveredKey = null;
+            renderTooltip(null);
+          }
+          syncSelection();
+        });
+      }
+      if (sceneState.visitor && sceneState.visitor.node && !sceneState.visitor.node.dataset.bound) {
+        sceneState.visitor.node.addEventListener("pointerenter", () => {
+          if (!sceneState.visitor || !sceneState.visitor.active) return;
+          sceneState.hoveredKey = "visitor";
+          renderTooltip(sceneState.visitor, sceneState.visitor.lastScreenPoint || { x: 120, y: 120 });
+        });
+        sceneState.visitor.node.addEventListener("pointerleave", () => {
+          if (sceneState.hoveredKey === "visitor") {
+            sceneState.hoveredKey = null;
+            renderTooltip(null);
+          }
+        });
+        sceneState.visitor.node.addEventListener("click", () => {
+          if (!sceneState.visitor || !sceneState.visitor.active) return;
+          sceneState.selectedKey = sceneState.selectedKey === "visitor" ? null : "visitor";
+          if (sceneState.selectedKey) {
+            sceneState.hoveredKey = null;
+            renderTooltip(null);
+          }
+          syncSelection();
+        });
+        sceneState.visitor.node.dataset.bound = "1";
+      }
+      if (shell && !shell.dataset.detailBound) {
+        shell.addEventListener("click", (event) => {
+          if (event.target.closest(".agent") || event.target.closest(".scene-detail")) return;
+          sceneState.selectedKey = null;
+          syncSelection();
+        });
+        shell.dataset.detailBound = "1";
+      }
+    }
+
+    function renderAgents(agents) {
+      const target = document.getElementById("sprite-layer");
+      const shadowTarget = document.getElementById("shadow-layer");
+      if (!agents.length) {
+        target.innerHTML = `<div class="scene-brand" style="top:auto; bottom:76px; left:16px; max-width:280px;">${t("scene.no_agents", "No visible agents")}</div>`;
+        shadowTarget.innerHTML = "";
+        sceneState.agents = [];
+        sceneState.agentMap = new Map();
+        renderTooltip(null);
+        renderDetailPanel(null);
+        return;
+      }
+      shadowTarget.innerHTML = agents.map((agent) => `
+        <div class="agent-shadow" data-shadow-key="${agent.key}"></div>
+      `).join("") + `
+        <div class="agent-shadow is-hidden" data-shadow-key="visitor"></div>
+      `;
+      target.innerHTML = agents.map((agent) => `
+        <div class="agent ${roleClass(agent.key)} ${stateClass(agent.state)}" data-agent-key="${agent.key}" title="${agent.name} · ${stateLabel(agent.state)}" style="--state-color:${stateColor(agent.state)}">
+          <span class="state-glow"></span>
+          <span class="agent-badge"></span>
+          <span class="staff">
+            <span class="staff-part staff-head"></span>
+            <span class="staff-part staff-hair"></span>
+            <span class="staff-part staff-body"></span>
+            <span class="staff-part staff-accent"></span>
+            <span class="staff-part staff-feet"></span>
+          </span>
+        </div>
+      `).join("") + `
+        <div class="agent role-visitor is-hidden" data-agent-key="visitor" title="${t("visitor.name", "Visitor")}">
+          <span class="agent-badge"></span>
+          <span class="staff">
+            <span class="staff-part staff-head"></span>
+            <span class="staff-part staff-hair"></span>
+            <span class="staff-part staff-body"></span>
+            <span class="staff-part staff-accent"></span>
+            <span class="staff-part staff-feet"></span>
+          </span>
+        </div>
+      `;
+      sceneState.agents = agents.map((agent) => ({
+        ...agent,
+        node: target.querySelector(`[data-agent-key="${agent.key}"]`),
+        shadowNode: shadowTarget.querySelector(`[data-shadow-key="${agent.key}"]`),
+      }));
+      sceneState.agentMap = new Map(sceneState.agents.map((agent) => [agent.key, agent]));
+      sceneState.visitor = {
+        key: "visitor",
+        kind: "visitor",
+        active: false,
+        name: t("visitor.name", "Visitor"),
+        roleLabelText: t("visitor.role", "External"),
+        stateLabelText: t("visitor.state", "visiting"),
+        displayDetail: t("visitor.summary.inquiry", "making an inquiry"),
+        node: target.querySelector('[data-agent-key="visitor"]'),
+        shadowNode: shadowTarget.querySelector('[data-shadow-key="visitor"]'),
+        stateColorValue: "#9eb4d4",
+        updated_at: "",
+      };
+      if (sceneState.selectedKey && !sceneState.agentMap.has(sceneState.selectedKey)) {
+        if (sceneState.selectedKey !== "visitor") {
+          sceneState.selectedKey = null;
+        }
+      }
+      bindAgentInteractions();
+      syncLegend();
+      syncSelection();
+    }
+
+    function applyVisitorEvent(nowSeconds) {
+      const visitor = sceneState.visitor;
+      const scenario = getVisitorScenario(nowSeconds);
+      const ops = sceneState.agentMap.get("ops");
+      const signature = scenario.active ? `${scenario.kind}` : "inactive";
+      if (signature === sceneState.lastVisitorSignature) {
+        return;
+      }
+      sceneState.lastVisitorSignature = signature;
+
+      if (ops) {
+        ops.route = ops.baseRoute;
+        ops.anchor = ops.baseAnchor;
+        ops.displayDetail = ops.baseDetail;
+      }
+
+      if (!visitor) return;
+
+      if (!scenario.active) {
+        visitor.active = false;
+        visitor.node.classList.add("is-hidden");
+        visitor.shadowNode.classList.add("is-hidden");
+        if (sceneState.selectedKey === "visitor") {
+          sceneState.selectedKey = null;
+        }
+        if (sceneState.hoveredKey === "visitor") {
+          sceneState.hoveredKey = null;
+          renderTooltip(null);
+        }
+        syncSelection();
+        return;
+      }
+
+      visitor.active = true;
+      visitor.kind = scenario.kind;
+      visitor.name = scenario.name;
+      visitor.roleLabelText = scenario.roleLabelText;
+      visitor.stateLabelText = scenario.stateLabelText;
+      visitor.displayDetail = scenario.displayDetail;
+      visitor.point = scenario.point;
+      visitor.node.classList.remove("is-hidden");
+      visitor.shadowNode.classList.remove("is-hidden");
+
+      if (ops && String(ops.state || "").toLowerCase() !== "error") {
+        ops.route = resolveRoutePoints(VISITOR_EVENT.supportRoute);
+        ops.anchor = snapToWalkmap(WALKMAP.points.entry_guest_ops || ops.baseAnchor);
+        ops.displayDetail = t(`ops.event.${scenario.kind}`, scenario.kind);
+      }
+
+      if (sceneState.selectedKey === "visitor" || sceneState.selectedKey === "ops") {
+        syncSelection();
+      }
+    }
+
+    function ensureAnimation() {
+      if (sceneState.frameHandle) return;
+      const tick = (ts) => {
+        const shell = document.querySelector(".scene-shell");
+        const width = shell ? shell.clientWidth : 0;
+        const height = shell ? shell.clientHeight : 0;
+        const time = ts / 1000;
+        applyVisitorEvent(Date.now() / 1000);
+        for (const agent of sceneState.agents) {
+          if (!agent.node || !width || !height) continue;
+          const next = motion(agent, time);
+          const x = width * next.x;
+          const y = height * next.y;
+          agent.node.style.transform = `translate(${x}px, ${y}px)`;
+          agent.node.style.zIndex = String(Math.round(y));
+          agent.lastScreenPoint = { x, y };
+          if (agent.shadowNode) {
+            agent.shadowNode.style.transform = `translate(${x}px, ${y + 13}px)`;
+            agent.shadowNode.style.opacity = next.paused ? "0.85" : "0.7";
+          }
+          agent.node.classList.toggle("is-paused", !!next.paused);
+          if (sceneState.hoveredKey === agent.key) {
+            renderTooltip(agent, agent.lastScreenPoint);
+          }
+        }
+        if (sceneState.visitor && sceneState.visitor.node && width && height) {
+          if (sceneState.visitor.active && sceneState.visitor.point) {
+            const x = width * sceneState.visitor.point.x;
+            const y = height * sceneState.visitor.point.y;
+            sceneState.visitor.node.style.transform = `translate(${x}px, ${y}px)`;
+            sceneState.visitor.node.style.zIndex = String(Math.round(y));
+            sceneState.visitor.lastScreenPoint = { x, y };
+            sceneState.visitor.shadowNode.style.transform = `translate(${x}px, ${y + 12}px)`;
+            sceneState.visitor.shadowNode.style.opacity = "0.56";
+            if (sceneState.hoveredKey === "visitor") {
+              renderTooltip(sceneState.visitor, sceneState.visitor.lastScreenPoint);
+            }
+          } else {
+            sceneState.visitor.node.classList.add("is-hidden");
+            sceneState.visitor.shadowNode.classList.add("is-hidden");
+          }
+        }
+        sceneState.frameHandle = window.requestAnimationFrame(tick);
+      };
+      sceneState.frameHandle = window.requestAnimationFrame(tick);
+    }
+
+    async function loadPublicState() {
+      const response = await fetch(`/api/public/state?v={{VERSION_TIMESTAMP}}`, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`public-state:${response.status}`);
+      }
+      return response.json();
+    }
+
+    async function refreshScene() {
+      try {
+        await ensureWalkmaskLoaded();
+        const data = await loadPublicState();
+        renderAgents(buildSceneAgents(data.agents || []));
+        document.getElementById("live-sub").textContent = `${t("scene.updated", "Updated")} ${safeDate(data.health && data.health.latest_update)}`;
+      } catch (error) {
+        document.getElementById("live-sub").textContent = t("scene.loading", "Loading office scene…");
+        renderAgents([]);
+        console.error(error);
+      }
+    }
+
+    function startPolling() {
+      if (sceneState.pollHandle) {
+        window.clearInterval(sceneState.pollHandle);
+      }
+      sceneState.pollHandle = window.setInterval(refreshScene, 15000);
+    }
+
+    sceneState.lang = resolveLang();
+    window.localStorage.setItem(LANG_KEY, sceneState.lang);
+    applyI18n();
+    applyEmbedOptions();
+    refreshScene();
+    ensureAnimation();
+    startPolling();
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        if (sceneState.pollHandle) window.clearInterval(sceneState.pollHandle);
+        sceneState.pollHandle = window.setInterval(refreshScene, 45000);
+        return;
+      }
+      refreshScene();
+      startPolling();
+    });
+  </script>
+</body>
+</html>

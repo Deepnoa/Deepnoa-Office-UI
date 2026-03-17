@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja" translate="no" class="notranslate">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google" content="notranslate">
   <title>Deepnoa AI Office</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -170,6 +171,39 @@
       margin-bottom: 20px;
     }
 
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .metric-card {
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 30px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .metric-sub {
+      color: #cfddf3;
+      font-size: 13px;
+    }
+
     .section {
       padding: 22px;
     }
@@ -191,6 +225,411 @@
       color: var(--muted);
       font-size: 14px;
       line-height: 1.5;
+    }
+
+    .office-layout {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .office-scene-shell {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .office-scene {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      min-height: 360px;
+      background:
+        linear-gradient(180deg, rgba(8, 15, 26, 0.08), rgba(8, 15, 26, 0.46)),
+        url('/static/office_bg_small.webp?v={{VERSION_TIMESTAMP}}') center / cover no-repeat,
+        linear-gradient(180deg, #16283f 0%, #0c1523 100%);
+    }
+
+    .office-scene::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(transparent 0 58%, rgba(7, 12, 21, 0.16) 58% 100%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 18px, rgba(255,255,255,0.01) 18px 36px);
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+
+    .office-scene::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 16% 16%, rgba(130, 233, 198, 0.16), transparent 20%),
+        radial-gradient(circle at 82% 22%, rgba(91, 153, 255, 0.16), transparent 18%),
+        linear-gradient(180deg, rgba(9, 16, 28, 0.06), rgba(9, 16, 28, 0.28));
+      pointer-events: none;
+    }
+
+    .office-zones {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .zone {
+      position: absolute;
+      border-radius: 26px;
+      border: 1px dashed rgba(226, 239, 255, 0.16);
+      background: rgba(8, 14, 24, 0.16);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+      backdrop-filter: blur(1px);
+    }
+
+    .zone.walkway {
+      left: 18%;
+      right: 16%;
+      bottom: 11%;
+      height: 18%;
+      border-style: solid;
+      border-color: rgba(255,255,255,0.1);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)),
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0 22px, rgba(255,255,255,0.01) 22px 44px);
+    }
+
+    .zone.work-left {
+      left: 10%;
+      top: 18%;
+      width: 31%;
+      height: 28%;
+    }
+
+    .zone.work-right {
+      right: 10%;
+      top: 18%;
+      width: 31%;
+      height: 28%;
+    }
+
+    .zone.meeting {
+      left: 38%;
+      top: 16%;
+      width: 24%;
+      height: 20%;
+      border-color: rgba(126, 226, 194, 0.2);
+      background: rgba(126, 226, 194, 0.09);
+    }
+
+    .zone.corridor {
+      left: 45%;
+      top: 26%;
+      width: 10%;
+      height: 40%;
+      border-color: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .office-desks {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .desk {
+      position: absolute;
+      width: 14%;
+      height: 10%;
+      border: 2px solid rgba(7, 12, 21, 0.75);
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(214, 236, 255, 0.16), rgba(57, 90, 122, 0.28));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 16px 26px rgba(0,0,0,0.18);
+    }
+
+    .desk::after {
+      content: "";
+      position: absolute;
+      left: 14%;
+      right: 14%;
+      top: 18%;
+      height: 20%;
+      border-radius: 999px;
+      background: rgba(126, 226, 194, 0.18);
+    }
+
+    .desk.d1 { left: 12%; top: 22%; }
+    .desk.d2 { left: 36%; top: 18%; }
+    .desk.d3 { left: 61%; top: 22%; }
+    .desk.d4 { left: 18%; top: 55%; }
+    .desk.d5 { left: 44%; top: 50%; }
+    .desk.d6 { left: 70%; top: 55%; }
+
+    .office-agents {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      z-index: 4;
+    }
+
+    .office-agent {
+      position: absolute;
+      width: 76px;
+      transform: translate(-50%, -50%);
+      will-change: transform;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .office-agent .tag {
+      display: inline-block;
+      margin-bottom: 6px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+      color: rgba(240, 248, 255, 0.88);
+      background: rgba(7, 12, 21, 0.72);
+      border: 1px solid rgba(255,255,255,0.1);
+      white-space: nowrap;
+    }
+
+    .office-agent .sprite {
+      position: relative;
+      width: 34px;
+      height: 44px;
+      margin: 0 auto;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.35));
+    }
+
+    .office-agent .shadow {
+      position: absolute;
+      left: 50%;
+      bottom: 2px;
+      width: 28px;
+      height: 8px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: rgba(6, 11, 18, 0.45);
+      filter: blur(1px);
+    }
+
+    .office-agent .sprite-head,
+    .office-agent .sprite-body,
+    .office-agent .sprite-feet,
+    .office-agent .sprite-accent,
+    .office-agent .sprite-hair {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      image-rendering: pixelated;
+    }
+
+    .office-agent .sprite-head {
+      top: 2px;
+      width: 14px;
+      height: 14px;
+      background: #ffd6b7;
+      box-shadow: 0 0 0 3px rgba(7, 12, 21, 0.62);
+    }
+
+    .office-agent .sprite-hair {
+      top: 0;
+      width: 18px;
+      height: 7px;
+      background: var(--agent-hair, #202a39);
+      box-shadow: inset 0 -1px 0 rgba(255,255,255,0.08);
+    }
+
+    .office-agent .sprite-body {
+      top: 18px;
+      width: 22px;
+      height: 14px;
+      background: var(--agent-color, #7ee2c2);
+      box-shadow:
+        -10px 4px 0 -6px var(--agent-color, #7ee2c2),
+        10px 4px 0 -6px var(--agent-color, #7ee2c2);
+    }
+
+    .office-agent .sprite-accent {
+      top: 22px;
+      width: 10px;
+      height: 6px;
+      background: var(--agent-accent, #d7f3ff);
+      box-shadow:
+        -13px 2px 0 -5px var(--agent-accent, #d7f3ff),
+        13px 2px 0 -5px var(--agent-accent, #d7f3ff);
+    }
+
+    .office-agent .sprite-feet {
+      top: 34px;
+      width: 18px;
+      height: 8px;
+      background: transparent;
+      box-shadow:
+        -6px 0 0 0 var(--agent-leg, #243246),
+        6px 0 0 0 var(--agent-leg, #243246);
+    }
+
+    .office-agent .status {
+      margin-top: 6px;
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+      color: rgba(237, 244, 255, 0.78);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .office-agent.role-dev {
+      --agent-color: #8bc5ff;
+      --agent-accent: #dceeff;
+      --agent-hair: #1b2638;
+      --agent-leg: #203049;
+    }
+
+    .office-agent.role-ops {
+      --agent-color: #ffc46b;
+      --agent-accent: #fff1c8;
+      --agent-hair: #29364a;
+      --agent-leg: #3d2c1c;
+    }
+
+    .office-agent.role-research {
+      --agent-color: #9ddfb9;
+      --agent-accent: #e5fff0;
+      --agent-hair: #243546;
+      --agent-leg: #264337;
+    }
+
+    .office-agent.role-gateway {
+      --agent-color: #c4a2ff;
+      --agent-accent: #f1e8ff;
+      --agent-hair: #34264a;
+      --agent-leg: #33274a;
+    }
+
+    .office-agent.state-error .sprite-head,
+    .office-agent.state-error .sprite-body,
+    .office-agent.state-error .sprite-accent {
+      animation: pulse-alert 1.1s ease-in-out infinite;
+    }
+
+    .office-agent.is-moving .sprite {
+      animation: staff-bob 0.8s steps(2) infinite;
+    }
+
+    .office-agent.is-paused .sprite {
+      animation: none;
+    }
+
+    .office-agent.role-dev .sprite-accent::after,
+    .office-agent.role-ops .sprite-accent::after,
+    .office-agent.role-research .sprite-accent::after {
+      content: "";
+      position: absolute;
+      top: -2px;
+      width: 4px;
+      height: 10px;
+      right: -11px;
+      background: var(--agent-accent, #fff);
+      box-shadow: 0 0 0 1px rgba(7, 12, 21, 0.25);
+    }
+
+    .office-overlay {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: end;
+      pointer-events: none;
+    }
+
+    .office-note {
+      max-width: 390px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(8, 14, 24, 0.74);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #d5e4fb;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .office-mini-legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: end;
+      gap: 8px;
+    }
+
+    .legend-chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(8, 14, 24, 0.7);
+      color: var(--muted);
+      font-size: 11px;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .office-radar {
+      display: grid;
+      gap: 12px;
+    }
+
+    .radar-card {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .radar-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .radar-name {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .radar-role {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .radar-desc {
+      color: #d5e4fb;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .radar-subline {
+      margin-top: 10px;
+      color: #89a6cb;
+      font-size: 12px;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    @keyframes pulse-alert {
+      0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+      50% { opacity: 0.72; transform: translateX(-50%) scale(1.06); }
+    }
+
+    @keyframes staff-bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-2px); }
     }
 
     .agent-list,
@@ -282,8 +721,10 @@
 
     @media (max-width: 980px) {
       .hero,
+      .summary-strip,
       .grid,
-      .footer-grid {
+      .footer-grid,
+      .office-layout {
         grid-template-columns: 1fr;
       }
 
@@ -303,42 +744,125 @@
   <main class="shell">
     <section class="hero">
       <article class="panel hero-main">
-        <div class="eyebrow">Deepnoa public mission control</div>
+        <div class="eyebrow" data-i18n="public.eyebrow">Deepnoa public mission control</div>
         <h1 id="office-name">Deepnoa AI Office</h1>
-        <p class="hero-copy" id="office-subtitle">
+        <p class="hero-copy" id="office-subtitle" data-i18n="public.hero_copy">
           Public-safe visibility into how Deepnoa's AI office is operating right now.
         </p>
         <div class="hero-meta">
           <div class="pill mono" id="human-host">deepnoa.com</div>
           <div class="pill mono" id="gateway-host">bot.deepnoa.com</div>
-          <div class="pill mono">Public-safe view only</div>
+          <div class="pill mono" data-i18n="public.safe_only">Public-safe view only</div>
+          <div class="pill mono">
+            <button class="pill mono" type="button" data-lang-switch="ja">JA</button>
+            <button class="pill mono" type="button" data-lang-switch="en">EN</button>
+            <button class="pill mono" type="button" data-lang-switch="zh">ZH</button>
+          </div>
         </div>
       </article>
 
       <aside class="panel hero-side">
         <div class="status-card">
-          <div class="status-label">Reception / gateway</div>
+          <div class="status-label" data-i18n="public.gateway">Reception / gateway</div>
           <div class="status-value" id="gateway-status">Standby</div>
           <div class="status-detail" id="gateway-detail">Loading public gateway state…</div>
-          <div class="subline" id="gateway-updated">Updated --</div>
+          <div class="subline" id="gateway-updated">--</div>
         </div>
         <div class="status-card">
-          <div class="status-label">System health</div>
+          <div class="status-label" data-i18n="public.system_health">System health</div>
           <div class="status-value" id="health-status">Nominal</div>
-          <div class="status-detail" id="health-detail">
+          <div class="status-detail" id="health-detail" data-i18n="public.health_detail">
             Connected systems and public-safe telemetry only.
           </div>
-          <div class="subline" id="health-updated">Latest update --</div>
+          <div class="subline" id="health-updated">--</div>
         </div>
       </aside>
+    </section>
+
+    <section class="summary-strip">
+      <article class="panel metric-card">
+        <div class="metric-label" data-i18n="summary.active_agents">Active Agents</div>
+        <div class="metric-value" id="summary-active-agents">0</div>
+        <div class="metric-sub" data-i18n="summary.active_agents_sub">Agents currently moving work</div>
+      </article>
+      <article class="panel metric-card">
+        <div class="metric-label" data-i18n="summary.active_tasks">Active Tasks</div>
+        <div class="metric-value" id="summary-active-tasks">0</div>
+        <div class="metric-sub" data-i18n="summary.active_tasks_sub">Running or in-flight work items</div>
+      </article>
+      <article class="panel metric-card">
+        <div class="metric-label" data-i18n="summary.blocked">Blocked</div>
+        <div class="metric-value" id="summary-blocked">0</div>
+        <div class="metric-sub" data-i18n="summary.blocked_sub">Needs intervention</div>
+      </article>
+      <article class="panel metric-card">
+        <div class="metric-label" data-i18n="summary.awaiting_approval">Awaiting Approval</div>
+        <div class="metric-value" id="summary-approval">0</div>
+        <div class="metric-sub" data-i18n="summary.awaiting_approval_sub">Waiting on human review</div>
+      </article>
+      <article class="panel metric-card">
+        <div class="metric-label" data-i18n="summary.done_today">Done Today</div>
+        <div class="metric-value" id="summary-done-today">0</div>
+        <div class="metric-sub" data-i18n="summary.done_today_sub">Completed since local midnight</div>
+      </article>
+      <article class="panel metric-card">
+        <div class="metric-label" data-i18n="summary.alerts">Alerts</div>
+        <div class="metric-value" id="summary-alerts">0</div>
+        <div class="metric-sub" data-i18n="summary.alerts_sub">Errors and runtime warnings</div>
+      </article>
+    </section>
+
+    <section class="office-layout">
+      <article class="panel office-scene-shell">
+        <div class="office-scene" id="office-scene">
+          <div class="office-zones" aria-hidden="true">
+            <div class="zone work-left"></div>
+            <div class="zone meeting"></div>
+            <div class="zone work-right"></div>
+            <div class="zone corridor"></div>
+            <div class="zone walkway"></div>
+          </div>
+          <div class="office-desks" aria-hidden="true">
+            <div class="desk d1"></div>
+            <div class="desk d2"></div>
+            <div class="desk d3"></div>
+            <div class="desk d4"></div>
+            <div class="desk d5"></div>
+            <div class="desk d6"></div>
+          </div>
+          <div class="office-agents" id="office-agents"></div>
+          <div class="office-overlay">
+            <div class="office-note" id="office-note" data-i18n="public.pixel_office_sub">
+              Public-safe pixel office. Agents move differently based on their current state.
+            </div>
+            <div class="office-mini-legend">
+              <div class="legend-chip" data-i18n="legend.idle">idle = roaming</div>
+              <div class="legend-chip" data-i18n="legend.executing">executing = pacing</div>
+              <div class="legend-chip" data-i18n="legend.researching">researching = scanning</div>
+              <div class="legend-chip" data-i18n="legend.syncing">syncing = patrol</div>
+              <div class="legend-chip" data-i18n="legend.error">error = stopped</div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel section">
+        <div class="section-head">
+          <div>
+            <h2 data-i18n="public.pixel_office">Pixel office floor</h2>
+            <div class="section-copy" data-i18n="public.pixel_office_copy">A single public floor where Deepnoa staff-like agents move through desks, walkways, and meeting space.</div>
+          </div>
+        </div>
+        <div class="office-radar" id="office-agent-summary"></div>
+      </article>
     </section>
 
     <section class="grid">
       <article class="panel section">
         <div class="section-head">
           <div>
-            <h2>Agent organization</h2>
-            <div class="section-copy">A public-facing view of Deepnoa's AI departments and their current state.</div>
+            <h2 data-i18n="public.agent_organization">Agent organization</h2>
+            <div class="section-copy" data-i18n="public.agent_organization_sub">A public-facing view of Deepnoa's AI departments and their current state.</div>
           </div>
         </div>
         <div class="agent-list" id="agent-list"></div>
@@ -347,8 +871,8 @@
       <article class="panel section">
         <div class="section-head">
           <div>
-            <h2>Live activity</h2>
-            <div class="section-copy">Recent public-safe activity summaries derived from the AI office runtime.</div>
+            <h2 data-i18n="public.live_activity">Live activity</h2>
+            <div class="section-copy" data-i18n="public.live_activity_sub">Recent public-safe activity summaries derived from the AI office runtime.</div>
           </div>
         </div>
         <div class="activity-list" id="activity-list"></div>
@@ -359,8 +883,8 @@
       <article class="panel section">
         <div class="section-head">
           <div>
-            <h2>Recent work</h2>
-            <div class="section-copy">Shareable task summaries without private logs, secrets, or internal paths.</div>
+            <h2 data-i18n="public.recent_work">Recent work</h2>
+            <div class="section-copy" data-i18n="public.recent_work_sub">Shareable task summaries without private logs, secrets, or internal paths.</div>
           </div>
         </div>
         <div class="activity-list" id="recent-work-list"></div>
@@ -369,8 +893,8 @@
       <article class="panel section">
         <div class="section-head">
           <div>
-            <h2>Connected systems</h2>
-            <div class="section-copy">Only high-level connectivity and public-safe health are shown here.</div>
+            <h2 data-i18n="public.connected_systems">Connected systems</h2>
+            <div class="section-copy" data-i18n="public.connected_systems_sub">Only high-level connectivity and public-safe health are shown here.</div>
           </div>
         </div>
         <div class="systems-list" id="systems-list"></div>
@@ -379,11 +903,212 @@
   </main>
 
   <script>
+    const I18N = {
+      ja: {
+        "public.safe_only": "公開安全ビューのみ",
+        "public.eyebrow": "Deepnoa 公開ミッションコントロール",
+        "public.hero_copy": "Deepnoa の AI オフィスが今どう動いているかを、公開安全な範囲で可視化します。",
+        "public.gateway": "受付 / ゲートウェイ",
+        "public.system_health": "システム健全性",
+        "public.health_detail": "接続システムと公開安全なテレメトリのみを表示します。",
+        "public.agent_organization": "エージェント構成",
+        "public.agent_organization_sub": "Deepnoa の AI 部門と現在状態の公開向け表示です。",
+        "public.live_activity": "ライブアクティビティ",
+        "public.live_activity_sub": "AI オフィス実行基盤から作られた公開安全な活動要約です。",
+        "public.recent_work": "最近の作業",
+        "public.recent_work_sub": "秘密や内部パスを含まない共有可能な要約です。",
+        "public.connected_systems": "接続システム",
+        "public.connected_systems_sub": "ここでは高レベルな接続状態だけを表示します。",
+        "public.pixel_office": "ピクセルオフィス",
+        "public.pixel_office_copy": "Deepnoa の 3 エージェントが、デスク帯と通路を行き来する public floor です。",
+        "public.pixel_office_sub": "背景は office_bg_small.webp を使います。状態に応じて巡回、往復、停止の動きが変わります。",
+        "summary.active_agents": "稼働中エージェント",
+        "summary.active_agents_sub": "現在動いている担当数です。",
+        "summary.active_tasks": "進行中タスク",
+        "summary.active_tasks_sub": "現在進行中の作業件数です。",
+        "summary.blocked": "ブロック中",
+        "summary.blocked_sub": "介入や解除待ちの件数です。",
+        "summary.awaiting_approval": "承認待ち",
+        "summary.awaiting_approval_sub": "人の確認待ちの件数です。",
+        "summary.done_today": "本日完了",
+        "summary.done_today_sub": "本日完了した件数です。",
+        "summary.alerts": "アラート",
+        "summary.alerts_sub": "異常や注意シグナルの件数です。",
+        "empty.no_public_agents": "公開エージェント情報はありません。",
+        "empty.no_public_activity": "公開可能なアクティビティはありません。",
+        "empty.no_recent_work": "最近の公開作業はありません。",
+        "empty.no_systems": "システム接続状態はありません。",
+        "empty.no_public_office_agents": "表示できるエージェントがいません。",
+        "error.failed_public_state": "public state の取得に失敗しました。",
+        "status.gateway_detail_empty": "公開可能なゲートウェイ詳細はまだありません。",
+        "legend.idle": "idle = 巡回",
+        "legend.executing": "executing = 速く移動",
+        "legend.researching": "researching = 調査中",
+        "legend.syncing": "syncing = 巡回",
+        "legend.error": "error = 停止",
+        "label.office_route": "動線",
+        "label.office_zone": "位置",
+        "zone.walkway": "walkway",
+        "zone.meeting": "meeting",
+        "zone.desks": "desk zone",
+        "label.updated": "更新",
+        "label.latest_update": "最新更新",
+        "enum.nominal": "正常",
+        "enum.standby": "待機",
+        "enum.public": "公開ビュー",
+        "enum.connected": "接続中",
+        "enum.routing": "振り分け中",
+        "enum.attention": "要注意",
+        "enum.executing": "実行中"
+      },
+      en: {},
+      zh: {
+        "public.safe_only": "仅公开安全视图",
+        "public.eyebrow": "Deepnoa 公开任务总览",
+        "public.hero_copy": "以公开安全的方式展示 Deepnoa 的 AI 办公室当前如何运转。",
+        "public.gateway": "接待 / 网关",
+        "public.system_health": "系统健康",
+        "public.health_detail": "这里只显示连接系统与公开安全的遥测信息。",
+        "public.agent_organization": "代理组织",
+        "public.agent_organization_sub": "面向公开的 Deepnoa AI 部门与当前状态视图。",
+        "public.live_activity": "实时活动",
+        "public.live_activity_sub": "来自 AI 办公室运行时的公开安全活动摘要。",
+        "public.recent_work": "最近工作",
+        "public.recent_work_sub": "不含私密日志、密钥或内部路径的可分享摘要。",
+        "public.connected_systems": "连接系统",
+        "public.connected_systems_sub": "这里只显示高层级连接状态与公开安全健康信息。",
+        "public.pixel_office": "像素办公室",
+        "public.pixel_office_copy": "Deepnoa 三个代理在 desk、walkway 与 meeting 区域之间移动的 public floor。",
+        "public.pixel_office_sub": "背景使用 office_bg_small.webp。代理会根据状态切换巡游、往返与停留动作。",
+        "summary.active_agents": "活跃代理",
+        "summary.active_agents_sub": "当前正在处理工作的代理数量。",
+        "summary.active_tasks": "活跃任务",
+        "summary.active_tasks_sub": "当前运行中的工作项数量。",
+        "summary.blocked": "阻塞中",
+        "summary.blocked_sub": "等待介入或解除阻塞的数量。",
+        "summary.awaiting_approval": "等待审批",
+        "summary.awaiting_approval_sub": "等待人工审核的数量。",
+        "summary.done_today": "今日完成",
+        "summary.done_today_sub": "今天完成的数量。",
+        "summary.alerts": "告警",
+        "summary.alerts_sub": "错误与警告信号数量。",
+        "empty.no_public_agents": "暂无公开代理数据。",
+        "empty.no_public_activity": "暂无公开安全活动。",
+        "empty.no_recent_work": "暂无最近工作。",
+        "empty.no_systems": "暂无系统状态。",
+        "empty.no_public_office_agents": "当前没有可显示的代理。",
+        "error.failed_public_state": "加载 public state 失败。",
+        "status.gateway_detail_empty": "当前没有公开安全的网关详情。",
+        "legend.idle": "idle = 巡游",
+        "legend.executing": "executing = 快速移动",
+        "legend.researching": "researching = 调查中",
+        "legend.syncing": "syncing = 巡逻",
+        "legend.error": "error = 停止",
+        "label.office_route": "路线",
+        "label.office_zone": "区域",
+        "zone.walkway": "walkway",
+        "zone.meeting": "meeting",
+        "zone.desks": "desk zone",
+        "label.updated": "更新",
+        "label.latest_update": "最新更新",
+        "enum.nominal": "正常",
+        "enum.standby": "待机",
+        "enum.public": "公开视图",
+        "enum.connected": "已连接",
+        "enum.routing": "路由中",
+        "enum.attention": "需关注",
+        "enum.executing": "执行中"
+      }
+    };
+    const DEFAULT_LANG = "ja";
+    const LANG_KEY = "deepnoa_ui_lang";
+    const resolveLang = () => {
+      const qs = new URLSearchParams(window.location.search).get("lang");
+      const stored = window.localStorage.getItem(LANG_KEY);
+      const candidate = String(qs || stored || DEFAULT_LANG).toLowerCase();
+      return candidate === "en" || candidate === "zh" || candidate === "ja" ? candidate : DEFAULT_LANG;
+    };
+    let currentLang = resolveLang();
+    const t = (key, fallback = "") => I18N[currentLang]?.[key] || fallback || key;
+    const translateEnum = (value) => t(`enum.${String(value || "").toLowerCase()}`, value || "");
+    const officeAnimationState = {
+      agents: [],
+      frameHandle: null,
+    };
+
+    const routeProfiles = {
+      dev: {
+        zone: "desk zone",
+        points: [
+          { x: 0.22, y: 0.70, pause: 1.3 },
+          { x: 0.22, y: 0.48, pause: 0.8 },
+          { x: 0.34, y: 0.28, pause: 1.2 },
+          { x: 0.46, y: 0.38, pause: 0.6 },
+          { x: 0.50, y: 0.70, pause: 1.0 },
+          { x: 0.34, y: 0.74, pause: 0.7 },
+        ],
+      },
+      ops: {
+        zone: "walkway",
+        points: [
+          { x: 0.72, y: 0.72, pause: 1.0 },
+          { x: 0.60, y: 0.74, pause: 0.5 },
+          { x: 0.58, y: 0.45, pause: 0.8 },
+          { x: 0.72, y: 0.30, pause: 1.1 },
+          { x: 0.82, y: 0.48, pause: 0.4 },
+          { x: 0.78, y: 0.70, pause: 1.2 },
+        ],
+      },
+      research: {
+        zone: "meeting",
+        points: [
+          { x: 0.42, y: 0.68, pause: 0.8 },
+          { x: 0.48, y: 0.48, pause: 1.4 },
+          { x: 0.56, y: 0.26, pause: 1.0 },
+          { x: 0.66, y: 0.38, pause: 0.6 },
+          { x: 0.52, y: 0.56, pause: 1.1 },
+          { x: 0.38, y: 0.46, pause: 0.8 },
+        ],
+      },
+      gateway: {
+        zone: "walkway",
+        points: [
+          { x: 0.14, y: 0.70, pause: 1.5 },
+          { x: 0.18, y: 0.54, pause: 0.8 },
+          { x: 0.16, y: 0.34, pause: 1.0 },
+          { x: 0.26, y: 0.30, pause: 0.6 },
+          { x: 0.24, y: 0.60, pause: 1.0 },
+        ],
+      },
+      default: {
+        zone: "walkway",
+        points: [
+          { x: 0.22, y: 0.72, pause: 0.9 },
+          { x: 0.50, y: 0.74, pause: 0.5 },
+          { x: 0.76, y: 0.70, pause: 0.9 },
+          { x: 0.54, y: 0.44, pause: 0.7 },
+          { x: 0.30, y: 0.42, pause: 0.7 },
+        ],
+      },
+    };
+
+    function applyI18n() {
+      document.documentElement.lang = currentLang;
+      for (const node of document.querySelectorAll("[data-i18n]")) {
+        node.textContent = t(node.dataset.i18n, node.textContent);
+      }
+    }
+    async function setLanguage(lang) {
+      currentLang = lang;
+      window.localStorage.setItem(LANG_KEY, currentLang);
+      applyI18n();
+      await boot();
+    }
     const safeDate = (value) => {
       if (!value) return "--";
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) return value;
-      return date.toLocaleString();
+      return date.toLocaleString(currentLang === "zh" ? "zh-CN" : currentLang === "ja" ? "ja-JP" : "en-US");
     };
 
     const badgeClass = (label) => {
@@ -397,10 +1122,17 @@
       target.innerHTML = `<div class="empty">${message}</div>`;
     }
 
+    function publicStateBadgeClass(state) {
+      const normalized = String(state || "").toLowerCase();
+      if (normalized === "error") return "status-badge attention";
+      if (normalized === "executing" || normalized === "routing" || normalized === "syncing") return "status-badge syncing";
+      return "status-badge";
+    }
+
     function renderAgents(agents) {
       const target = document.getElementById("agent-list");
       if (!agents || !agents.length) {
-        renderEmpty(target, "No public agent data available.");
+        renderEmpty(target, t("empty.no_public_agents", "No public agent data available."));
         return;
       }
       target.innerHTML = agents.map((agent) => `
@@ -410,7 +1142,7 @@
               <div class="agent-name">${agent.name}</div>
               <div class="agent-role">${agent.role}</div>
             </div>
-            <div class="${badgeClass(agent.status_label)}">${agent.status_label}</div>
+            <div class="${badgeClass(agent.status_label)}">${translateEnum(agent.status_label)}</div>
           </div>
           <div class="agent-desc">${agent.description}</div>
           <div class="subline">${agent.detail}</div>
@@ -428,7 +1160,7 @@
         <article class="activity-card">
           <div class="activity-top">
             <div class="activity-name">${item.agent || item.title}</div>
-            <div class="${badgeClass(item.status_label || 'Standby')}">${item.status_label || "Public"}</div>
+            <div class="${badgeClass(item.status_label || 'Standby')}">${translateEnum(item.status_label || "Public")}</div>
           </div>
           <div class="activity-summary">${item.summary}</div>
           <div class="subline">${safeDate(item.updated_at)}</div>
@@ -439,23 +1171,198 @@
     function renderSystems(items) {
       const target = document.getElementById("systems-list");
       if (!items || !items.length) {
-        renderEmpty(target, "No system connectivity status available.");
+        renderEmpty(target, t("empty.no_systems", "No system connectivity status available."));
         return;
       }
       target.innerHTML = items.map((item) => `
         <article class="systems-card">
           <div class="systems-top">
             <div class="activity-name">${item.name}</div>
-            <div class="${badgeClass(item.status)}">${item.status}</div>
+            <div class="${badgeClass(item.status)}">${translateEnum(item.status)}</div>
           </div>
         </article>
       `).join("");
     }
 
+    function buildOfficeAgents(agents) {
+      const priorityOrder = ["dev", "ops", "research"];
+      const sceneAgents = (agents || [])
+        .filter((agent) => agent.key !== "reception")
+        .sort((a, b) => {
+          const ai = priorityOrder.indexOf(a.key);
+          const bi = priorityOrder.indexOf(b.key);
+          return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+        });
+      return sceneAgents.map((agent, index) => {
+        const profile = routeProfiles[agent.key] || routeProfiles.default;
+        return {
+          key: agent.key || `agent-${index}`,
+          name: agent.name,
+          role: agent.role,
+          state: agent.state || "idle",
+          status_label: agent.status_label || agent.state || "idle",
+          route: profile.points,
+          zone: profile.zone,
+          phase: index * 0.9,
+        };
+      });
+    }
+
+    function getRoleClass(agent) {
+      const key = String(agent.key || "").toLowerCase();
+      if (key === "dev") return "role-dev";
+      if (key === "ops") return "role-ops";
+      if (key === "research") return "role-research";
+      return "role-gateway";
+    }
+
+    function getStateSpeed(state) {
+      const normalized = String(state || "").toLowerCase();
+      if (normalized === "executing") return 0.19;
+      if (normalized === "researching") return 0.08;
+      if (normalized === "syncing" || normalized === "routing") return 0.12;
+      if (normalized === "writing") return 0.1;
+      if (normalized === "error") return 0;
+      return 0.07;
+    }
+
+    function computeRoutePosition(route, progress) {
+      if (!route || !route.length) return { x: 0.5, y: 0.5, paused: false };
+      if (route.length === 1) return { x: route[0].x, y: route[0].y, paused: true };
+      const segments = [];
+      let total = 0;
+      for (let i = 0; i < route.length; i += 1) {
+        const start = route[i];
+        const end = route[(i + 1) % route.length];
+        const dist = Math.hypot(end.x - start.x, end.y - start.y);
+        const move = Math.max(dist / 0.08, 0.45);
+        const pause = Math.max(start.pause || 0, 0);
+        segments.push({ type: "move", start, end, duration: move });
+        total += move;
+        if (pause) {
+          segments.push({ type: "pause", point: start, duration: pause });
+          total += pause;
+        }
+      }
+      let cursor = (progress % total + total) % total;
+      for (const segment of segments) {
+        if (cursor > segment.duration) {
+          cursor -= segment.duration;
+          continue;
+        }
+        if (segment.type === "pause") {
+          return { x: segment.point.x, y: segment.point.y, paused: true };
+        }
+        const ratio = segment.duration ? cursor / segment.duration : 0;
+        return {
+          x: segment.start.x + (segment.end.x - segment.start.x) * ratio,
+          y: segment.start.y + (segment.end.y - segment.start.y) * ratio,
+          paused: false,
+        };
+      }
+      const last = route[route.length - 1];
+      return { x: last.x, y: last.y, paused: false };
+    }
+
+    function officeMotion(agent, time) {
+      const state = String(agent.state || "idle").toLowerCase();
+      const speed = getStateSpeed(state);
+      if (!speed) {
+        const anchor = (agent.route && agent.route[0]) || { x: 0.5, y: 0.5 };
+        return { x: anchor.x, y: anchor.y, paused: true };
+      }
+      const wave = time + agent.phase;
+      const routePoint = computeRoutePosition(agent.route, wave * speed * 10);
+      let x = routePoint.x;
+      let y = routePoint.y;
+      if (state === "researching") {
+        y += Math.sin(wave * 0.8) * 0.01;
+      } else if (state === "executing") {
+        x += Math.sin(wave * 2.6) * 0.008;
+      } else if (state === "syncing" || state === "routing") {
+        x += Math.cos(wave * 1.3) * 0.012;
+        y += Math.sin(wave * 1.1) * 0.008;
+      } else if (state === "idle") {
+        x += Math.sin(wave * 0.6) * 0.004;
+      }
+      return { x, y, paused: routePoint.paused };
+    }
+
+    function ensureOfficeAnimation() {
+      if (officeAnimationState.frameHandle) return;
+      const tick = (ts) => {
+        const scene = document.getElementById("office-scene");
+        const width = scene?.clientWidth || 0;
+        const height = scene?.clientHeight || 0;
+        const time = ts / 1000;
+        for (const agent of officeAnimationState.agents) {
+          if (!agent.node || !width || !height) continue;
+          const motion = officeMotion(agent, time);
+          const x = width * motion.x;
+          const y = height * motion.y;
+          agent.node.style.transform = `translate(${x}px, ${y}px)`;
+          agent.node.classList.toggle("is-paused", !!motion.paused);
+          agent.node.classList.toggle("is-moving", !motion.paused && String(agent.state || "").toLowerCase() !== "error");
+        }
+        officeAnimationState.frameHandle = window.requestAnimationFrame(tick);
+      };
+      officeAnimationState.frameHandle = window.requestAnimationFrame(tick);
+    }
+
+    function renderOfficeSummary(agents) {
+      const target = document.getElementById("office-agent-summary");
+      if (!agents || !agents.length) {
+        renderEmpty(target, t("empty.no_public_office_agents", "No agents available for the office floor."));
+        return;
+      }
+      target.innerHTML = agents.map((agent) => `
+        <article class="radar-card">
+          <div class="radar-top">
+            <div>
+              <div class="radar-name">${agent.name}</div>
+              <div class="radar-role">${agent.role}</div>
+            </div>
+            <div class="${publicStateBadgeClass(agent.state)}">${translateEnum(agent.state)}</div>
+          </div>
+          <div class="radar-desc">${agent.detail || agent.status_label}</div>
+          <div class="radar-subline">${t("label.office_zone", "Zone")} ${t(`zone.${String(agent.zone || "walkway").replace(/\s+/g, "_")}`, agent.zone || "walkway")} · ${t("label.office_route", "Route")} ${translateEnum(agent.status_label || agent.state)}</div>
+        </article>
+      `).join("");
+    }
+
+    function renderOfficeScene(agents) {
+      const target = document.getElementById("office-agents");
+      if (!agents || !agents.length) {
+        officeAnimationState.agents = [];
+        target.innerHTML = `<div class="empty" style="position:absolute; left:24px; top:24px;">${t("empty.no_public_office_agents", "No agents available for the office floor.")}</div>`;
+        return;
+      }
+      const officeAgents = buildOfficeAgents(agents);
+      target.innerHTML = officeAgents.map((agent) => `
+        <div class="office-agent ${getRoleClass(agent)} state-${agent.state}" data-agent-key="${agent.key}">
+          <div class="tag">${agent.name}</div>
+          <div class="sprite">
+            <div class="shadow"></div>
+            <div class="sprite-head"></div>
+            <div class="sprite-hair"></div>
+            <div class="sprite-body"></div>
+            <div class="sprite-accent"></div>
+            <div class="sprite-feet"></div>
+          </div>
+          <div class="status">${translateEnum(agent.state)}</div>
+        </div>
+      `).join("");
+      officeAnimationState.agents = officeAgents.map((agent) => ({
+        ...agent,
+        node: target.querySelector(`[data-agent-key="${agent.key}"]`),
+      }));
+      ensureOfficeAnimation();
+    }
+
     async function loadPublicState() {
-      const response = await fetch(`/public-state?v={{VERSION_TIMESTAMP}}`, { cache: "no-store" });
+      const response = await fetch(`/api/public/state?v={{VERSION_TIMESTAMP}}`, { cache: "no-store" });
       if (!response.ok) {
-        throw new Error("Failed to load public state");
+        throw new Error(t("error.failed_public_state", "Failed to load public state"));
       }
       return response.json();
     }
@@ -468,25 +1375,45 @@
         document.getElementById("human-host").textContent = data.office?.human_host || "deepnoa.com";
         document.getElementById("gateway-host").textContent = data.office?.gateway_host || "bot.deepnoa.com";
         document.getElementById("gateway-status").textContent = data.gateway?.status || "Standby";
-        document.getElementById("gateway-detail").textContent = data.gateway?.detail || "No public-safe gateway detail available.";
-        document.getElementById("gateway-updated").textContent = `Updated ${safeDate(data.gateway?.updated_at)}`;
-        document.getElementById("health-status").textContent = data.health?.status || "nominal";
+        document.getElementById("gateway-detail").textContent = data.gateway?.detail || t("status.gateway_detail_empty", "No public-safe gateway detail available.");
+        document.getElementById("gateway-updated").textContent = `${t("label.updated", "Updated")} ${safeDate(data.gateway?.updated_at)}`;
+        document.getElementById("health-status").textContent = translateEnum(data.health?.status || "nominal");
         document.getElementById("health-detail").textContent = `${data.health?.agent_count || 0} public agents visible · ${data.health?.public_log_policy || "public-safe only"}`;
-        document.getElementById("health-updated").textContent = `Latest update ${safeDate(data.health?.latest_update)}`;
+        document.getElementById("health-updated").textContent = `${t("label.latest_update", "Latest update")} ${safeDate(data.health?.latest_update)}`;
+        document.getElementById("summary-active-agents").textContent = String(data.summary?.active_agents ?? 0);
+        document.getElementById("summary-active-tasks").textContent = String(data.summary?.active_tasks ?? 0);
+        document.getElementById("summary-blocked").textContent = String(data.summary?.blocked ?? 0);
+        document.getElementById("summary-approval").textContent = String(data.summary?.awaiting_approval ?? 0);
+        document.getElementById("summary-done-today").textContent = String(data.summary?.done_today ?? 0);
+        document.getElementById("summary-alerts").textContent = String(data.summary?.alerts ?? 0);
 
+        renderOfficeScene(data.agents || []);
+        renderOfficeSummary(data.agents || []);
         renderAgents(data.agents || []);
-        renderActivity(data.activity || [], "activity-list", "No public-safe activity available.");
-        renderActivity(data.recent_work || [], "recent-work-list", "No recent public-safe work items available.");
+        renderActivity(data.activity || [], "activity-list", t("empty.no_public_activity", "No public-safe activity available."));
+        renderActivity(data.recent_work || [], "recent-work-list", t("empty.no_recent_work", "No recent public-safe work items available."));
         renderSystems(data.systems || []);
       } catch (error) {
         console.error(error);
-        renderEmpty(document.getElementById("agent-list"), "Failed to load agent organization.");
-        renderEmpty(document.getElementById("activity-list"), "Failed to load live activity.");
-        renderEmpty(document.getElementById("recent-work-list"), "Failed to load recent work.");
-        renderEmpty(document.getElementById("systems-list"), "Failed to load system status.");
+        document.getElementById("summary-active-agents").textContent = "0";
+        document.getElementById("summary-active-tasks").textContent = "0";
+        document.getElementById("summary-blocked").textContent = "0";
+        document.getElementById("summary-approval").textContent = "0";
+        document.getElementById("summary-done-today").textContent = "0";
+        document.getElementById("summary-alerts").textContent = "0";
+        renderOfficeScene([]);
+        renderOfficeSummary([]);
+        renderEmpty(document.getElementById("agent-list"), error.message || t("error.failed_public_state", "Failed to load public state"));
+        renderEmpty(document.getElementById("activity-list"), error.message || t("error.failed_public_state", "Failed to load public state"));
+        renderEmpty(document.getElementById("recent-work-list"), error.message || t("error.failed_public_state", "Failed to load public state"));
+        renderEmpty(document.getElementById("systems-list"), error.message || t("error.failed_public_state", "Failed to load public state"));
       }
     }
 
+    for (const button of document.querySelectorAll("[data-lang-switch]")) {
+      button.addEventListener("click", () => setLanguage(button.dataset.langSwitch));
+    }
+    applyI18n();
     boot();
     setInterval(boot, 15000);
   </script>

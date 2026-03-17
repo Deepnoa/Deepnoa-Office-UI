@@ -230,7 +230,7 @@
 
   <script>
     async function boot() {
-      const response = await fetch(`/public-state?v={{VERSION_TIMESTAMP}}`, { cache: "no-store" });
+      const response = await fetch(`/api/public/state?v={{VERSION_TIMESTAMP}}`, { cache: "no-store" });
       const data = await response.json();
       document.getElementById("gateway-status").textContent = data.gateway?.status || "Routing";
       document.getElementById("gateway-detail").textContent = data.gateway?.detail || "No public-safe detail available.";
