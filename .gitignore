@@ -37,8 +37,17 @@ assets/room-reference.webp
 frontend/office_bg.png
 frontend/office_bg_small.webp
 frontend/*.bak
+tmp-office-bg.png
+deprecated-route-access.jsonl
+test-results/
 layers/
 desktop-pet/src-tauri/icons/*Logo.png
+
+# Local scratch copies accidentally created at repo root
+/app.py
+/scene.html
+/UPDATE_REPORT_2026-03-17.md
+/frontend/UPDATE_REPORT_2026-03-17.md
 
 # Electron local build artifacts
 electron-shell/node_modules/
