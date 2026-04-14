@@ -54,6 +54,8 @@ FRONTEND_PUBLIC_FILE = os.path.join(FRONTEND_DIR, "public.html")
 FRONTEND_SCENE_FILE = os.path.join(FRONTEND_DIR, "scene.html")
 FRONTEND_GATEWAY_FILE = os.path.join(FRONTEND_DIR, "gateway.html")
 FRONTEND_ELECTRON_STANDALONE_FILE = os.path.join(FRONTEND_DIR, "electron-standalone.html")
+FRONTEND_RUNS_FILE = os.path.join(FRONTEND_DIR, "runs.html")
+FRONTEND_RUN_DETAIL_FILE = os.path.join(FRONTEND_DIR, "run_detail.html")
 STATE_FILE = os.path.join(ROOT_DIR, "state.json")
 MANAGER_STATE_FILE = os.path.join(ROOT_DIR, "manager-state.json")
 AGENTS_STATE_FILE = os.path.join(ROOT_DIR, "agents-state.json")
@@ -65,6 +67,12 @@ WORKSPACE_DIR = os.path.dirname(ROOT_DIR)
 OPENCLAW_WORKSPACE = os.environ.get("OPENCLAW_WORKSPACE") or os.path.join(os.path.expanduser("~"), ".openclaw", "workspace")
 IDENTITY_FILE = os.path.join(OPENCLAW_WORKSPACE, "IDENTITY.md")
 OPENCLAW_CRON_JOBS_FILE = os.path.join(os.path.expanduser("~"), ".openclaw", "cron", "jobs.json")
+OPENCLAW_STATE_DIR = (
+    os.environ.get("OPENCLAW_STATE_DIR")
+    or os.environ.get("CLAWDBOT_STATE_DIR")
+    or os.path.join(os.path.expanduser("~"), ".openclaw")
+)
+OPENCLAW_RUNS_DIR = os.path.join(OPENCLAW_STATE_DIR, "runs")
 GITHUB_WORKER_LOG_FILE = os.path.join(os.path.expanduser("~"), "bot", "github_queue_local", "log", "worker.log")
 GITHUB_DEPLOY_LOG_FILE = os.path.join(os.path.expanduser("~"), "bot", "github_queue_local", "log", "deploy.log")
 GEMINI_SCRIPT = os.path.join(WORKSPACE_DIR, "skills", "gemini-image-generate", "scripts", "gemini_image_generate.py")
@@ -451,6 +459,129 @@ def invite_page():
     resp = make_response(html)
     resp.headers["Content-Type"] = "text/html; charset=utf-8"
     return resp
+
+
+@app.route("/runs", methods=["GET"])
+def runs_page():
+    """Serve the run list operator console."""
+    with open(FRONTEND_RUNS_FILE, "r", encoding="utf-8") as f:
+        html = f.read()
+    resp = make_response(html.replace("{{VERSION_TIMESTAMP}}", VERSION_TIMESTAMP))
+    resp.headers["Content-Type"] = "text/html; charset=utf-8"
+    return resp
+
+
+@app.route("/runs/<run_id>", methods=["GET"])
+def run_detail_page(run_id):
+    """Serve the run detail page for a single run."""
+    with open(FRONTEND_RUN_DETAIL_FILE, "r", encoding="utf-8") as f:
+        html = f.read()
+    resp = make_response(html.replace("{{VERSION_TIMESTAMP}}", VERSION_TIMESTAMP))
+    resp.headers["Content-Type"] = "text/html; charset=utf-8"
+    return resp
+
+
+# ---------------------------------------------------------------------------
+# Run record helpers
+# ---------------------------------------------------------------------------
+
+_RUN_ID_RE = re.compile(r'^run_[A-Za-z0-9_]+$')
+_RUN_DATE_RE = re.compile(r'^run_(\d{4})(\d{2})(\d{2})_')
+_RUNS_LIST_LIMIT_MAX = 200
+_RUNS_LIST_LIMIT_DEFAULT = 50
+
+
+def _read_run_json(filepath):
+    """Read and validate a single run JSON file. Returns dict or None."""
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            return None
+        run_id = data.get("run_id", "")
+        if not isinstance(run_id, str) or not _RUN_ID_RE.match(run_id):
+            return None
+        return data
+    except Exception:
+        return None
+
+
+def _find_run_file(run_id):
+    """Locate the .json file for a given run_id. Returns path str or None."""
+    if not _RUN_ID_RE.match(run_id):
+        return None
+    # Fast path: extract date from run_id format run_YYYYMMDD_HHMMSS_xxx
+    m = _RUN_DATE_RE.match(run_id)
+    if m:
+        date_str = f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
+        candidate = os.path.join(OPENCLAW_RUNS_DIR, date_str, f"{run_id}.json")
+        if os.path.isfile(candidate):
+            return candidate
+    # Fallback: scan all date directories newest first
+    if not os.path.isdir(OPENCLAW_RUNS_DIR):
+        return None
+    try:
+        date_dirs = sorted(
+            (d for d in os.listdir(OPENCLAW_RUNS_DIR)
+             if os.path.isdir(os.path.join(OPENCLAW_RUNS_DIR, d))),
+            reverse=True,
+        )
+    except OSError:
+        return None
+    for date_dir in date_dirs:
+        candidate = os.path.join(OPENCLAW_RUNS_DIR, date_dir, f"{run_id}.json")
+        if os.path.isfile(candidate):
+            return candidate
+    return None
+
+
+def _load_runs(limit=_RUNS_LIST_LIMIT_DEFAULT, status_filter=None, date_filter=None):
+    """
+    Scan OPENCLAW_RUNS_DIR and return run records sorted by queued_at descending.
+
+    Args:
+        limit: Maximum number of records to return.
+        status_filter: If set, only return records with this status string.
+        date_filter: If set (YYYY-MM-DD), only scan that date directory.
+    """
+    limit = min(max(1, int(limit)), _RUNS_LIST_LIMIT_MAX)
+    if not os.path.isdir(OPENCLAW_RUNS_DIR):
+        return []
+
+    try:
+        if date_filter and re.match(r'^\d{4}-\d{2}-\d{2}$', date_filter):
+            date_dirs = [date_filter]
+        else:
+            date_dirs = sorted(
+                (d for d in os.listdir(OPENCLAW_RUNS_DIR)
+                 if os.path.isdir(os.path.join(OPENCLAW_RUNS_DIR, d))),
+                reverse=True,
+            )
+    except OSError:
+        return []
+
+    records = []
+    for date_dir in date_dirs:
+        dir_path = os.path.join(OPENCLAW_RUNS_DIR, date_dir)
+        try:
+            filenames = [f for f in os.listdir(dir_path) if f.endswith(".json") and not f.endswith(".tmp")]
+        except OSError:
+            continue
+        for fname in filenames:
+            rec = _read_run_json(os.path.join(dir_path, fname))
+            if rec is None:
+                continue
+            if status_filter and rec.get("status") != status_filter:
+                continue
+            records.append(rec)
+            if len(records) >= limit * 4:
+                # Gather enough to sort, then truncate after sort
+                break
+        if len(records) >= limit * 4:
+            break
+
+    records.sort(key=lambda r: r.get("queued_at") or "", reverse=True)
+    return records[:limit]
 
 
 DEFAULT_AGENTS = [
@@ -1818,6 +1949,40 @@ def api_internal_events():
     since = (request.args.get("since") or "").strip()
     data = build_internal_view_state()
     return jsonify(build_events_contract(events=list(data.get("events") or []), since=since))
+
+
+@app.route("/api/internal/runs", methods=["GET"])
+def api_internal_runs():
+    """Return paginated list of run records from ~/.openclaw/runs/."""
+    try:
+        raw_limit = request.args.get("limit", str(_RUNS_LIST_LIMIT_DEFAULT))
+        limit = min(max(1, int(raw_limit)), _RUNS_LIST_LIMIT_MAX)
+    except (ValueError, TypeError):
+        limit = _RUNS_LIST_LIMIT_DEFAULT
+    status_filter = (request.args.get("status") or "").strip() or None
+    date_filter = (request.args.get("date") or "").strip() or None
+    records = _load_runs(limit=limit, status_filter=status_filter, date_filter=date_filter)
+    return jsonify({
+        "ok": True,
+        "schema_version": "2026-04-14",
+        "runs": records,
+        "total": len(records),
+        "limit": limit,
+    })
+
+
+@app.route("/api/internal/runs/<run_id>", methods=["GET"])
+def api_internal_run_detail(run_id):
+    """Return a single run record by run_id."""
+    if not _RUN_ID_RE.match(run_id):
+        return jsonify({"ok": False, "error": "invalid_run_id"}), 400
+    filepath = _find_run_file(run_id)
+    if filepath is None:
+        return jsonify({"ok": False, "error": "not_found"}), 404
+    rec = _read_run_json(filepath)
+    if rec is None:
+        return jsonify({"ok": False, "error": "unreadable"}), 500
+    return jsonify({"ok": True, "run": rec})
 
 
 @app.route("/manager/event", methods=["POST"])
