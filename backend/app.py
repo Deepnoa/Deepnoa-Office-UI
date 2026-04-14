@@ -668,7 +668,6 @@ def _execute_run_background(record):
     ]
 
     done_record = dict(running_record)
-    done_record["done_at"] = datetime.utcnow().isoformat() + "Z"
 
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
@@ -695,6 +694,7 @@ def _execute_run_background(record):
         )
 
         if failed:
+            done_record["done_at"] = datetime.utcnow().isoformat() + "Z"
             done_record["status"] = "failed"
             msg = (
                 error_str.strip()
@@ -704,6 +704,7 @@ def _execute_run_background(record):
             done_record["error"] = {"message": msg, "detail": stderr or None}
             done_record["result"] = None
         else:
+            done_record["done_at"] = datetime.utcnow().isoformat() + "Z"
             done_record["status"] = "done"
             done_record["error"] = None
             kps = payload.get("key_points")
@@ -716,11 +717,13 @@ def _execute_run_background(record):
             }
 
     except subprocess.TimeoutExpired:
+        done_record["done_at"] = datetime.utcnow().isoformat() + "Z"
         done_record["status"] = "failed"
         done_record["error"] = {"message": "Bridge timed out after 300s", "detail": None}
         done_record["result"] = None
 
     except Exception as exc:
+        done_record["done_at"] = datetime.utcnow().isoformat() + "Z"
         done_record["status"] = "failed"
         done_record["error"] = {"message": str(exc)[:500], "detail": None}
         done_record["result"] = None
