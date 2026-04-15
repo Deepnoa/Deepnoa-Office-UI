@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Run List — Deepnoa AI Office</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07111d;
+      --panel: rgba(10, 20, 35, 0.82);
+      --line: rgba(130, 164, 214, 0.18);
+      --text: #eef6ff;
+      --muted: #8ea4c1;
+      --accent: #82f2cb;
+      --warn: #ffd08a;
+      --danger: #ff7a7a;
+      --shadow: 0 4px 32px rgba(0,0,0,0.32);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Space Grotesk", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(50, 110, 192, 0.18), transparent 40%),
+        linear-gradient(180deg, #0a1422 0%, #07111d 60%, #060e18 100%);
+      min-height: 100vh;
+    }
+
+    /* Nav */
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(7, 17, 29, 0.72);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .nav-logo { font-weight: 700; font-size: 15px; color: var(--accent); margin-right: auto; }
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+    nav a:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+    nav a.active { color: var(--text); background: rgba(255,255,255,0.07); }
+
+    /* Layout */
+    main { max-width: 1100px; margin: 0 auto; padding: 28px 24px 60px; }
+
+    /* Page header */
+    .page-header {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .page-header h1 { font-size: 22px; font-weight: 700; }
+    .poll-badge {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    /* Summary strip */
+    .summary-strip {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .summary-chip {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .summary-chip .count { font-size: 18px; font-weight: 700; font-family: "IBM Plex Mono", monospace; }
+    .chip-done .count { color: var(--accent); }
+    .chip-running .count { color: var(--warn); }
+    .chip-failed .count { color: var(--danger); }
+    .chip-queued .count { color: var(--muted); }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    select {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: 7px;
+      cursor: pointer;
+    }
+    select:focus { outline: 1px solid var(--accent); }
+    .toolbar-spacer { flex: 1; }
+    .last-updated { font-size: 11px; color: var(--muted); font-family: "IBM Plex Mono", monospace; }
+
+    /* Table */
+    .table-wrap {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { border-bottom: 1px solid var(--line); }
+    th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 10px 14px;
+    }
+    td { padding: 11px 14px; font-size: 13px; vertical-align: middle; }
+    tbody tr {
+      border-bottom: 1px solid var(--line);
+      transition: background 0.1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+    /* Status badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 5px;
+      font-family: "IBM Plex Mono", monospace;
+      white-space: nowrap;
+    }
+    .s-queued  { background: rgba(142,164,193,0.12); color: var(--muted); }
+    .s-running { background: rgba(255,208,138,0.15); color: var(--warn); }
+    .s-done    { background: rgba(130,242,203,0.12); color: var(--accent); }
+    .s-failed  { background: rgba(255,122,122,0.15); color: var(--danger); }
+    .s-cancelled { background: rgba(142,164,193,0.10); color: var(--muted); }
+
+    /* run_id link */
+    .run-link {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .run-link:hover { text-decoration: underline; }
+
+    /* kind badge */
+    .kind-badge {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    /* summary text */
+    .summary-text {
+      color: var(--muted);
+      font-size: 12px;
+      max-width: 260px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Duration */
+    .duration { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* Error state */
+    .error-banner {
+      padding: 12px 16px;
+      background: rgba(255,122,122,0.1);
+      border: 1px solid rgba(255,122,122,0.25);
+      border-radius: 8px;
+      color: var(--danger);
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <span class="nav-logo">Deepnoa AI Office</span>
+    <a href="/runs" class="active">Runs</a>
+    <a href="/health">Health</a>
+    <a href="/internal">Internal</a>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <h1>Run List</h1>
+      <span class="poll-badge" id="poll-badge">—</span>
+    </div>
+
+    <div class="summary-strip" id="summary-strip">
+      <div class="summary-chip chip-done">
+        <span class="count" id="count-done">—</span>
+        <span>done</span>
+      </div>
+      <div class="summary-chip chip-running">
+        <span class="count" id="count-running">—</span>
+        <span>running</span>
+      </div>
+      <div class="summary-chip chip-failed">
+        <span class="count" id="count-failed">—</span>
+        <span>failed</span>
+      </div>
+      <div class="summary-chip chip-queued">
+        <span class="count" id="count-queued">—</span>
+        <span>queued</span>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <select id="filter-status">
+        <option value="">すべて</option>
+        <option value="running">running</option>
+        <option value="done">done</option>
+        <option value="failed">failed</option>
+        <option value="queued">queued</option>
+        <option value="cancelled">cancelled</option>
+      </select>
+      <div class="toolbar-spacer"></div>
+      <span class="last-updated" id="last-updated"></span>
+    </div>
+
+    <div id="error-banner" class="error-banner" style="display:none"></div>
+
+    <div class="table-wrap" id="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>状態</th>
+            <th>run_id</th>
+            <th>種別</th>
+            <th>依頼者</th>
+            <th>受付</th>
+            <th>実行時間</th>
+            <th>サマリー</th>
+          </tr>
+        </thead>
+        <tbody id="runs-tbody"></tbody>
+      </table>
+      <div class="empty-state" id="empty-state" style="display:none">実行履歴がありません</div>
+    </div>
+  </main>
+
+  <script>
+    const POLL_INTERVAL_MS = 10000;
+    let pollTimer = null;
+    let allRuns = [];
+
+    function statusBadge(status) {
+      const icons = { queued: '⏳', running: '🔄', done: '✅', failed: '❌', cancelled: '⛔' };
+      const icon = icons[status] || '?';
+      return `<span class="status-badge s-${status}">${icon} ${status}</span>`;
+    }
+
+    function formatDuration(rec) {
+      const start = rec.started_at || rec.queued_at;
+      const end = rec.done_at;
+      if (!start || !end) return rec.status === 'running' ? '実行中' : '—';
+      const ms = Date.parse(end) - Date.parse(start);
+      if (!isFinite(ms) || ms < 0) return '—';
+      const s = Math.round(ms / 1000);
+      return s < 60 ? `${s}秒` : `${Math.floor(s/60)}分${s%60}秒`;
+    }
+
+    function formatTime(iso) {
+      if (!iso) return '—';
+      try {
+        const d = new Date(iso);
+        const now = new Date();
+        const isToday = d.toDateString() === now.toDateString();
+        if (isToday) {
+          return d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        return d.toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+      } catch { return iso; }
+    }
+
+    function getSummary(rec) {
+      if (rec.status === 'failed') return rec.error?.message || '—';
+      return rec.result?.summary || '—';
+    }
+
+    function getRequestedBy(rec) {
+      const name = rec.requested_by_name;
+      if (!name) return rec.requested_by || '—';
+      // Strip "slack:channel:..." prefix if present
+      const m = name.match(/^[a-z]+:(?:channel|group):(.+)$/i);
+      if (m) return rec.requested_by || '—';
+      return name;
+    }
+
+    function renderRows(runs) {
+      const tbody = document.getElementById('runs-tbody');
+      const empty = document.getElementById('empty-state');
+      if (!runs.length) {
+        tbody.innerHTML = '';
+        empty.style.display = '';
+        return;
+      }
+      empty.style.display = 'none';
+      tbody.innerHTML = runs.map(rec => {
+        const summary = getSummary(rec);
+        const truncated = summary.length > 60 ? summary.slice(0, 60) + '…' : summary;
+        return `<tr>
+          <td>${statusBadge(rec.status)}</td>
+          <td><a class="run-link" href="/runs/${rec.run_id}">${rec.run_id}</a></td>
+          <td><span class="kind-badge">${rec.kind}</span></td>
+          <td style="font-size:12px;color:var(--muted)">${getRequestedBy(rec)}</td>
+          <td style="font-size:12px;font-family:'IBM Plex Mono',monospace;white-space:nowrap">${formatTime(rec.queued_at)}</td>
+          <td class="duration">${formatDuration(rec)}</td>
+          <td><span class="summary-text" title="${summary.replace(/"/g,'&quot;')}">${truncated}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function updateSummary(runs) {
+      const counts = { done: 0, running: 0, failed: 0, queued: 0 };
+      runs.forEach(r => { if (counts[r.status] !== undefined) counts[r.status]++; });
+      document.getElementById('count-done').textContent    = counts.done;
+      document.getElementById('count-running').textContent = counts.running;
+      document.getElementById('count-failed').textContent  = counts.failed;
+      document.getElementById('count-queued').textContent  = counts.queued;
+    }
+
+    function applyFilter() {
+      const status = document.getElementById('filter-status').value;
+      renderRows(status ? allRuns.filter(r => r.status === status) : allRuns);
+    }
+
+    async function fetchRuns() {
+      const badge = document.getElementById('poll-badge');
+      const errBanner = document.getElementById('error-banner');
+      try {
+        badge.textContent = '読込中…';
+        const res = await fetch('/api/internal/runs?limit=100&v={{VERSION_TIMESTAMP}}');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        allRuns = data.runs || [];
+        updateSummary(allRuns);
+        applyFilter();
+        errBanner.style.display = 'none';
+        const now = new Date().toLocaleTimeString('ja-JP');
+        document.getElementById('last-updated').textContent = `更新: ${now}`;
+        badge.textContent = `${POLL_INTERVAL_MS/1000}秒後に更新`;
+      } catch (err) {
+        badge.textContent = 'エラー';
+        errBanner.textContent = `取得エラー: ${err.message}`;
+        errBanner.style.display = '';
+      }
+    }
+
+    function schedulePoll() {
+      clearTimeout(pollTimer);
+      pollTimer = setTimeout(async () => {
+        await fetchRuns();
+        schedulePoll();
+      }, POLL_INTERVAL_MS);
+    }
+
+    document.getElementById('filter-status').addEventListener('change', applyFilter);
+
+    fetchRuns().then(schedulePoll);
+  </script>
+</body>
+</html>
