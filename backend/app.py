@@ -2149,6 +2149,14 @@ def api_internal_run_retry(run_id):
     if original is None:
         return jsonify({"ok": False, "error": "unreadable"}), 500
 
+    status = original.get("status")
+    if status not in ("failed", "cancelled"):
+        return jsonify({
+            "ok": False,
+            "error": "not_retryable",
+            "status": status,
+        }), 409
+
     now = datetime.utcnow()
     new_run_id = _format_run_id(now)
 
