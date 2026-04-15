@@ -56,6 +56,7 @@ FRONTEND_GATEWAY_FILE = os.path.join(FRONTEND_DIR, "gateway.html")
 FRONTEND_ELECTRON_STANDALONE_FILE = os.path.join(FRONTEND_DIR, "electron-standalone.html")
 FRONTEND_RUNS_FILE = os.path.join(FRONTEND_DIR, "runs.html")
 FRONTEND_RUN_DETAIL_FILE = os.path.join(FRONTEND_DIR, "run_detail.html")
+FRONTEND_HEALTH_FILE = os.path.join(FRONTEND_DIR, "health.html")
 STATE_FILE = os.path.join(ROOT_DIR, "state.json")
 MANAGER_STATE_FILE = os.path.join(ROOT_DIR, "manager-state.json")
 AGENTS_STATE_FILE = os.path.join(ROOT_DIR, "agents-state.json")
@@ -2055,11 +2056,125 @@ def agent_push():
 
 @app.route("/health", methods=["GET"])
 def health():
-    """Health check"""
+    """Health dashboard page."""
+    with open(FRONTEND_HEALTH_FILE, "r", encoding="utf-8") as f:
+        content = f.read()
+    return make_response(content, 200, {"Content-Type": "text/html; charset=utf-8"})
+
+
+@app.route("/api/health", methods=["GET"])
+def api_health():
+    """Machine-readable health check (was /health)."""
     return jsonify({
         "status": "ok",
         "service": "deepnoa-office-ui",
         "timestamp": datetime.now().isoformat(),
+    })
+
+
+# ---------------------------------------------------------------------------
+# Run scan helpers (shared with /api/internal/health)
+# ---------------------------------------------------------------------------
+
+_HEALTH_RUN_DATE_RE = re.compile(r'^run_(\d{4})(\d{2})(\d{2})_')
+_HEALTH_RUNS_SCAN_MAX = 200
+
+
+def _health_read_run_json(filepath):
+    """Read and minimally validate a single run JSON file."""
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict) or not isinstance(data.get("run_id"), str):
+            return None
+        return data
+    except Exception:
+        return None
+
+
+def _health_load_runs_today(today_str):
+    """Load all runs for a specific YYYY-MM-DD date directory."""
+    if not os.path.isdir(OPENCLAW_RUNS_DIR):
+        return []
+    dir_path = os.path.join(OPENCLAW_RUNS_DIR, today_str)
+    if not os.path.isdir(dir_path):
+        return []
+    records = []
+    try:
+        filenames = [f for f in os.listdir(dir_path) if f.endswith(".json") and not f.endswith(".tmp")]
+    except OSError:
+        return []
+    for fname in filenames:
+        rec = _health_read_run_json(os.path.join(dir_path, fname))
+        if rec is not None:
+            records.append(rec)
+    records.sort(key=lambda r: r.get("queued_at") or "", reverse=True)
+    return records[:_HEALTH_RUNS_SCAN_MAX]
+
+
+@app.route("/api/internal/health", methods=["GET"])
+def api_internal_health():
+    """Aggregated health snapshot: today's run stats, connectors, alerts, roles."""
+    from datetime import date as _date
+    today = _date.today().isoformat()
+
+    # Today's run stats
+    today_runs = _health_load_runs_today(today)
+    counts = {"done": 0, "running": 0, "failed": 0, "queued": 0, "cancelled": 0}
+    latest_failed = None
+    for rec in today_runs:
+        s = rec.get("status", "")
+        if s in counts:
+            counts[s] += 1
+        if s == "failed" and latest_failed is None:
+            latest_failed = {
+                "run_id": rec.get("run_id"),
+                "queued_at": rec.get("queued_at"),
+                "kind": rec.get("kind"),
+                "error_message": (rec.get("error") or {}).get("message"),
+            }
+
+    # System state (connectors=degraded only, alerts, roles, summary)
+    state = build_internal_view_state()
+    connectors = list(state.get("connectors") or [])   # degraded only
+    alerts = list(state.get("alerts") or [])[:8]
+    roles = list(state.get("roles") or [])
+    summary = dict(state.get("summary") or {})
+    connector_total = len(
+        (state.get("policies") or {}).get("connector_health_rules") or {}
+    )
+
+    # Derive overall status
+    error_connectors = [c for c in connectors if c.get("status") in ("error", "offline")]
+    degraded_connectors = [c for c in connectors if c.get("status") == "degraded"]
+    critical_alerts = [a for a in alerts if a.get("severity") in ("error", "critical")]
+
+    if error_connectors or critical_alerts:
+        overall_status = "error"
+    elif degraded_connectors or counts["failed"] > 0:
+        overall_status = "degraded"
+    else:
+        overall_status = "ok"
+
+    return jsonify({
+        "ok": True,
+        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "overall_status": overall_status,
+        "runs_today": {
+            "date": today,
+            "done": counts["done"],
+            "running": counts["running"],
+            "failed": counts["failed"],
+            "queued": counts["queued"],
+            "cancelled": counts["cancelled"],
+            "total": len(today_runs),
+        },
+        "latest_failed_run": latest_failed,
+        "connectors": connectors,
+        "connector_total": connector_total,
+        "alerts": alerts,
+        "roles": roles,
+        "summary": summary,
     })
 
 
