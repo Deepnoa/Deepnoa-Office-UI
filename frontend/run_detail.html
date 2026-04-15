@@ -262,6 +262,60 @@
       padding: 2px 8px;
       display: inline-block;
     }
+
+    /* Retry button */
+    .btn-retry {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 7px;
+      border: 1px solid rgba(255,208,138,0.4);
+      background: rgba(255,208,138,0.1);
+      color: var(--warn);
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      margin-left: auto;
+    }
+    .btn-retry:hover:not(:disabled) {
+      background: rgba(255,208,138,0.18);
+      border-color: rgba(255,208,138,0.65);
+    }
+    .btn-retry:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Retry toast */
+    .retry-toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      padding: 12px 18px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 500;
+      background: rgba(10,20,35,0.96);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+      transition: opacity 0.3s;
+      z-index: 100;
+    }
+    .toast-success { border-color: rgba(130,242,203,0.4); color: var(--accent); }
+    .toast-error   { border-color: rgba(255,122,122,0.4); color: var(--danger); }
+    .toast-hidden  { opacity: 0; pointer-events: none; }
+
+    /* retry_of link in meta */
+    .meta-run-link {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .meta-run-link:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -282,6 +336,9 @@
       <div class="page-header">
         <h1 id="hdr-run-id"></h1>
         <span id="hdr-status"></span>
+        <button class="btn-retry" id="btn-retry" style="display:none" onclick="retryRun()">
+          ↺ 再実行
+        </button>
       </div>
 
       <!-- Meta -->
@@ -311,6 +368,12 @@
 
           <span class="meta-label">sense_job_id</span>
           <span class="meta-value" id="meta-sense-job-id"></span>
+
+          <span class="meta-label" id="lbl-retry-of" style="display:none">retry_of</span>
+          <span class="meta-value" id="meta-retry-of" style="display:none"></span>
+
+          <span class="meta-label" id="lbl-retry-count" style="display:none">retry_count</span>
+          <span class="meta-value meta-mono" id="meta-retry-count" style="display:none"></span>
         </div>
       </div>
 
@@ -348,7 +411,45 @@
     </div><!-- #content -->
   </main>
 
+  <div class="retry-toast toast-hidden" id="retry-toast"></div>
+
   <script>
+    let _currentRunId = null;
+
+    function showToast(msg, type) {
+      const el = document.getElementById('retry-toast');
+      el.textContent = msg;
+      el.className = `retry-toast toast-${type}`;
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => { el.className += ' toast-hidden'; }, 4000);
+    }
+
+    async function retryRun() {
+      if (!_currentRunId) return;
+      const btn = document.getElementById('btn-retry');
+      btn.disabled = true;
+      btn.textContent = '…';
+      try {
+        const res = await fetch(`/api/internal/runs/${encodeURIComponent(_currentRunId)}/retry`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
+        showToast(`受付しました: ${data.run_id}`, 'success');
+        // Navigate to the new run after a short delay
+        setTimeout(() => {
+          window.location.href = `/runs/${encodeURIComponent(data.run_id)}`;
+        }, 900);
+      } catch (err) {
+        showToast(`再実行エラー: ${esc(err.message)}`, 'error');
+        btn.disabled = false;
+        btn.textContent = '↺ 再実行';
+      }
+    }
+
     function statusBadge(status) {
       const icons = { queued: '⏳', running: '🔄', done: '✅', failed: '❌', cancelled: '⛔' };
       const icon = icons[status] || '?';
@@ -400,10 +501,17 @@
     }
 
     function render(rec) {
+      _currentRunId = rec.run_id;
+
       // Header
       set('hdr-run-id', esc(rec.run_id));
       set('hdr-status', statusBadge(rec.status));
       document.title = `${rec.run_id} — Deepnoa AI Office`;
+
+      // Retry button: show only for failed or cancelled runs
+      if (rec.status === 'failed' || rec.status === 'cancelled') {
+        show('btn-retry');
+      }
 
       // Meta
       setText('meta-kind', rec.kind);
@@ -418,6 +526,18 @@
         set('meta-sense-job-id', `<span class="job-id-badge">${esc(rec.sense_job_id)}</span>`);
       } else {
         setText('meta-sense-job-id', '—');
+      }
+
+      // retry_of / retry_count
+      if (rec.retry_of) {
+        show('lbl-retry-of');
+        show('meta-retry-of');
+        set('meta-retry-of', `<a class="meta-run-link" href="/runs/${encodeURIComponent(rec.retry_of)}">${esc(rec.retry_of)}</a>`);
+      }
+      if (rec.retry_count != null && rec.retry_count > 0) {
+        show('lbl-retry-count');
+        show('meta-retry-count');
+        setText('meta-retry-count', String(rec.retry_count));
       }
 
       // Command

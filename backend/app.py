@@ -584,6 +584,156 @@ def _load_runs(limit=_RUNS_LIST_LIMIT_DEFAULT, status_filter=None, date_filter=N
     return records[:limit]
 
 
+# ---------------------------------------------------------------------------
+# Run retry helpers
+# ---------------------------------------------------------------------------
+
+_SENSE_BRIDGE_SCRIPT = (
+    os.environ.get("SENSE_BRIDGE_SCRIPT")
+    or os.path.join(
+        os.path.dirname(ROOT_DIR),
+        "openclaw", "scripts", "runtime", "sense_runtime_manager_task.py",
+    )
+)
+
+
+def _format_run_id(now=None):
+    """Generate a new run_id in the format run_YYYYMMDD_HHMMSS_xxx (3-char hex suffix)."""
+    import uuid as _uuid
+    now = now or datetime.utcnow()
+    suffix = _uuid.uuid4().hex[:3]
+    return now.strftime(f"run_%Y%m%d_%H%M%S_{suffix}")
+
+
+def _write_run_record_atomic(record):
+    """Atomically write a run record JSON to OPENCLAW_RUNS_DIR/<date>/<run_id>.json."""
+    run_id = record["run_id"]
+    m = _RUN_DATE_RE.match(run_id)
+    if not m:
+        raise ValueError(f"Cannot derive date from run_id: {run_id}")
+    date_str = f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
+    dir_path = os.path.join(OPENCLAW_RUNS_DIR, date_str)
+    os.makedirs(dir_path, mode=0o700, exist_ok=True)
+    target = os.path.join(dir_path, f"{run_id}.json")
+    tmp_fd, tmp_path = tempfile.mkstemp(dir=dir_path, suffix=".tmp")
+    try:
+        with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
+            json.dump(record, f, ensure_ascii=False)
+        os.chmod(tmp_path, 0o600)
+        os.rename(tmp_path, target)
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
+    return target
+
+
+def _build_bridge_task(kind):
+    if kind in ("health", "digest"):
+        return kind
+    return "free"
+
+
+def _build_bridge_params(kind):
+    if kind == "digest":
+        return {"mode": "digest_ready_probe", "digest_ready_probe": True, "task_type": "digest"}
+    return {"mode": "nemoclaw_job", "task_type": kind}
+
+
+def _execute_run_background(record):
+    """Execute a queued run in a background thread, updating the run file on disk."""
+    run_id = record["run_id"]
+
+    # Transition: queued → running
+    running_record = dict(record)
+    running_record["status"] = "running"
+    running_record["started_at"] = datetime.utcnow().isoformat() + "Z"
+    try:
+        _write_run_record_atomic(running_record)
+    except Exception as exc:
+        print(f"[retry] failed to write running state for {run_id}: {exc}", flush=True)
+        return
+
+    # Build python3 invocation
+    raw_text = record.get("raw_text") or record.get("normalized_task") or ""
+    cmd = [
+        "python3",
+        _SENSE_BRIDGE_SCRIPT,
+        "--task", _build_bridge_task(record.get("kind", "free")),
+        "--input", raw_text,
+        "--params-json", json.dumps(_build_bridge_params(record.get("kind", "free")), ensure_ascii=False),
+        "--base-url", os.environ.get("SENSE_WORKER_URL", "http://192.168.11.11:8787"),
+    ]
+
+    done_record = dict(running_record)
+
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        stdout = proc.stdout.strip()
+        stderr = proc.stderr.strip()
+
+        if not stdout:
+            raise RuntimeError(
+                f"Bridge returned no output. stderr={stderr[:300]}"
+            )
+
+        payload = json.loads(stdout)
+
+        exit_code = payload.get("exit_code")
+        error_str = payload.get("error")
+        failed = (
+            proc.returncode != 0
+            or (isinstance(exit_code, int) and exit_code != 0)
+            or (isinstance(error_str, str) and error_str.strip())
+        )
+
+        done_record["sense_job_id"] = (
+            str(payload["sense_job_id"]) if payload.get("sense_job_id") else None
+        )
+
+        if failed:
+            done_record["done_at"] = datetime.utcnow().isoformat() + "Z"
+            done_record["status"] = "failed"
+            msg = (
+                error_str.strip()
+                if isinstance(error_str, str) and error_str.strip()
+                else f"Bridge exited {proc.returncode}"
+            )
+            done_record["error"] = {"message": msg, "detail": stderr or None}
+            done_record["result"] = None
+        else:
+            done_record["done_at"] = datetime.utcnow().isoformat() + "Z"
+            done_record["status"] = "done"
+            done_record["error"] = None
+            kps = payload.get("key_points")
+            done_record["result"] = {
+                "summary": payload.get("summary"),
+                "key_points": kps if isinstance(kps, list) else [],
+                "suggested_next_action": payload.get("suggested_next_action"),
+                "exit_code": exit_code,
+                "raw_output": payload.get("raw_output"),
+            }
+
+    except subprocess.TimeoutExpired:
+        done_record["done_at"] = datetime.utcnow().isoformat() + "Z"
+        done_record["status"] = "failed"
+        done_record["error"] = {"message": "Bridge timed out after 300s", "detail": None}
+        done_record["result"] = None
+
+    except Exception as exc:
+        done_record["done_at"] = datetime.utcnow().isoformat() + "Z"
+        done_record["status"] = "failed"
+        done_record["error"] = {"message": str(exc)[:500], "detail": None}
+        done_record["result"] = None
+
+    try:
+        _write_run_record_atomic(done_record)
+    except Exception as exc:
+        print(f"[retry] failed to write final state for {run_id}: {exc}", flush=True)
+
+
 DEFAULT_AGENTS = [
     {
         "agentId": "star",
@@ -1983,6 +2133,61 @@ def api_internal_run_detail(run_id):
     if rec is None:
         return jsonify({"ok": False, "error": "unreadable"}), 500
     return jsonify({"ok": True, "run": rec})
+
+
+@app.route("/api/internal/runs/<run_id>/retry", methods=["POST"])
+def api_internal_run_retry(run_id):
+    """Enqueue a retry of an existing run, returning the new run_id immediately (202)."""
+    if not _RUN_ID_RE.match(run_id):
+        return jsonify({"ok": False, "error": "invalid_run_id"}), 400
+
+    filepath = _find_run_file(run_id)
+    if filepath is None:
+        return jsonify({"ok": False, "error": "not_found"}), 404
+
+    original = _read_run_json(filepath)
+    if original is None:
+        return jsonify({"ok": False, "error": "unreadable"}), 500
+
+    now = datetime.utcnow()
+    new_run_id = _format_run_id(now)
+
+    new_record = {
+        "run_id": new_run_id,
+        "requested_by": original.get("requested_by"),
+        "requested_by_name": original.get("requested_by_name"),
+        "channel_id": original.get("channel_id"),
+        "channel_name": original.get("channel_name"),
+        "raw_text": original.get("raw_text"),
+        "kind": original.get("kind"),
+        "normalized_task": original.get("normalized_task"),
+        "params": original.get("params") or {},
+        "status": "queued",
+        "sense_job_id": None,
+        "queued_at": now.isoformat() + "Z",
+        "started_at": None,
+        "done_at": None,
+        "result": None,
+        "error": None,
+        "retry_of": run_id,
+        "retry_count": int(original.get("retry_count") or 0) + 1,
+        "slack_ts": original.get("slack_ts"),
+    }
+
+    try:
+        _write_run_record_atomic(new_record)
+    except Exception as exc:
+        return jsonify({"ok": False, "error": f"write_failed: {exc}"}), 500
+
+    t = threading.Thread(target=_execute_run_background, args=(new_record,), daemon=True)
+    t.start()
+
+    return jsonify({
+        "ok": True,
+        "run_id": new_run_id,
+        "retry_of": run_id,
+        "status": "queued",
+    }), 202
 
 
 @app.route("/manager/event", methods=["POST"])
