@@ -27,6 +27,7 @@ from services.schemas import (
     normalize_event_payload,
     normalize_internal_state,
 )
+from services.source_adapters import RunsAdapter
 from store_utils import (
     load_agents_state as _store_load_agents_state,
     save_agents_state as _store_save_agents_state,
@@ -74,6 +75,8 @@ OPENCLAW_STATE_DIR = (
     or os.path.join(os.path.expanduser("~"), ".openclaw")
 )
 OPENCLAW_RUNS_DIR = os.path.join(OPENCLAW_STATE_DIR, "runs")
+OPENCLAW_GATEWAY_URL = os.environ.get("OPENCLAW_GATEWAY_URL", "").strip()
+OPENCLAW_GATEWAY_TOKEN = os.environ.get("OPENCLAW_GATEWAY_TOKEN", "").strip()
 GITHUB_WORKER_LOG_FILE = os.path.join(os.path.expanduser("~"), "bot", "github_queue_local", "log", "worker.log")
 GITHUB_DEPLOY_LOG_FILE = os.path.join(os.path.expanduser("~"), "bot", "github_queue_local", "log", "deploy.log")
 GEMINI_SCRIPT = os.path.join(WORKSPACE_DIR, "skills", "gemini-image-generate", "scripts", "gemini_image_generate.py")
@@ -2080,6 +2083,20 @@ _HEALTH_RUN_DATE_RE = re.compile(r'^run_(\d{4})(\d{2})(\d{2})_')
 _HEALTH_RUNS_SCAN_MAX = 200
 
 
+def _make_runs_adapter() -> "RunsAdapter | None":
+    """Instantiate a RunsAdapter from environment, or return None if not configured."""
+    if not OPENCLAW_GATEWAY_URL or not OPENCLAW_GATEWAY_TOKEN:
+        return None
+    try:
+        return RunsAdapter(gateway_url=OPENCLAW_GATEWAY_URL, gateway_token=OPENCLAW_GATEWAY_TOKEN)
+    except Exception:
+        return None
+
+
+# Module-level adapter singleton (None when gateway env vars not set)
+_RUNS_ADAPTER: "RunsAdapter | None" = _make_runs_adapter()
+
+
 def _health_read_run_json(filepath):
     """Read and minimally validate a single run JSON file."""
     try:
@@ -2114,12 +2131,30 @@ def _health_load_runs_today(today_str):
 
 @app.route("/api/internal/health", methods=["GET"])
 def api_internal_health():
-    """Aggregated health snapshot: today's run stats, connectors, alerts, roles."""
+    """Aggregated health snapshot: today's run stats, connectors, alerts, roles.
+
+    Primary source: RunsAdapter (gateway → run-viewer plugin).
+    Fallback: direct file read from OPENCLAW_RUNS_DIR.
+    """
     from datetime import date as _date
     today = _date.today().isoformat()
 
-    # Today's run stats
-    today_runs = _health_load_runs_today(today)
+    # Today's run stats — try adapter first, fall back to file read
+    today_runs = None
+    if _RUNS_ADAPTER is not None:
+        try:
+            today_runs = _RUNS_ADAPTER.fetch_recent_json(
+                limit=_HEALTH_RUNS_SCAN_MAX,
+                date=today,
+            )
+        except Exception as _exc:
+            import sys
+            print(f"[health] RunsAdapter.fetch_recent_json failed, falling back to file read: {_exc}", file=sys.stderr)
+            today_runs = None
+
+    if today_runs is None:
+        today_runs = _health_load_runs_today(today)
+
     counts = {"done": 0, "running": 0, "failed": 0, "queued": 0, "cancelled": 0}
     latest_failed = None
     for rec in today_runs:
@@ -2218,7 +2253,11 @@ def api_internal_events():
 
 @app.route("/api/internal/runs", methods=["GET"])
 def api_internal_runs():
-    """Return paginated list of run records from ~/.openclaw/runs/."""
+    """Return paginated list of run records from ~/.openclaw/runs/.
+
+    Primary source: RunsAdapter (gateway → run-viewer plugin).
+    Fallback: direct file read from OPENCLAW_RUNS_DIR.
+    """
     try:
         raw_limit = request.args.get("limit", str(_RUNS_LIST_LIMIT_DEFAULT))
         limit = min(max(1, int(raw_limit)), _RUNS_LIST_LIMIT_MAX)
@@ -2226,7 +2265,23 @@ def api_internal_runs():
         limit = _RUNS_LIST_LIMIT_DEFAULT
     status_filter = (request.args.get("status") or "").strip() or None
     date_filter = (request.args.get("date") or "").strip() or None
-    records = _load_runs(limit=limit, status_filter=status_filter, date_filter=date_filter)
+
+    records = None
+    if _RUNS_ADAPTER is not None:
+        try:
+            records = _RUNS_ADAPTER.fetch_recent_json(
+                limit=limit,
+                status=status_filter,
+                date=date_filter,
+            )
+        except Exception as _exc:
+            import sys
+            print(f"[runs] RunsAdapter.fetch_recent_json failed, falling back to file read: {_exc}", file=sys.stderr)
+            records = None
+
+    if records is None:
+        records = _load_runs(limit=limit, status_filter=status_filter, date_filter=date_filter)
+
     return jsonify({
         "ok": True,
         "schema_version": "2026-04-14",
@@ -2238,15 +2293,33 @@ def api_internal_runs():
 
 @app.route("/api/internal/runs/<run_id>", methods=["GET"])
 def api_internal_run_detail(run_id):
-    """Return a single run record by run_id."""
+    """Return a single run record by run_id.
+
+    Primary source: RunsAdapter (gateway → run-viewer plugin).
+    Fallback: direct file read from OPENCLAW_RUNS_DIR.
+    """
     if not _RUN_ID_RE.match(run_id):
         return jsonify({"ok": False, "error": "invalid_run_id"}), 400
-    filepath = _find_run_file(run_id)
-    if filepath is None:
-        return jsonify({"ok": False, "error": "not_found"}), 404
-    rec = _read_run_json(filepath)
+
+    rec = None
+    if _RUNS_ADAPTER is not None:
+        try:
+            rec = _RUNS_ADAPTER.fetch_detail_json(run_id)
+            # fetch_detail_json returns None on 404 (run not found via gateway)
+        except Exception as _exc:
+            import sys
+            print(f"[run_detail] RunsAdapter.fetch_detail_json failed, falling back to file read: {_exc}", file=sys.stderr)
+            rec = None
+
     if rec is None:
-        return jsonify({"ok": False, "error": "unreadable"}), 500
+        # Adapter unavailable, timed out, or returned 404 — try file read
+        filepath = _find_run_file(run_id)
+        if filepath is None:
+            return jsonify({"ok": False, "error": "not_found"}), 404
+        rec = _read_run_json(filepath)
+        if rec is None:
+            return jsonify({"ok": False, "error": "unreadable"}), 500
+
     return jsonify({"ok": True, "run": rec})
 
 
