@@ -378,6 +378,9 @@
     .failed-runs-list { display: grid; gap: 8px; margin-top: 10px; }
     .failed-run-item { padding: 10px 12px; border-radius: 12px; background: rgba(255,126,143,0.06); border: 1px solid rgba(255,126,143,0.16); }
     .failed-run-item .run-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 4px; }
+    .failed-run-link { color: var(--danger); text-decoration: none; }
+    .failed-run-link:hover,
+    .failed-run-link:focus-visible { text-decoration: underline; outline: none; }
     .failed-run-item .run-err { color: var(--muted); font-size: 12px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   </style>
 </head>
@@ -1921,6 +1924,8 @@ manager カードの補足に使います。</div>
         <div class="label mono" style="margin-top:6px; margin-bottom:4px">${escapeHtml(t("runs.recent_failures", "最近の失敗実行"))}</div>
         ${runs.map((run) => {
           const shortId = escapeHtml(trunc(run.run_id, 12));
+          const fullId = escapeHtml(run.run_id || "");
+          const runDetailHref = `/runs/${encodeURIComponent(run.run_id || "")}`;
           const kind = escapeHtml(run.kind || t("label.unknown", "?"));
           const errMsg = escapeHtml(trunc((run.error || {}).message, 60));
           const ago = escapeHtml(relTime(run.queued_at));
@@ -1928,7 +1933,7 @@ manager カードの補足に使います。</div>
           return `
             <div class="failed-run-item">
               <div class="run-meta">
-                <span class="mono" style="font-size:12px; color:var(--danger)">${shortId}</span>
+                <a class="mono failed-run-link" style="font-size:12px" href="${runDetailHref}" target="_blank" rel="noopener noreferrer" title="${fullId}">${shortId}</a>
                 <span class="mini-chip mono">${kind}</span>
                 ${isRetry ? `<span class="badge danger mono" style="font-size:10px; padding:3px 7px">${escapeHtml(t("runs.retry", "再試行"))}</span>` : ""}
                 <span class="sub" style="margin-left:auto; font-size:11px">${ago}</span>
