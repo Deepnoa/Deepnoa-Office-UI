@@ -362,6 +362,15 @@
       .hero-main, .hero-side, .section { padding: 18px; }
       .meta-grid { grid-template-columns: 1fr; }
     }
+    /* ── Needs Attention panel ─────────────────────────────────────────────── */
+    .attention-strip { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding-top: 4px; }
+    .attention-item { display: flex; align-items: center; gap: 10px; }
+    /* ── Today's Runs counts ───────────────────────────────────────────────── */
+    .runs-counts { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
+    .run-count-item { display: flex; flex-direction: column; align-items: center; min-width: 38px; }
+    .run-count-value { font-size: 22px; font-weight: 700; line-height: 1.2; }
+    .run-count-value.is-danger { color: var(--danger); }
+    .run-count-label { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-top: 2px; }
   </style>
 </head>
 <body>
@@ -401,6 +410,12 @@
           <div class="label mono" data-i18n="internal.asset_auth">アセット認証</div>
           <div class="copy" id="assetAuthSummary" data-i18n="status.asset_auth_loading">アセット認証を読込中です。</div>
         </div>
+        <div class="summary-card" id="runsSummaryCard">
+          <div class="label mono" data-i18n="internal.today_runs">本日の実行</div>
+          <div class="copy" id="runsSummaryStatus" data-i18n="status.runs_loading">読込中</div>
+          <div class="runs-counts" id="runsCounts"></div>
+          <a href="runs.html" class="footer-note mono" style="display:block; margin-top:10px" data-i18n="internal.runs_view_all">runs 一覧 →</a>
+        </div>
       </div>
     </section>
 
@@ -435,6 +450,17 @@
         <div class="metric-value" id="summaryAlerts">0</div>
         <div class="metric-sub" data-i18n="summary.alerts_sub">異常や劣化シグナルです。</div>
       </div>
+    </section>
+
+    <section class="panel section" id="needsAttentionPanel" style="display:none; margin-bottom:20px">
+      <div class="section-head">
+        <div>
+          <h2 data-i18n="section.needs_attention">要対応</h2>
+          <div class="section-copy" data-i18n="section.needs_attention_sub">承認・ブロック・アラート・コネクタ異常をまとめて表示します。</div>
+        </div>
+        <div class="badge mono" id="attentionStatusBadge"></div>
+      </div>
+      <div class="attention-strip" id="attentionStrip"></div>
     </section>
 
     <section class="grid-main">
@@ -921,7 +947,18 @@ manager カードの補足に使います。</div>
         "enum.degraded": "劣化",
         "enum.error": "異常",
         "enum.connected": "接続中",
-        "enum.offline": "オフライン"
+        "enum.offline": "オフライン",
+        "internal.today_runs": "本日の実行",
+        "internal.runs_view_all": "runs 一覧 →",
+        "status.runs_loading": "読込中",
+        "status.runs_unavailable": "実行状態を取得できませんでした。",
+        "section.needs_attention": "要対応",
+        "section.needs_attention_sub": "承認・ブロック・アラート・コネクタ異常をまとめて表示します。",
+        "runs.done": "完了",
+        "runs.failed": "失敗",
+        "runs.running": "実行中",
+        "runs.queued": "待機",
+        "runs.total": "合計"
       },
       en: {
         "page.title": "Deepnoa Internal View",
@@ -1002,7 +1039,18 @@ manager カードの補足に使います。</div>
         "connector.policy_fallback": "connector policy",
         "task.untitled": "Untitled",
         "task.approval_default": "Approval",
-        "approval.signal_prefix": "approval"
+        "approval.signal_prefix": "approval",
+        "internal.today_runs": "Today's Runs",
+        "internal.runs_view_all": "view all runs →",
+        "status.runs_loading": "Loading",
+        "status.runs_unavailable": "Run status unavailable.",
+        "section.needs_attention": "Needs Attention",
+        "section.needs_attention_sub": "Pending approvals, blocked tasks, alerts, and connector issues.",
+        "runs.done": "done",
+        "runs.failed": "failed",
+        "runs.running": "running",
+        "runs.queued": "queued",
+        "runs.total": "total"
       },
       zh: {
         "page.title": "Deepnoa 内部视图",
@@ -1234,7 +1282,18 @@ manager カードの補足に使います。</div>
         "enum.degraded": "退化",
         "enum.error": "错误",
         "enum.connected": "已连接",
-        "enum.offline": "离线"
+        "enum.offline": "离线",
+        "internal.today_runs": "今日执行",
+        "internal.runs_view_all": "查看全部 →",
+        "status.runs_loading": "加载中",
+        "status.runs_unavailable": "无法获取执行状态。",
+        "section.needs_attention": "需要关注",
+        "section.needs_attention_sub": "待审批、阻塞任务、告警与连接器异常。",
+        "runs.done": "完成",
+        "runs.failed": "失败",
+        "runs.running": "运行中",
+        "runs.queued": "等待",
+        "runs.total": "合计"
       }
     };
     const DEFAULT_LANG = "ja";
@@ -1310,7 +1369,7 @@ manager カードの補足に使います。</div>
     };
     const ACTIVE_POLL_MS = 15000;
     const HIDDEN_POLL_MS = 60000;
-    const state = { internal: null, assetAuth: null, bgPollTimer: null, selectedDetail: null, renderTimer: null, renderInFlight: null, toastTimer: null };
+    const state = { internal: null, health: null, assetAuth: null, bgPollTimer: null, selectedDetail: null, renderTimer: null, renderInFlight: null, toastTimer: null };
 
     function detailItemKey(kind, item) {
       if (!item) return "";
@@ -1742,6 +1801,78 @@ manager カードの補足に使います。</div>
       return fetchJson(`/api/internal/state?v={{VERSION_TIMESTAMP}}`);
     }
 
+    async function loadHealthData() {
+      return fetchJson("/api/internal/health");
+    }
+
+    function renderNeedsAttention(data) {
+      const panel = document.getElementById("needsAttentionPanel");
+      if (!panel) return;
+      const pendingApprovals = (data?.approvals || []).length;
+      const blocked = (data?.blocked || []).length;
+      const criticalAlerts = (data?.alerts || []).filter(
+        (a) => a.severity === "error" || a.severity === "critical"
+      ).length;
+      const badConnectors = (data?.connectors || []).filter(
+        (c) => c.status === "error" || c.status === "offline" || c.status === "degraded"
+      ).length;
+      const hasItems = pendingApprovals > 0 || blocked > 0 || criticalAlerts > 0 || badConnectors > 0;
+      if (!hasItems) {
+        panel.style.display = "none";
+        return;
+      }
+      panel.style.display = "";
+      const status = data?.summary?.status ?? "watch";
+      const badge = document.getElementById("attentionStatusBadge");
+      if (badge) {
+        badge.className = `${badgeClass(status)} mono`;
+        badge.textContent = translateEnum(status);
+      }
+      const items = [];
+      if (pendingApprovals > 0) items.push({ key: "section.pending_approvals", fallback: "承認待ち", count: pendingApprovals, tone: "warn" });
+      if (blocked > 0) items.push({ key: "section.blocked_tasks", fallback: "ブロック中", count: blocked, tone: "warn" });
+      if (criticalAlerts > 0) items.push({ key: "section.alerts", fallback: "アラート", count: criticalAlerts, tone: "danger" });
+      if (badConnectors > 0) items.push({ key: "section.connector_health", fallback: "コネクタ", count: badConnectors, tone: criticalAlerts > 0 ? "danger" : "warn" });
+      const strip = document.getElementById("attentionStrip");
+      if (strip) {
+        strip.innerHTML = items.map((item) => `
+          <div class="attention-item">
+            <span class="badge ${escapeHtml(item.tone)} mono">${escapeHtml(String(item.count))}</span>
+            <span class="copy" style="font-size:13px">${escapeHtml(t(item.key, item.fallback))}</span>
+          </div>
+        `).join("");
+      }
+    }
+
+    function renderRunsSummaryCard(health) {
+      const statusEl = document.getElementById("runsSummaryStatus");
+      const countsEl = document.getElementById("runsCounts");
+      if (!statusEl || !countsEl) return;
+      if (!health) {
+        statusEl.textContent = t("status.runs_unavailable", "実行状態を取得できませんでした。");
+        statusEl.className = "copy";
+        countsEl.innerHTML = "";
+        return;
+      }
+      const runs = health.runs_today || {};
+      const overallStatus = health.overall_status || "ok";
+      const failed = runs.failed ?? 0;
+      statusEl.className = `copy${overallStatus === "error" ? " danger" : overallStatus === "degraded" ? " warn" : ""}`;
+      statusEl.textContent = translateEnum(overallStatus);
+      countsEl.innerHTML = [
+        ["runs.done", "done", runs.done ?? 0, ""],
+        ["runs.failed", "failed", runs.failed ?? 0, failed > 0 ? "is-danger" : ""],
+        ["runs.running", "running", runs.running ?? 0, ""],
+        ["runs.queued", "queued", runs.queued ?? 0, ""],
+        ["runs.total", "total", runs.total ?? 0, ""],
+      ].map(([key, fallback, val, cls]) => `
+        <div class="run-count-item">
+          <div class="run-count-value${cls ? ` ${escapeHtml(cls)}` : ""}">${escapeHtml(String(val))}</div>
+          <div class="run-count-label">${escapeHtml(t(key, fallback))}</div>
+        </div>
+      `).join("");
+    }
+
     async function refreshAssetAuthStatus() {
       try {
         const data = await fetchJson("/assets/auth/status");
@@ -1938,8 +2069,15 @@ manager カードの補足に使います。</div>
       state.renderInFlight = (async () => {
       const snapshot = captureRenderState();
       try {
-        const data = await loadInternalState();
+        // Fetch internal state and health in parallel; health is best-effort
+        const [stateRes, healthRes] = await Promise.allSettled([
+          loadInternalState(),
+          loadHealthData(),
+        ]);
+        if (stateRes.status === "rejected") throw stateRes.reason;
+        const data = stateRes.value;
         state.internal = data;
+        if (healthRes.status === "fulfilled") state.health = healthRes.value;
         if (!state.selectedDetail) {
           const queryDetail = detailQueryState();
           if (queryDetail.kind && queryDetail.key) state.selectedDetail = queryDetail;
@@ -1967,6 +2105,8 @@ manager カードの補足に使います。</div>
         renderIntake(data.intake);
         renderPolicies(data.policies);
         renderDetailPane();
+        renderNeedsAttention(state.internal);
+        renderRunsSummaryCard(state.health);
         await refreshAssetAuthStatus();
       } catch (error) {
         const targets = ["rolesList", "activityList", "routingList", "assetsList", "agentsList", "intakeList", "policyList", "blockedList", "approvalList", "failedList", "connectorList", "completedList", "alertList"];
@@ -1974,6 +2114,8 @@ manager カードの補足に使います。</div>
         renderSummary({});
         state.selectedDetail = null;
         renderDetailPane();
+        renderNeedsAttention(null);
+        renderRunsSummaryCard(state.health);
         document.getElementById("gatewayStatus").textContent = translateEnum("error");
         document.getElementById("gatewayDetail").textContent = error.message || t("error.failed_internal_state", "Failed to load internal state.");
       } finally {
