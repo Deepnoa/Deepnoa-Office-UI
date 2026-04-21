@@ -10,6 +10,7 @@ import math
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import threading
 from pathlib import Path
@@ -2148,7 +2149,6 @@ def api_internal_health():
                 date=today,
             )
         except Exception as _exc:
-            import sys
             print(f"[health] RunsAdapter.fetch_recent_json failed, falling back to file read: {_exc}", file=sys.stderr)
             today_runs = None
 
@@ -2275,7 +2275,6 @@ def api_internal_runs():
                 date=date_filter,
             )
         except Exception as _exc:
-            import sys
             print(f"[runs] RunsAdapter.fetch_recent_json failed, falling back to file read: {_exc}", file=sys.stderr)
             records = None
 
@@ -2307,7 +2306,6 @@ def api_internal_run_detail(run_id):
             rec = _RUNS_ADAPTER.fetch_detail_json(run_id)
             # fetch_detail_json returns None on 404 (run not found via gateway)
         except Exception as _exc:
-            import sys
             print(f"[run_detail] RunsAdapter.fetch_detail_json failed, falling back to file read: {_exc}", file=sys.stderr)
             rec = None
 
