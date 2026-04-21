@@ -384,5 +384,157 @@ class TestParseDetail(unittest.TestCase):
         self.assertIsNone(result["queued_date"])
 
 
+# ── fetch_recent_json / fetch_detail_json tests ────────────────────────────────
+
+_FULL_RUN_RECORD = {
+    "run_id": "run_20260420_081200_abc",
+    "requested_by": "U_TEST",
+    "kind": "health",
+    "status": "done",
+    "queued_at": "2026-04-20T08:12:00Z",
+    "started_at": "2026-04-20T08:12:01Z",
+    "done_at": "2026-04-20T08:13:20Z",
+    "result": {
+        "summary": "All systems healthy.",
+        "key_points": ["CPU ok", "Memory ok"],
+        "exit_code": 0,
+    },
+    "error": None,
+    "retry_of": None,
+    "retry_count": 0,
+}
+
+
+def _mock_json_list_response(runs: list) -> MagicMock:
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {"ok": True, "runs": runs, "total": len(runs)}
+    resp.raise_for_status.return_value = None
+    return resp
+
+
+def _mock_json_detail_response(run: dict) -> MagicMock:
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {"ok": True, "run": run}
+    resp.raise_for_status.return_value = None
+    return resp
+
+
+def _mock_404_response() -> MagicMock:
+    resp = MagicMock()
+    resp.status_code = 404
+    exc = _requests_lib_module().exceptions.HTTPError(response=resp) if False else MagicMock()
+    # Build a real-ish HTTPError with response attached
+    import requests as _r
+    http_exc = _r.exceptions.HTTPError()
+    http_exc.response = MagicMock()
+    http_exc.response.status_code = 404
+    resp.raise_for_status.side_effect = http_exc
+    return resp
+
+
+class TestFetchRecentJson(unittest.TestCase):
+
+    @patch("services.source_adapters._requests_lib")
+    def test_returns_list_of_records(self, mock_req: MagicMock) -> None:
+        mock_req.get.return_value = _mock_json_list_response([_FULL_RUN_RECORD])
+        result = _make_adapter().fetch_recent_json()
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["run_id"], "run_20260420_081200_abc")
+
+    @patch("services.source_adapters._requests_lib")
+    def test_url_contains_format_json(self, mock_req: MagicMock) -> None:
+        mock_req.get.return_value = _mock_json_list_response([])
+        _make_adapter().fetch_recent_json()
+        url: str = mock_req.get.call_args[0][0]
+        self.assertIn("format=json", url)
+        self.assertIn("mode=list", url)
+
+    @patch("services.source_adapters._requests_lib")
+    def test_limit_param_forwarded(self, mock_req: MagicMock) -> None:
+        mock_req.get.return_value = _mock_json_list_response([])
+        _make_adapter().fetch_recent_json(limit=7)
+        url: str = mock_req.get.call_args[0][0]
+        self.assertIn("limit=7", url)
+
+    @patch("services.source_adapters._requests_lib")
+    def test_status_param_forwarded(self, mock_req: MagicMock) -> None:
+        mock_req.get.return_value = _mock_json_list_response([])
+        _make_adapter().fetch_recent_json(status="failed")
+        url: str = mock_req.get.call_args[0][0]
+        self.assertIn("status=failed", url)
+
+    @patch("services.source_adapters._requests_lib")
+    def test_date_param_forwarded(self, mock_req: MagicMock) -> None:
+        mock_req.get.return_value = _mock_json_list_response([])
+        _make_adapter().fetch_recent_json(date="2026-04-20")
+        url: str = mock_req.get.call_args[0][0]
+        self.assertIn("date=2026-04-20", url)
+
+    @patch("services.source_adapters._requests_lib")
+    def test_no_status_no_date_omits_params(self, mock_req: MagicMock) -> None:
+        mock_req.get.return_value = _mock_json_list_response([])
+        _make_adapter().fetch_recent_json()
+        url: str = mock_req.get.call_args[0][0]
+        self.assertNotIn("status=", url)
+        self.assertNotIn("date=", url)
+
+    @patch("services.source_adapters._requests_lib")
+    def test_empty_runs_returns_empty_list(self, mock_req: MagicMock) -> None:
+        mock_req.get.return_value = _mock_json_list_response([])
+        result = _make_adapter().fetch_recent_json()
+        self.assertEqual(result, [])
+
+    @patch("services.source_adapters._requests_lib")
+    def test_full_record_fields_preserved(self, mock_req: MagicMock) -> None:
+        mock_req.get.return_value = _mock_json_list_response([_FULL_RUN_RECORD])
+        result = _make_adapter().fetch_recent_json()
+        rec = result[0]
+        self.assertEqual(rec["queued_at"], "2026-04-20T08:12:00Z")
+        self.assertEqual(rec["result"]["summary"], "All systems healthy.")
+        self.assertIsNone(rec["error"])
+
+
+class TestFetchDetailJson(unittest.TestCase):
+
+    @patch("services.source_adapters._requests_lib")
+    def test_returns_run_dict(self, mock_req: MagicMock) -> None:
+        mock_req.get.return_value = _mock_json_detail_response(_FULL_RUN_RECORD)
+        result = _make_adapter().fetch_detail_json("run_20260420_081200_abc")
+        self.assertIsNotNone(result)
+        self.assertEqual(result["run_id"], "run_20260420_081200_abc")
+
+    @patch("services.source_adapters._requests_lib")
+    def test_url_contains_format_json_and_mode_detail(self, mock_req: MagicMock) -> None:
+        mock_req.get.return_value = _mock_json_detail_response(_FULL_RUN_RECORD)
+        _make_adapter().fetch_detail_json("run_20260420_081200_abc")
+        url: str = mock_req.get.call_args[0][0]
+        self.assertIn("format=json", url)
+        self.assertIn("mode=detail", url)
+        self.assertIn("run_id=run_20260420_081200_abc", url)
+
+    @patch("services.source_adapters._requests_lib")
+    def test_not_found_returns_none(self, mock_req: MagicMock) -> None:
+        import requests as _r
+        http_exc = _r.exceptions.HTTPError()
+        http_exc.response = MagicMock()
+        http_exc.response.status_code = 404
+        mock_req.exceptions.HTTPError = _r.exceptions.HTTPError
+        resp = MagicMock()
+        resp.raise_for_status.side_effect = http_exc
+        mock_req.get.return_value = resp
+        result = _make_adapter().fetch_detail_json("run_notexist_000")
+        self.assertIsNone(result)
+
+    @patch("services.source_adapters._requests_lib")
+    def test_full_record_fields_preserved(self, mock_req: MagicMock) -> None:
+        mock_req.get.return_value = _mock_json_detail_response(_FULL_RUN_RECORD)
+        result = _make_adapter().fetch_detail_json("run_20260420_081200_abc")
+        self.assertEqual(result["started_at"], "2026-04-20T08:12:01Z")
+        self.assertEqual(result["done_at"], "2026-04-20T08:13:20Z")
+        self.assertEqual(result["result"]["key_points"], ["CPU ok", "Memory ok"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

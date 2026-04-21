@@ -238,6 +238,28 @@ class RunsAdapter:
         data: dict = resp.json()
         return data.get("text", "")
 
+    # ── Internal JSON call ─────────────────────────────────────────────────────
+
+    def _call_json(self, **params: str) -> dict:
+        """Call GET /plugins/run-viewer/runs?format=json&<params> and return parsed JSON.
+
+        Args:
+            **params: Query parameters merged with ``format=json``.
+
+        Returns:
+            Parsed JSON response dict.
+
+        Raises:
+            requests.HTTPError: On non-2xx gateway response.
+            requests.Timeout: When the gateway does not respond within
+                ``self._timeout`` seconds.
+        """
+        query = urllib.parse.urlencode({"format": "json", **params})
+        url = f"{self._base}/plugins/run-viewer/runs?{query}"
+        resp = _requests_lib.get(url, headers=self._headers, timeout=self._timeout)
+        resp.raise_for_status()
+        return resp.json()
+
     # ── Fetch methods ──────────────────────────────────────────────────────────
 
     def fetch_recent(self, limit: int = 10) -> str:
@@ -282,6 +304,70 @@ class RunsAdapter:
             Raw display text from the run-viewer plugin.
         """
         return self._call(run_id)
+
+    def fetch_recent_json(
+        self,
+        limit: int = 50,
+        status: str | None = None,
+        date: str | None = None,
+    ) -> list[dict]:
+        """Fetch recent run records as full structured JSON.
+
+        Calls ``GET /plugins/run-viewer/runs?format=json&mode=list`` and returns
+        actual run record dicts — the same shape stored in the run JSON files.
+        Prefer this over :meth:`fetch_recent` whenever the caller needs complete
+        field coverage (``queued_at``, ``result``, ``error``, ``retry_of``, …).
+
+        Args:
+            limit: Maximum number of records (default 50, hard-capped at 1000 by
+                the gateway).
+            status: If set, only return records with this ``status`` value
+                (``"done"`` / ``"failed"`` / ``"running"`` / ``"queued"`` /
+                ``"cancelled"``).
+            date: If set (``"YYYY-MM-DD"``), only scan that date directory.
+
+        Returns:
+            List of full run record dicts (may be empty).
+
+        Raises:
+            requests.HTTPError: On non-2xx gateway response.
+            requests.Timeout: On gateway timeout.
+        """
+        params: dict[str, str] = {"mode": "list", "limit": str(limit)}
+        if status:
+            params["status"] = status
+        if date:
+            params["date"] = date
+        data = self._call_json(**params)
+        runs = data.get("runs")
+        return runs if isinstance(runs, list) else []
+
+    def fetch_detail_json(self, run_id: str) -> dict | None:
+        """Fetch a single run record as full structured JSON.
+
+        Calls ``GET /plugins/run-viewer/runs?format=json&mode=detail&run_id=ID``.
+        Prefer this over :meth:`fetch_detail` whenever the caller needs complete
+        field coverage.
+
+        Args:
+            run_id: Run identifier (e.g. ``"run_20260420_081200_abc"``).
+
+        Returns:
+            Full run record dict, or ``None`` when the run does not exist
+            (gateway returns 404).
+
+        Raises:
+            requests.HTTPError: On non-2xx, non-404 gateway response.
+            requests.Timeout: On gateway timeout.
+        """
+        try:
+            data = self._call_json(mode="detail", run_id=run_id)
+            run = data.get("run")
+            return run if isinstance(run, dict) else None
+        except _requests_lib.exceptions.HTTPError as exc:
+            if exc.response is not None and exc.response.status_code == 404:
+                return None
+            raise
 
     # ── Parse hooks ────────────────────────────────────────────────────────────
 
