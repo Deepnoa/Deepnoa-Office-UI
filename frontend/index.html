@@ -362,6 +362,9 @@
       .hero-main, .hero-side, .section { padding: 18px; }
       .meta-grid { grid-template-columns: 1fr; }
     }
+    /* ── Standalone color modifiers (used with .copy etc.) ─────────────────── */
+    .danger { color: var(--danger); }
+    .warn { color: var(--warn); }
     /* ── Needs Attention panel ─────────────────────────────────────────────── */
     .attention-strip { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding-top: 4px; }
     .attention-item { display: flex; align-items: center; gap: 10px; }
@@ -371,6 +374,11 @@
     .run-count-value { font-size: 22px; font-weight: 700; line-height: 1.2; }
     .run-count-value.is-danger { color: var(--danger); }
     .run-count-label { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-top: 2px; }
+    /* ── Recent Failed Runs mini list ───────────────────────────────────────── */
+    .failed-runs-list { display: grid; gap: 8px; margin-top: 10px; }
+    .failed-run-item { padding: 10px 12px; border-radius: 12px; background: rgba(255,126,143,0.06); border: 1px solid rgba(255,126,143,0.16); }
+    .failed-run-item .run-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 4px; }
+    .failed-run-item .run-err { color: var(--muted); font-size: 12px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -414,6 +422,7 @@
           <div class="label mono" data-i18n="internal.today_runs">本日の実行</div>
           <div class="copy" id="runsSummaryStatus" data-i18n="status.runs_loading">読込中</div>
           <div class="runs-counts" id="runsCounts"></div>
+          <div class="failed-runs-list" id="recentFailedRunsList" style="display:none"></div>
           <a href="runs.html" class="footer-note mono" style="display:block; margin-top:10px" data-i18n="internal.runs_view_all">runs 一覧 →</a>
         </div>
       </div>
@@ -958,7 +967,9 @@ manager カードの補足に使います。</div>
         "runs.failed": "失敗",
         "runs.running": "実行中",
         "runs.queued": "待機",
-        "runs.total": "合計"
+        "runs.total": "合計",
+        "runs.recent_failures": "最近の失敗実行",
+        "runs.retry": "再試行"
       },
       en: {
         "page.title": "Deepnoa Internal View",
@@ -1050,7 +1061,9 @@ manager カードの補足に使います。</div>
         "runs.failed": "failed",
         "runs.running": "running",
         "runs.queued": "queued",
-        "runs.total": "total"
+        "runs.total": "total",
+        "runs.recent_failures": "Recent Failed Runs",
+        "runs.retry": "Retry"
       },
       zh: {
         "page.title": "Deepnoa 内部视图",
@@ -1293,7 +1306,9 @@ manager カードの補足に使います。</div>
         "runs.failed": "失败",
         "runs.running": "运行中",
         "runs.queued": "等待",
-        "runs.total": "合计"
+        "runs.total": "合计",
+        "runs.recent_failures": "最近失败执行",
+        "runs.retry": "重试"
       }
     };
     const DEFAULT_LANG = "ja";
@@ -1369,7 +1384,7 @@ manager カードの補足に使います。</div>
     };
     const ACTIVE_POLL_MS = 15000;
     const HIDDEN_POLL_MS = 60000;
-    const state = { internal: null, health: null, assetAuth: null, bgPollTimer: null, selectedDetail: null, renderTimer: null, renderInFlight: null, toastTimer: null };
+    const state = { internal: null, health: null, failedRuns: null, assetAuth: null, bgPollTimer: null, selectedDetail: null, renderTimer: null, renderInFlight: null, toastTimer: null };
 
     function detailItemKey(kind, item) {
       if (!item) return "";
@@ -1805,6 +1820,10 @@ manager カードの補足に使います。</div>
       return fetchJson("/api/internal/health");
     }
 
+    async function loadRecentFailedRuns() {
+      return fetchJson("/api/internal/runs?status=failed&limit=5");
+    }
+
     function renderNeedsAttention(data) {
       const panel = document.getElementById("needsAttentionPanel");
       if (!panel) return;
@@ -1871,6 +1890,51 @@ manager カードの補足に使います。</div>
           <div class="run-count-label">${escapeHtml(t(key, fallback))}</div>
         </div>
       `).join("");
+    }
+
+    function renderRecentFailedRuns(failedRuns) {
+      const container = document.getElementById("recentFailedRunsList");
+      if (!container) return;
+      const runs = Array.isArray(failedRuns?.runs) ? failedRuns.runs : [];
+      if (!runs.length) {
+        container.style.display = "none";
+        return;
+      }
+      const trunc = (s, n) => { const str = String(s == null ? "" : s); return str.length > n ? `${str.slice(0, n)}…` : str; };
+      const relTime = (iso) => {
+        if (!iso) return t("label.not_available", "n/a");
+        const ms = Date.now() - new Date(iso).getTime();
+        if (ms < 0 || Number.isNaN(ms)) return fmt(iso);
+        const sec = Math.floor(ms / 1000);
+        if (sec < 60) return `${sec}s`;
+        const min = Math.floor(sec / 60);
+        if (min < 60) return `${min}m`;
+        const hr = Math.floor(min / 60);
+        if (hr < 24) return `${hr}h`;
+        return `${Math.floor(hr / 24)}d`;
+      };
+      container.style.display = "";
+      container.innerHTML = `
+        <div class="label mono" style="margin-top:6px; margin-bottom:4px">${escapeHtml(t("runs.recent_failures", "最近の失敗実行"))}</div>
+        ${runs.map((run) => {
+          const shortId = escapeHtml(trunc(run.run_id, 12));
+          const kind = escapeHtml(run.kind || t("label.unknown", "?"));
+          const errMsg = escapeHtml(trunc((run.error || {}).message, 60));
+          const ago = escapeHtml(relTime(run.queued_at));
+          const isRetry = !!run.retry_of;
+          return `
+            <div class="failed-run-item">
+              <div class="run-meta">
+                <span class="mono" style="font-size:12px; color:var(--danger)">${shortId}</span>
+                <span class="mini-chip mono">${kind}</span>
+                ${isRetry ? `<span class="badge danger mono" style="font-size:10px; padding:3px 7px">${escapeHtml(t("runs.retry", "再試行"))}</span>` : ""}
+                <span class="sub" style="margin-left:auto; font-size:11px">${ago}</span>
+              </div>
+              ${errMsg ? `<div class="run-err">${errMsg}</div>` : ""}
+            </div>
+          `;
+        }).join("")}
+      `;
     }
 
     async function refreshAssetAuthStatus() {
@@ -2069,15 +2133,17 @@ manager カードの補足に使います。</div>
       state.renderInFlight = (async () => {
       const snapshot = captureRenderState();
       try {
-        // Fetch internal state and health in parallel; health is best-effort
-        const [stateRes, healthRes] = await Promise.allSettled([
+        // Fetch internal state, health, and recent failed runs in parallel; health and runs are best-effort
+        const [stateRes, healthRes, failedRunsRes] = await Promise.allSettled([
           loadInternalState(),
           loadHealthData(),
+          loadRecentFailedRuns(),
         ]);
         if (stateRes.status === "rejected") throw stateRes.reason;
         const data = stateRes.value;
         state.internal = data;
         if (healthRes.status === "fulfilled") state.health = healthRes.value;
+        if (failedRunsRes.status === "fulfilled") state.failedRuns = failedRunsRes.value;
         if (!state.selectedDetail) {
           const queryDetail = detailQueryState();
           if (queryDetail.kind && queryDetail.key) state.selectedDetail = queryDetail;
@@ -2107,6 +2173,7 @@ manager カードの補足に使います。</div>
         renderDetailPane();
         renderNeedsAttention(state.internal);
         renderRunsSummaryCard(state.health);
+        renderRecentFailedRuns(state.failedRuns);
         await refreshAssetAuthStatus();
       } catch (error) {
         const targets = ["rolesList", "activityList", "routingList", "assetsList", "agentsList", "intakeList", "policyList", "blockedList", "approvalList", "failedList", "connectorList", "completedList", "alertList"];
@@ -2116,6 +2183,7 @@ manager カードの補足に使います。</div>
         renderDetailPane();
         renderNeedsAttention(null);
         renderRunsSummaryCard(state.health);
+        renderRecentFailedRuns(state.failedRuns);
         document.getElementById("gatewayStatus").textContent = translateEnum("error");
         document.getElementById("gatewayDetail").textContent = error.message || t("error.failed_internal_state", "Failed to load internal state.");
       } finally {
