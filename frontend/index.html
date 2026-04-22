@@ -368,6 +368,14 @@
     /* ── Needs Attention panel ─────────────────────────────────────────────── */
     .attention-strip { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding-top: 4px; }
     .attention-item { display: flex; align-items: center; gap: 10px; }
+    button.attention-item {
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      text-align: left;
+    }
     /* ── Today's Runs counts ───────────────────────────────────────────────── */
     .runs-counts { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
     .run-count-item { display: flex; flex-direction: column; align-items: center; min-width: 38px; }
@@ -1854,19 +1862,32 @@ manager カードの補足に使います。</div>
         badge.textContent = translateEnum(status);
       }
       const items = [];
-      if (pendingApprovals > 0) items.push({ key: "section.pending_approvals", fallback: "承認待ち", count: pendingApprovals, tone: "warn" });
-      if (blocked > 0) items.push({ key: "section.blocked_tasks", fallback: "ブロック中", count: blocked, tone: "warn" });
-      if (criticalAlerts > 0) items.push({ key: "section.alerts", fallback: "アラート", count: criticalAlerts, tone: "danger" });
-      if (badConnectors > 0) items.push({ key: "section.connector_health", fallback: "コネクタ", count: badConnectors, tone: criticalAlerts > 0 ? "danger" : "warn" });
+      if (pendingApprovals > 0) items.push({ key: "section.pending_approvals", fallback: "承認待ち", count: pendingApprovals, tone: "warn", targetId: "approvalList" });
+      if (blocked > 0) items.push({ key: "section.blocked_tasks", fallback: "ブロック中", count: blocked, tone: "warn", targetId: "blockedList" });
+      if (criticalAlerts > 0) items.push({ key: "section.alerts", fallback: "アラート", count: criticalAlerts, tone: "danger", targetId: "alertList" });
+      if (badConnectors > 0) items.push({ key: "section.connector_health", fallback: "コネクタ", count: badConnectors, tone: criticalAlerts > 0 ? "danger" : "warn", targetId: "connectorList" });
       const strip = document.getElementById("attentionStrip");
       if (strip) {
         strip.innerHTML = items.map((item) => `
-          <div class="attention-item">
+          <button class="attention-item" type="button" data-attention-target="${escapeHtml(item.targetId)}">
             <span class="badge ${escapeHtml(item.tone)} mono">${escapeHtml(String(item.count))}</span>
             <span class="copy" style="font-size:13px">${escapeHtml(t(item.key, item.fallback))}</span>
-          </div>
+          </button>
         `).join("");
       }
+    }
+
+    function scrollToAttentionSection(targetId) {
+      const aliases = {
+        approvalsList: "approvalList",
+        alertsList: "alertList",
+        connectorsList: "connectorList",
+        blockedList: "blockedList"
+      };
+      const resolvedId = aliases[targetId] || targetId;
+      const target = document.getElementById(resolvedId);
+      if (!target) return;
+      target.scrollIntoView({ block: "start", behavior: "smooth" });
     }
 
     function renderRunsSummaryCard(health) {
@@ -2215,6 +2236,11 @@ manager カードの補足に使います。</div>
       button.addEventListener("click", () => setLanguage(button.dataset.langSwitch));
     }
     document.addEventListener("click", (event) => {
+      const attentionTrigger = event.target.closest("[data-attention-target]");
+      if (attentionTrigger) {
+        scrollToAttentionSection(attentionTrigger.dataset.attentionTarget);
+        return;
+      }
       const trigger = event.target.closest("[data-detail-kind][data-detail-key]");
       if (!trigger || !state.internal) return;
       const kind = trigger.dataset.detailKind;
