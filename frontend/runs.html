@@ -213,9 +213,9 @@
 <body>
   <nav>
     <span class="nav-logo">Deepnoa AI Office</span>
-    <a href="/runs" class="active">Runs</a>
-    <a href="/health">Health</a>
-    <a href="/internal">Internal</a>
+    <a id="nav-runs" href="/runs?lang=ja" class="active">Runs</a>
+    <a id="nav-health" href="/health?lang=ja">Health</a>
+    <a id="nav-internal" href="/internal?lang=ja">Internal</a>
   </nav>
 
   <main>
@@ -281,6 +281,24 @@
     const POLL_INTERVAL_MS = 10000;
     let pollTimer = null;
     let allRuns = [];
+    const currentLang = (() => {
+      const params = new URLSearchParams(window.location.search);
+      const candidate = String(params.get('lang') || document.documentElement.lang || 'ja').toLowerCase();
+      return candidate === 'en' || candidate === 'zh' || candidate === 'ja' ? candidate : 'ja';
+    })();
+
+    function withLang(path) {
+      const url = new URL(path, window.location.origin);
+      url.searchParams.set('lang', currentLang);
+      return `${url.pathname}${url.search}${url.hash}`;
+    }
+
+    function syncNavLinks() {
+      document.documentElement.lang = currentLang;
+      document.getElementById('nav-runs').href = withLang('/runs');
+      document.getElementById('nav-health').href = withLang('/health');
+      document.getElementById('nav-internal').href = withLang('/internal');
+    }
 
     function statusBadge(status) {
       const icons = { queued: '⏳', running: '🔄', done: '✅', failed: '❌', cancelled: '⛔' };
@@ -339,7 +357,7 @@
         const truncated = summary.length > 60 ? summary.slice(0, 60) + '…' : summary;
         return `<tr>
           <td>${statusBadge(rec.status)}</td>
-          <td><a class="run-link" href="/runs/${rec.run_id}">${rec.run_id}</a></td>
+          <td><a class="run-link" href="${withLang(`/runs/${encodeURIComponent(rec.run_id)}`)}">${rec.run_id}</a></td>
           <td><span class="kind-badge">${rec.kind}</span></td>
           <td style="font-size:12px;color:var(--muted)">${getRequestedBy(rec)}</td>
           <td style="font-size:12px;font-family:'IBM Plex Mono',monospace;white-space:nowrap">${formatTime(rec.queued_at)}</td>
@@ -395,6 +413,7 @@
 
     document.getElementById('filter-status').addEventListener('change', applyFilter);
 
+    syncNavLinks();
     fetchRuns().then(schedulePoll);
   </script>
 </body>
