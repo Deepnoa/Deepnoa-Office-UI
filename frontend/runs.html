@@ -300,6 +300,10 @@
       document.getElementById('nav-internal').href = withLang('/internal');
     }
 
+    const initialParams = new URLSearchParams(window.location.search);
+    const initialStatusFilter = initialParams.get('status') || '';
+    const initialKindFilter = initialParams.get('kind') || '';
+
     function statusBadge(status) {
       const icons = { queued: '⏳', running: '🔄', done: '✅', failed: '❌', cancelled: '⛔' };
       const icon = icons[status] || '?';
@@ -378,7 +382,12 @@
 
     function applyFilter() {
       const status = document.getElementById('filter-status').value;
-      renderRows(status ? allRuns.filter(r => r.status === status) : allRuns);
+      const filteredRuns = allRuns.filter((run) => {
+        if (status && run.status !== status) return false;
+        if (initialKindFilter && run.kind !== initialKindFilter) return false;
+        return true;
+      });
+      renderRows(filteredRuns);
     }
 
     async function fetchRuns() {
@@ -414,6 +423,7 @@
     document.getElementById('filter-status').addEventListener('change', applyFilter);
 
     syncNavLinks();
+    if (initialStatusFilter) document.getElementById('filter-status').value = initialStatusFilter;
     fetchRuns().then(schedulePoll);
   </script>
 </body>
