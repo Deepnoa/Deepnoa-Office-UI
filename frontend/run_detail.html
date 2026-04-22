@@ -79,6 +79,12 @@
       margin-bottom: 24px;
       flex-wrap: wrap;
     }
+    .page-header-links {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: auto;
+    }
     .page-header h1 {
       font-size: 16px;
       font-weight: 700;
@@ -334,6 +340,9 @@
     <div id="content" style="display:none">
 
       <div class="page-header">
+        <div class="page-header-links">
+          <a id="back-to-office-link" class="back-link" href="/internal?lang=ja">← Back to AIOffice</a>
+        </div>
         <h1 id="hdr-run-id"></h1>
         <span id="hdr-status"></span>
         <button class="btn-retry" id="btn-retry" style="display:none" onclick="retryRun()">
@@ -500,6 +509,17 @@
       if (el) el.style.display = 'none';
     }
 
+    function currentLang() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('lang') || document.documentElement.lang || 'ja';
+    }
+
+    function updateBackToOfficeLink() {
+      const link = document.getElementById('back-to-office-link');
+      if (!link) return;
+      link.href = `/internal?lang=${encodeURIComponent(currentLang())}`;
+    }
+
     function render(rec) {
       _currentRunId = rec.run_id;
 
@@ -601,6 +621,7 @@
       }
     }
 
+    updateBackToOfficeLink();
     load();
   </script>
 </body>
