@@ -59,6 +59,7 @@ FRONTEND_ELECTRON_STANDALONE_FILE = os.path.join(FRONTEND_DIR, "electron-standal
 FRONTEND_RUNS_FILE = os.path.join(FRONTEND_DIR, "runs.html")
 FRONTEND_RUN_DETAIL_FILE = os.path.join(FRONTEND_DIR, "run_detail.html")
 FRONTEND_HEALTH_FILE = os.path.join(FRONTEND_DIR, "health.html")
+FRONTEND_DASHBOARD_FILE = os.path.join(FRONTEND_DIR, "dashboard.html")
 STATE_FILE = os.path.join(ROOT_DIR, "state.json")
 MANAGER_STATE_FILE = os.path.join(ROOT_DIR, "manager-state.json")
 AGENTS_STATE_FILE = os.path.join(ROOT_DIR, "agents-state.json")
@@ -2056,6 +2057,14 @@ def agent_push():
         return jsonify({"ok": True, "agentId": agent_id, "area": target.get("area")})
     except Exception as e:
         return jsonify({"ok": False, "msg": str(e)}), 500
+
+
+@app.route("/dashboard", methods=["GET"])
+def dashboard_page():
+    """Serve the executive dashboard page."""
+    with open(FRONTEND_DASHBOARD_FILE, "r", encoding="utf-8") as f:
+        content = f.read()
+    return make_response(content, 200, {"Content-Type": "text/html; charset=utf-8"})
 
 
 @app.route("/health", methods=["GET"])
