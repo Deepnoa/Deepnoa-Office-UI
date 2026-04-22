@@ -434,7 +434,7 @@
           <div class="copy" id="runsSummaryStatus" data-i18n="status.runs_loading">読込中</div>
           <div class="runs-counts" id="runsCounts"></div>
           <div class="failed-runs-list" id="recentFailedRunsList" style="display:none"></div>
-          <a href="runs.html" class="footer-note mono" style="display:block; margin-top:10px" data-i18n="internal.runs_view_all">runs 一覧 →</a>
+          <a href="/runs?lang=ja" id="runsViewAllLink" class="footer-note mono" style="display:block; margin-top:10px" data-i18n="internal.runs_view_all">runs 一覧 →</a>
         </div>
       </div>
     </section>
@@ -1341,6 +1341,11 @@ manager カードの補足に使います。</div>
     };
     let currentLang = resolveLang();
     const t = (key, fallback = "") => I18N[currentLang]?.[key] || fallback || I18N.en?.[key] || key;
+    const withLang = (path) => {
+      const url = new URL(path, window.location.origin);
+      url.searchParams.set("lang", currentLang);
+      return `${url.pathname}${url.search}${url.hash}`;
+    };
     const detailQueryState = () => {
       const params = new URLSearchParams(window.location.search);
       return {
@@ -1366,6 +1371,8 @@ manager カードの補足に使います。</div>
     function applyI18n() {
       document.documentElement.lang = currentLang;
       document.title = t("page.title", "Deepnoa Internal View");
+      const runsViewAllLink = document.getElementById("runsViewAllLink");
+      if (runsViewAllLink) runsViewAllLink.href = withLang("/runs");
       for (const node of document.querySelectorAll("[data-i18n]")) {
         node.textContent = t(node.dataset.i18n, node.textContent);
       }
@@ -1946,7 +1953,7 @@ manager カードの補足に使います。</div>
         ${runs.map((run) => {
           const shortId = escapeHtml(trunc(run.run_id, 12));
           const fullId = escapeHtml(run.run_id || "");
-          const runDetailHref = `/runs/${encodeURIComponent(run.run_id || "")}`;
+          const runDetailHref = withLang(`/runs/${encodeURIComponent(run.run_id || "")}`);
           const kind = escapeHtml(run.kind || t("label.unknown", "?"));
           const errMsg = escapeHtml(trunc((run.error || {}).message, 60));
           const ago = escapeHtml(relTime(run.queued_at));
