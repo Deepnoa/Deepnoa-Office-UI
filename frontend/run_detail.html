@@ -327,13 +327,13 @@
 <body>
   <nav>
     <span class="nav-logo">Deepnoa AI Office</span>
-    <a href="/runs" class="active">Runs</a>
-    <a href="/health">Health</a>
-    <a href="/internal">Internal</a>
+    <a id="nav-runs" href="/runs?lang=ja" class="active">Runs</a>
+    <a id="nav-health" href="/health?lang=ja">Health</a>
+    <a id="nav-internal" href="/internal?lang=ja">Internal</a>
   </nav>
 
   <main>
-    <a href="/runs" class="back-link">← Run List</a>
+    <a id="back-to-runs-link" href="/runs?lang=ja" class="back-link">← Run List</a>
 
     <div id="loading" class="loading-state">読込中…</div>
     <div id="error-state" class="error-state" style="display:none"></div>
@@ -450,7 +450,7 @@
         showToast(`受付しました: ${data.run_id}`, 'success');
         // Navigate to the new run after a short delay
         setTimeout(() => {
-          window.location.href = `/runs/${encodeURIComponent(data.run_id)}`;
+          window.location.href = withLang(`/runs/${encodeURIComponent(data.run_id)}`);
         }, 900);
       } catch (err) {
         showToast(`再実行エラー: ${esc(err.message)}`, 'error');
@@ -514,10 +514,24 @@
       return params.get('lang') || document.documentElement.lang || 'ja';
     }
 
+    function withLang(path) {
+      const url = new URL(path, window.location.origin);
+      url.searchParams.set('lang', currentLang());
+      return `${url.pathname}${url.search}${url.hash}`;
+    }
+
     function updateBackToOfficeLink() {
-      const link = document.getElementById('back-to-office-link');
-      if (!link) return;
-      link.href = `/internal?lang=${encodeURIComponent(currentLang())}`;
+      document.documentElement.lang = currentLang();
+      const backToOfficeLink = document.getElementById('back-to-office-link');
+      if (backToOfficeLink) backToOfficeLink.href = withLang('/internal');
+      const backToRunsLink = document.getElementById('back-to-runs-link');
+      if (backToRunsLink) backToRunsLink.href = withLang('/runs');
+      const navRunsLink = document.getElementById('nav-runs');
+      if (navRunsLink) navRunsLink.href = withLang('/runs');
+      const navHealthLink = document.getElementById('nav-health');
+      if (navHealthLink) navHealthLink.href = withLang('/health');
+      const navInternalLink = document.getElementById('nav-internal');
+      if (navInternalLink) navInternalLink.href = withLang('/internal');
     }
 
     function render(rec) {
@@ -552,7 +566,7 @@
       if (rec.retry_of) {
         show('lbl-retry-of');
         show('meta-retry-of');
-        set('meta-retry-of', `<a class="meta-run-link" href="/runs/${encodeURIComponent(rec.retry_of)}">${esc(rec.retry_of)}</a>`);
+        set('meta-retry-of', `<a class="meta-run-link" href="${withLang(`/runs/${encodeURIComponent(rec.retry_of)}`)}">${esc(rec.retry_of)}</a>`);
       }
       if (rec.retry_count != null && rec.retry_count > 0) {
         show('lbl-retry-count');
