@@ -134,7 +134,7 @@
       gap: 8px 16px;
     }
     .meta-label {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--muted);
       font-family: "IBM Plex Mono", monospace;
       padding-top: 1px;
@@ -313,6 +313,21 @@
     .toast-success { border-color: rgba(130,242,203,0.4); color: var(--accent); }
     .toast-error   { border-color: rgba(255,122,122,0.4); color: var(--danger); }
     .toast-hidden  { opacity: 0; pointer-events: none; }
+
+    /* Result / Error card emphasis — outcome cards visually dominate context cards */
+    #card-result {
+      border-color: rgba(130,242,203,0.24);
+      background: rgba(130,242,203,0.04);
+      margin-top: 28px;
+    }
+    #card-result .card-title { color: var(--accent); }
+
+    #card-error {
+      border-color: rgba(255,122,122,0.32);
+      background: rgba(255,122,122,0.06);
+      margin-top: 28px;
+    }
+    #card-error .card-title { color: var(--danger); }
 
     /* retry_of link in meta */
     .meta-run-link {
