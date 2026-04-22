@@ -257,9 +257,10 @@
     Deepnoa AI Office
   </div>
 
-  <a class="nav-tab active" href="#" id="navDashboard" data-i18n="nav.dashboard">ダッシュボード</a>
+  <a class="nav-tab active" href="/dashboard" id="navDashboard" data-i18n="nav.dashboard">ダッシュボード</a>
   <a class="nav-tab" id="navInternal" data-i18n="nav.internal">Internal</a>
   <a class="nav-tab" id="navRuns" data-i18n="nav.runs">Runs</a>
+  <a class="nav-tab" id="navHealth" data-i18n="nav.health">Health</a>
 
   <div class="nav-spacer"></div>
 
@@ -512,11 +513,15 @@
       btn.classList.toggle("active", btn.dataset.langSwitch === currentLang);
     }
     // Nav links
+    const navDashboard = document.getElementById("navDashboard");
     const navInternal = document.getElementById("navInternal");
     const navRuns = document.getElementById("navRuns");
+    const navHealth = document.getElementById("navHealth");
     const runsViewAll = document.getElementById("runsViewAll");
+    if (navDashboard) navDashboard.href = withLang("/dashboard");
     if (navInternal) navInternal.href = withLang("/internal");
     if (navRuns) navRuns.href = withLang("/runs");
+    if (navHealth) navHealth.href = withLang("/health");
     if (runsViewAll) runsViewAll.href = withLang("/runs");
   }
 
