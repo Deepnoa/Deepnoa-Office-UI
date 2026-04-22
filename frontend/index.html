@@ -384,7 +384,21 @@
     .run-count-label { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-top: 2px; }
     /* ── Recent Failed Runs mini list ───────────────────────────────────────── */
     .failed-runs-list { display: grid; gap: 8px; margin-top: 10px; }
-    .failed-run-item { padding: 10px 12px; border-radius: 12px; background: rgba(255,126,143,0.06); border: 1px solid rgba(255,126,143,0.16); }
+    .failed-run-item {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,126,143,0.06);
+      border: 1px solid rgba(255,126,143,0.16);
+      cursor: pointer;
+      transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+    }
+    .failed-run-item:hover,
+    .failed-run-item:focus-visible {
+      background: rgba(255,126,143,0.1);
+      border-color: rgba(255,126,143,0.28);
+      outline: none;
+      transform: translateY(-1px);
+    }
     .failed-run-item .run-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 4px; }
     .failed-run-link { color: var(--danger); text-decoration: none; }
     .failed-run-link:hover,
@@ -1959,9 +1973,9 @@ manager カードの補足に使います。</div>
           const ago = escapeHtml(relTime(run.queued_at));
           const isRetry = !!run.retry_of;
           return `
-            <div class="failed-run-item">
+            <div class="failed-run-item" data-run-href="${runDetailHref}" role="link" tabindex="0">
               <div class="run-meta">
-                <a class="mono failed-run-link" style="font-size:12px" href="${runDetailHref}" target="_blank" rel="noopener noreferrer" title="${fullId}">${shortId}</a>
+                <a class="mono failed-run-link" style="font-size:12px" href="${runDetailHref}" title="${fullId}">${shortId}</a>
                 <span class="mini-chip mono">${kind}</span>
                 ${isRetry ? `<span class="badge danger mono" style="font-size:10px; padding:3px 7px">${escapeHtml(t("runs.retry", "再試行"))}</span>` : ""}
                 <span class="sub" style="margin-left:auto; font-size:11px">${ago}</span>
@@ -2243,6 +2257,16 @@ manager カードの補足に使います。</div>
       button.addEventListener("click", () => setLanguage(button.dataset.langSwitch));
     }
     document.addEventListener("click", (event) => {
+      const failedRunLink = event.target.closest(".failed-run-link");
+      if (failedRunLink) {
+        event.stopPropagation();
+        return;
+      }
+      const failedRunItem = event.target.closest("[data-run-href]");
+      if (failedRunItem) {
+        window.location.href = failedRunItem.dataset.runHref;
+        return;
+      }
       const attentionTrigger = event.target.closest("[data-attention-target]");
       if (attentionTrigger) {
         scrollToAttentionSection(attentionTrigger.dataset.attentionTarget);
@@ -2262,6 +2286,13 @@ manager カードの補足に使います。</div>
       setSelectedDetail(kind, item);
       if (window.innerWidth > 1120) return;
       document.getElementById("detailPanelShell")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      const failedRunItem = event.target.closest("[data-run-href]");
+      if (!failedRunItem) return;
+      event.preventDefault();
+      window.location.href = failedRunItem.dataset.runHref;
     });
     document.getElementById("detailCloseButton").addEventListener("click", closeDetailPane);
     document.getElementById("detailBackdrop").addEventListener("click", closeDetailPane);
