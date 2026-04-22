@@ -155,14 +155,22 @@
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 18px;
       background: rgba(255,255,255,0.03);
-      padding: 16px;
+      padding: 18px 20px;
+      transition: transform .15s, border-color .2s;
     }
+    .metric-card:hover { transform: translateY(-1px); border-color: rgba(128,168,225,0.28); }
+    .metric-card.is-warn { border-color: rgba(255,201,119,0.25); background: rgba(255,201,119,0.05); }
+    .metric-card.is-danger { border-color: rgba(255,126,143,0.25); background: rgba(255,126,143,0.05); }
     .metric-value {
-      font-size: 30px;
+      font-size: 44px;
       font-weight: 700;
-      margin-bottom: 6px;
+      line-height: 1;
+      margin-bottom: 4px;
     }
-    .metric-sub { color: #d0def3; font-size: 13px; }
+    .metric-value.ok { color: var(--text); }
+    .metric-value.warn { color: var(--warn); }
+    .metric-value.danger { color: var(--danger); }
+    .metric-sub { color: var(--muted); font-size: 11px; }
     .route-list, .policy-list, .mini-list { display: grid; gap: 10px; }
     .mini-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
     .mini-chip {
@@ -995,7 +1003,9 @@ manager カードの補足に使います。</div>
         "runs.queued": "待機",
         "runs.total": "合計",
         "runs.recent_failures": "最近の失敗実行",
-        "runs.retry": "再試行"
+        "runs.retry": "再試行",
+        "attention.all_clear": "全て正常",
+        "attention.no_items": "承認待ち・ブロック・アラートなし"
       },
       en: {
         "page.title": "Deepnoa Internal View",
@@ -1090,7 +1100,9 @@ manager カードの補足に使います。</div>
         "runs.queued": "queued",
         "runs.total": "total",
         "runs.recent_failures": "Recent Failed Runs",
-        "runs.retry": "Retry"
+        "runs.retry": "Retry",
+        "attention.all_clear": "All Clear",
+        "attention.no_items": "No approvals, blocks, or alerts"
       },
       zh: {
         "page.title": "Deepnoa 内部视图",
@@ -1336,7 +1348,9 @@ manager カードの補足に使います。</div>
         "runs.queued": "等待",
         "runs.total": "合计",
         "runs.recent_failures": "最近失败执行",
-        "runs.retry": "重试"
+        "runs.retry": "重试",
+        "attention.all_clear": "全部正常",
+        "attention.no_items": "无待审批・阻塞・告警"
       }
     };
     const DEFAULT_LANG = "ja";
@@ -1634,12 +1648,26 @@ manager カードの補足に使います。</div>
     }
 
     function renderSummary(summary) {
-      document.getElementById("summaryActiveAgents").textContent = String(summary?.active_agents ?? 0);
-      document.getElementById("summaryActiveTasks").textContent = String(summary?.active_tasks ?? 0);
-      document.getElementById("summaryBlocked").textContent = String(summary?.blocked ?? 0);
-      document.getElementById("summaryApproval").textContent = String(summary?.awaiting_approval ?? 0);
-      document.getElementById("summaryDoneToday").textContent = String(summary?.done_today ?? 0);
-      document.getElementById("summaryAlerts").textContent = String(summary?.alerts ?? 0);
+      function setMetric(id, value, tone) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = String(value ?? 0);
+        el.className = `metric-value${tone === "warn" ? " warn" : tone === "danger" ? " danger" : " ok"}`;
+        const card = el.closest(".metric-card");
+        if (card) {
+          card.classList.toggle("is-warn", tone === "warn");
+          card.classList.toggle("is-danger", tone === "danger");
+        }
+      }
+      const blocked = summary?.blocked ?? 0;
+      const approval = summary?.awaiting_approval ?? 0;
+      const alerts = summary?.alerts ?? 0;
+      setMetric("summaryActiveAgents", summary?.active_agents ?? 0, "ok");
+      setMetric("summaryActiveTasks", summary?.active_tasks ?? 0, "ok");
+      setMetric("summaryBlocked", blocked, blocked > 0 ? "warn" : "ok");
+      setMetric("summaryApproval", approval, approval > 0 ? "warn" : "ok");
+      setMetric("summaryDoneToday", summary?.done_today ?? 0, "ok");
+      setMetric("summaryAlerts", alerts, alerts > 0 ? "danger" : "ok");
     }
 
     function renderDetailPane() {
@@ -1862,6 +1890,11 @@ manager カードの補足に使います。</div>
     function renderNeedsAttention(data) {
       const panel = document.getElementById("needsAttentionPanel");
       if (!panel) return;
+      // null means render failed entirely — keep panel hidden until data is available
+      if (data === null) {
+        panel.style.display = "none";
+        return;
+      }
       const pendingApprovals = (data?.approvals || []).length;
       const blocked = (data?.blocked || []).length;
       const criticalAlerts = (data?.alerts || []).filter(
@@ -1871,13 +1904,26 @@ manager カードの補足に使います。</div>
         (c) => c.status === "error" || c.status === "offline" || c.status === "degraded"
       ).length;
       const hasItems = pendingApprovals > 0 || blocked > 0 || criticalAlerts > 0 || badConnectors > 0;
+      panel.style.display = "";  // always visible when data is available
+      const badge = document.getElementById("attentionStatusBadge");
+      const strip = document.getElementById("attentionStrip");
       if (!hasItems) {
-        panel.style.display = "none";
+        // "All clear" — quiet positive state
+        if (badge) {
+          badge.className = "badge mono";  // default badge = accent/green
+          badge.textContent = t("attention.all_clear", "全て正常");
+        }
+        if (strip) {
+          strip.innerHTML = `
+            <div class="attention-item">
+              <span class="badge mono" style="font-size:15px; padding:5px 10px">✓</span>
+              <span class="copy" style="font-size:13px; color:var(--muted)">${escapeHtml(t("attention.no_items", "承認待ち・ブロック・アラートなし"))}</span>
+            </div>
+          `;
+        }
         return;
       }
-      panel.style.display = "";
       const status = data?.summary?.status ?? "watch";
-      const badge = document.getElementById("attentionStatusBadge");
       if (badge) {
         badge.className = `${badgeClass(status)} mono`;
         badge.textContent = translateEnum(status);
@@ -1887,7 +1933,6 @@ manager カードの補足に使います。</div>
       if (blocked > 0) items.push({ key: "section.blocked_tasks", fallback: "ブロック中", count: blocked, tone: "warn", targetId: "blockedList" });
       if (criticalAlerts > 0) items.push({ key: "section.alerts", fallback: "アラート", count: criticalAlerts, tone: "danger", targetId: "alertList" });
       if (badConnectors > 0) items.push({ key: "section.connector_health", fallback: "コネクタ", count: badConnectors, tone: criticalAlerts > 0 ? "danger" : "warn", targetId: "connectorList" });
-      const strip = document.getElementById("attentionStrip");
       if (strip) {
         strip.innerHTML = items.map((item) => `
           <button class="attention-item" type="button" data-attention-target="${escapeHtml(item.targetId)}">
