@@ -611,7 +611,7 @@
 
     const approvals  = (data?.approvals  || []);
     const blocked    = (data?.blocked    || []);
-    const alerts     = (data?.alerts     || []).filter(a => a.severity === "error" || a.severity === "critical" || !a.severity);
+    const alerts     = (data?.alerts     || []).filter(a => a.severity === "error" || a.severity === "critical");
     const badConns   = (data?.connectors || []).filter(c => ["error","offline","degraded"].includes(c.status));
 
     const items = [
@@ -658,7 +658,7 @@
 
     const approvals = (data?.approvals || []).length;
     const blocked   = (data?.blocked   || []).length;
-    const alerts    = (data?.alerts    || []).filter(a => a.severity === "error" || a.severity === "critical" || !a.severity).length;
+    const alerts    = (data?.alerts    || []).filter(a => a.severity === "error" || a.severity === "critical").length;
     const total     = approvals + blocked + alerts;
 
     if (!total) { banner.style.display = "none"; return; }
@@ -680,7 +680,7 @@
     const span = document.getElementById("navStatusText");
     if (!dot || !span) return;
     const approvals = (data?.approvals || []).length;
-    const alerts    = (data?.alerts    || []).filter(a => a.severity === "error" || a.severity === "critical" || !a.severity).length;
+    const alerts    = (data?.alerts    || []).filter(a => a.severity === "error" || a.severity === "critical").length;
     const isCrit = approvals > 0 || alerts > 0;
     dot.className  = `sdot ${isCrit ? "crit" : "ok"}`;
     span.textContent = t(isCrit ? "status.crit" : "status.ok");
