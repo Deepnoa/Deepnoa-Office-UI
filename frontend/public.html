@@ -825,7 +825,7 @@
         "public.system_health": "システム健全性",
         "public.health_detail": "接続システムと公開安全なテレメトリのみを表示します。",
         "public.ai_teams_now": "AI teams now",
-        "public.ai_teams_now_sub": "Deepnoa の公開チームと現在状態をひと目で確認できます。",
+        "public.ai_teams_now_sub": "公開向けの役割と今の動きを、やさしく確認できます。",
         "public.recent_activity_combined": "Recent activity",
         "public.recent_activity_combined_sub": "公開安全な活動要約と共有可能な作業サマリーをまとめて表示します。",
         "public.connected_systems": "接続システム",
@@ -875,7 +875,7 @@
         "public.system_health": "系统健康",
         "public.health_detail": "这里只显示连接系统与公开安全的遥测信息。",
         "public.ai_teams_now": "AI teams now",
-        "public.ai_teams_now_sub": "集中展示 Deepnoa 公开团队及其当前状态。",
+        "public.ai_teams_now_sub": "用更容易理解的方式展示当前的公开角色与动态。",
         "public.recent_activity_combined": "Recent activity",
         "public.recent_activity_combined_sub": "将公开安全活动与可分享工作摘要合并显示。",
         "public.connected_systems": "连接系统",
@@ -1031,12 +1031,12 @@
           <div class="agent-top">
             <div>
               <div class="agent-name">${agent.name}</div>
-              <div class="agent-role">${agent.role}</div>
+              <div class="agent-role">${publicTeamRole(agent.role)}</div>
             </div>
             <div class="${badgeClass(agent.status_label)}">${translateEnum(agent.status_label)}</div>
           </div>
-          <div class="agent-desc">${agent.description}</div>
-          <div class="subline">${agent.detail}</div>
+          <div class="agent-desc">${publicTeamDescription(agent.description, agent.key)}</div>
+          <div class="subline">${publicTeamDetail(agent.detail, agent.key)}</div>
         </article>
       `).join("");
     }
@@ -1070,6 +1070,44 @@
         merged.push(item);
       }
       return merged.slice(0, 6);
+    }
+
+    function publicTeamRole(role) {
+      const value = String(role || "");
+      if (/^engineering$/i.test(value)) return "Systems";
+      if (/^research$/i.test(value)) return "Intelligence";
+      if (/^operations$/i.test(value)) return "Workflow";
+      return value;
+    }
+
+    function publicTeamDescription(description, key = "") {
+      const value = String(description || "").trim();
+      if (!value) return value;
+      if (/^Routes coding, GitHub review, implementation, and code-quality work\.$/i.test(value)) {
+        return "Keeps systems stable and improves how work gets done.";
+      }
+      if (/^Routes public research, summaries, scanning, and briefing preparation\.$/i.test(value)) {
+        return "Finds useful information and turns it into clear updates.";
+      }
+      if (/^Routes cron jobs, system checks, service health, and infrastructure coordination\.$/i.test(value)) {
+        return "Keeps work moving and watches over the office flow.";
+      }
+      return value;
+    }
+
+    function publicTeamDetail(detail, key = "") {
+      const value = String(detail || "").trim();
+      if (!value) return value;
+      if (/^GitHub webhook queue is being processed and deployment flow is active\.?$/i.test(value)) {
+        return "Handling active work across core systems.";
+      }
+      if (/^Ready for work\.?$/i.test(value)) {
+        return "Ready to help when new work arrives.";
+      }
+      if (/^\d+\s+scheduled system checks currently need attention\.?$/i.test(value)) {
+        return "Monitoring systems that need attention.";
+      }
+      return value;
     }
 
     function renderActivity(items, targetId, emptyMessage) {
