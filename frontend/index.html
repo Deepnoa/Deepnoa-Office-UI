@@ -386,6 +386,9 @@
     .failed-runs-list { display: grid; gap: 8px; margin-top: 10px; }
     .failed-run-item { padding: 10px 12px; border-radius: 12px; background: rgba(255,126,143,0.06); border: 1px solid rgba(255,126,143,0.16); }
     .failed-run-item .run-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 4px; }
+    .failed-run-link { color: var(--danger); text-decoration: none; }
+    .failed-run-link:hover,
+    .failed-run-link:focus-visible { text-decoration: underline; outline: none; }
     .failed-run-item .run-err { color: var(--muted); font-size: 12px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   </style>
 </head>
@@ -738,8 +741,8 @@ manager カードの補足に使います。</div>
         "summary.awaiting_approval_sub": "人の判断待ちです。",
         "summary.done_today": "本日完了",
         "summary.done_today_sub": "本日完了した件数です。",
-        "summary.alerts": "アラート",
-        "summary.alerts_sub": "異常や劣化シグナルです。",
+        "summary.alerts": "全アラート",
+        "summary.alerts_sub": "異常や劣化シグナルの総数です。",
         "internal.eyebrow": "internal / 運用ビュー",
         "internal.hero_copy": "AI オフィスの運用状況を確認します。\nルーティング、intake、フォールバック、保護された操作を見られます。",
         "internal.gateway": "ゲートウェイ",
@@ -754,7 +757,7 @@ manager カードの補足に使います。</div>
         "section.failed_tasks": "失敗タスク",
         "section.connector_health": "コネクタ健全性",
         "section.completed_recently": "直近の完了",
-        "section.alerts": "アラート",
+        "section.alerts": "重要アラート",
         "section.low_priority_activity": "低優先アクティビティ",
         "section.low_priority_activity_sub": "優先度の低い進行ログです。\n状態変化の確認に使います。",
         "section.routing_table": "ルーティングテーブル",
@@ -971,7 +974,7 @@ manager カードの補足に使います。</div>
         "status.runs_loading": "読込中",
         "status.runs_unavailable": "実行状態を取得できませんでした。",
         "section.needs_attention": "要対応",
-        "section.needs_attention_sub": "承認・ブロック・アラート・コネクタ異常をまとめて表示します。",
+        "section.needs_attention_sub": "承認・ブロック・重要アラート・コネクタ異常をまとめて表示します。",
         "runs.done": "完了",
         "runs.failed": "失敗",
         "runs.running": "実行中",
@@ -1065,7 +1068,7 @@ manager カードの補足に使います。</div>
         "status.runs_loading": "Loading",
         "status.runs_unavailable": "Run status unavailable.",
         "section.needs_attention": "Needs Attention",
-        "section.needs_attention_sub": "Pending approvals, blocked tasks, alerts, and connector issues.",
+        "section.needs_attention_sub": "Pending approvals, blocked tasks, critical alerts, and connector issues.",
         "enum.ok": "OK",
         "runs.done": "done",
         "runs.failed": "failed",
@@ -1088,8 +1091,8 @@ manager カードの補足に使います。</div>
         "summary.awaiting_approval_sub": "仍需人工判断。",
         "summary.done_today": "今日完成",
         "summary.done_today_sub": "今天完成的数量。",
-        "summary.alerts": "告警",
-        "summary.alerts_sub": "错误与退化信号。",
+        "summary.alerts": "全部告警",
+        "summary.alerts_sub": "错误与退化信号总数。",
         "internal.eyebrow": "仅内部 / manager-first runtime",
         "internal.hero_copy": "AI 办公室的运维控制界面。这里展示 manager routing、role worker、gateway intake、fallback 使用情况与受保护的 asset lab 控制，同时不暴露敏感值。",
         "internal.gateway": "网关",
@@ -1104,7 +1107,7 @@ manager カードの補足に使います。</div>
         "section.failed_tasks": "失败任务",
         "section.connector_health": "连接器健康",
         "section.completed_recently": "最近完成",
-        "section.alerts": "告警",
+        "section.alerts": "重要告警",
         "section.low_priority_activity": "低优先级活动",
         "section.low_priority_activity_sub": "紧急度较低的进度日志与状态更新。",
         "section.routing_table": "路由表",
@@ -1312,7 +1315,7 @@ manager カードの補足に使います。</div>
         "status.runs_loading": "加载中",
         "status.runs_unavailable": "无法获取执行状态。",
         "section.needs_attention": "需要关注",
-        "section.needs_attention_sub": "待审批、阻塞任务、告警与连接器异常。",
+        "section.needs_attention_sub": "待审批、阻塞任务、重要告警与连接器异常。",
         "runs.done": "完成",
         "runs.failed": "失败",
         "runs.running": "运行中",
@@ -1942,6 +1945,8 @@ manager カードの補足に使います。</div>
         <div class="label mono" style="margin-top:6px; margin-bottom:4px">${escapeHtml(t("runs.recent_failures", "最近の失敗実行"))}</div>
         ${runs.map((run) => {
           const shortId = escapeHtml(trunc(run.run_id, 12));
+          const fullId = escapeHtml(run.run_id || "");
+          const runDetailHref = `/runs/${encodeURIComponent(run.run_id || "")}`;
           const kind = escapeHtml(run.kind || t("label.unknown", "?"));
           const errMsg = escapeHtml(trunc((run.error || {}).message, 60));
           const ago = escapeHtml(relTime(run.queued_at));
@@ -1949,7 +1954,7 @@ manager カードの補足に使います。</div>
           return `
             <div class="failed-run-item">
               <div class="run-meta">
-                <span class="mono" style="font-size:12px; color:var(--danger)">${shortId}</span>
+                <a class="mono failed-run-link" style="font-size:12px" href="${runDetailHref}" target="_blank" rel="noopener noreferrer" title="${fullId}">${shortId}</a>
                 <span class="mini-chip mono">${kind}</span>
                 ${isRetry ? `<span class="badge danger mono" style="font-size:10px; padding:3px 7px">${escapeHtml(t("runs.retry", "再試行"))}</span>` : ""}
                 <span class="sub" style="margin-left:auto; font-size:11px">${ago}</span>
