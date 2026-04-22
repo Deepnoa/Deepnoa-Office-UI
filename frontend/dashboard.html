@@ -257,9 +257,10 @@
     Deepnoa AI Office
   </div>
 
-  <a class="nav-tab active" href="#" id="navDashboard" data-i18n="nav.dashboard">ダッシュボード</a>
+  <a class="nav-tab active" href="/dashboard" id="navDashboard" data-i18n="nav.dashboard">ダッシュボード</a>
   <a class="nav-tab" id="navInternal" data-i18n="nav.internal">Internal</a>
   <a class="nav-tab" id="navRuns" data-i18n="nav.runs">Runs</a>
+  <a class="nav-tab" id="navHealth" data-i18n="nav.health">Health</a>
 
   <div class="nav-spacer"></div>
 
@@ -346,6 +347,7 @@
       "nav.dashboard": "ダッシュボード",
       "nav.internal": "Internal",
       "nav.runs": "Runs",
+      "nav.health": "Health",
       "kpi.active_agents": "稼働中 Agent",
       "kpi.active_agents_sub": "現在作業中",
       "kpi.active_tasks": "実行中タスク",
@@ -389,6 +391,7 @@
       "nav.dashboard": "Dashboard",
       "nav.internal": "Internal",
       "nav.runs": "Runs",
+      "nav.health": "Health",
       "kpi.active_agents": "Active Agents",
       "kpi.active_agents_sub": "currently working",
       "kpi.active_tasks": "Active Tasks",
@@ -432,6 +435,7 @@
       "nav.dashboard": "仪表盘",
       "nav.internal": "内部",
       "nav.runs": "执行",
+      "nav.health": "健康",
       "kpi.active_agents": "活跃 Agent",
       "kpi.active_agents_sub": "当前工作中",
       "kpi.active_tasks": "执行中任务",
@@ -512,11 +516,15 @@
       btn.classList.toggle("active", btn.dataset.langSwitch === currentLang);
     }
     // Nav links
+    const navDashboard = document.getElementById("navDashboard");
     const navInternal = document.getElementById("navInternal");
     const navRuns = document.getElementById("navRuns");
+    const navHealth = document.getElementById("navHealth");
     const runsViewAll = document.getElementById("runsViewAll");
+    if (navDashboard) navDashboard.href = withLang("/dashboard");
     if (navInternal) navInternal.href = withLang("/internal");
     if (navRuns) navRuns.href = withLang("/runs");
+    if (navHealth) navHealth.href = withLang("/health");
     if (runsViewAll) runsViewAll.href = withLang("/runs");
   }
 

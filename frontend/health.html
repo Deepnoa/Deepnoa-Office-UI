@@ -332,9 +332,10 @@
 <body>
   <nav>
     <span class="nav-logo">Deepnoa AI Office</span>
-    <a href="/runs">Runs</a>
-    <a href="/health" class="active">Health</a>
-    <a href="/internal">Internal</a>
+    <a id="nav-dashboard" href="/dashboard">Dashboard</a>
+    <a id="nav-internal" href="/internal">Internal</a>
+    <a id="nav-runs"     href="/runs">Runs</a>
+    <a id="nav-health"   href="/health" class="active">Health</a>
   </nav>
 
   <main>
@@ -407,6 +408,22 @@
   <script>
     const POLL_MS = 30000;
     let pollTimer = null;
+
+    // ── lang / nav ────────────────────────────────────────────────────────────
+    function withLang(path) {
+      const url = new URL(path, window.location.origin);
+      const qs = new URLSearchParams(window.location.search).get('lang');
+      if (qs) url.searchParams.set('lang', qs);
+      return `${url.pathname}${url.search}`;
+    }
+    function syncNavLinks() {
+      const ids = { 'nav-dashboard':'/dashboard', 'nav-internal':'/internal', 'nav-runs':'/runs', 'nav-health':'/health' };
+      for (const [id, path] of Object.entries(ids)) {
+        const el = document.getElementById(id);
+        if (el) el.href = withLang(path);
+      }
+    }
+    syncNavLinks();
 
     // ── helpers ──────────────────────────────────────────────────────────────
 
