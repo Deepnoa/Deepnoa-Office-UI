@@ -103,17 +103,25 @@
       gap: 12px;
       margin-bottom: 16px;
     }
-    select {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      color: var(--text);
+    /* Filter chips */
+    .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .filter-chip {
       font-family: "Space Grotesk", sans-serif;
-      font-size: 13px;
-      padding: 6px 10px;
-      border-radius: 7px;
+      font-size: 12px; font-weight: 500;
+      padding: 5px 12px; border-radius: 99px;
+      border: 1px solid var(--line);
+      background: transparent; color: var(--muted);
       cursor: pointer;
+      transition: color 0.12s, border-color 0.12s, background 0.12s;
+      white-space: nowrap;
     }
-    select:focus { outline: 1px solid var(--accent); }
+    .filter-chip:hover { color: var(--text); border-color: rgba(255,255,255,0.18); }
+    .filter-chip.active { color: var(--text); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.07); }
+    .filter-chip[data-status="running"].active { color: var(--warn);   border-color: rgba(255,208,138,0.35); background: rgba(255,208,138,0.08); }
+    .filter-chip[data-status="done"].active    { color: var(--accent); border-color: rgba(130,242,203,0.35); background: rgba(130,242,203,0.08); }
+    .filter-chip[data-status="failed"].active  { color: var(--danger); border-color: rgba(255,122,122,0.35); background: rgba(255,122,122,0.08); }
+    .filter-chip[data-status="queued"].active,
+    .filter-chip[data-status="cancelled"].active { color: var(--muted); border-color: rgba(142,164,193,0.3); background: rgba(142,164,193,0.06); }
     .toolbar-spacer { flex: 1; }
     .last-updated { font-size: 11px; color: var(--muted); font-family: "IBM Plex Mono", monospace; }
 
@@ -245,14 +253,14 @@
     </div>
 
     <div class="toolbar">
-      <select id="filter-status">
-        <option value="">すべて</option>
-        <option value="running">running</option>
-        <option value="done">done</option>
-        <option value="failed">failed</option>
-        <option value="queued">queued</option>
-        <option value="cancelled">cancelled</option>
-      </select>
+      <div class="filter-chips" id="filter-chips">
+        <button class="filter-chip active" data-status="">すべて</button>
+        <button class="filter-chip" data-status="running">running</button>
+        <button class="filter-chip" data-status="done">done</button>
+        <button class="filter-chip" data-status="failed">failed</button>
+        <button class="filter-chip" data-status="queued">queued</button>
+        <button class="filter-chip" data-status="cancelled">cancelled</button>
+      </div>
       <div class="toolbar-spacer"></div>
       <span class="last-updated" id="last-updated"></span>
     </div>
@@ -305,6 +313,7 @@
     const initialParams = new URLSearchParams(window.location.search);
     const initialStatusFilter = initialParams.get('status') || '';
     const initialKindFilter = initialParams.get('kind') || '';
+    let currentStatusFilter = initialStatusFilter;
 
     function statusBadge(status) {
       const icons = { queued: '⏳', running: '🔄', done: '✅', failed: '❌', cancelled: '⛔' };
@@ -382,10 +391,16 @@
       document.getElementById('count-queued').textContent  = counts.queued;
     }
 
+    function activateChip(status) {
+      currentStatusFilter = status;
+      document.querySelectorAll('.filter-chip').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.status === status);
+      });
+    }
+
     function applyFilter() {
-      const status = document.getElementById('filter-status').value;
       const filteredRuns = allRuns.filter((run) => {
-        if (status && run.status !== status) return false;
+        if (currentStatusFilter && run.status !== currentStatusFilter) return false;
         if (initialKindFilter && run.kind !== initialKindFilter) return false;
         return true;
       });
@@ -422,10 +437,15 @@
       }, POLL_INTERVAL_MS);
     }
 
-    document.getElementById('filter-status').addEventListener('change', applyFilter);
+    document.getElementById('filter-chips').addEventListener('click', (e) => {
+      const chip = e.target.closest('.filter-chip');
+      if (!chip) return;
+      activateChip(chip.dataset.status);
+      applyFilter();
+    });
 
     syncNavLinks();
-    if (initialStatusFilter) document.getElementById('filter-status').value = initialStatusFilter;
+    activateChip(initialStatusFilter);
     fetchRuns().then(schedulePoll);
   </script>
 </body>
