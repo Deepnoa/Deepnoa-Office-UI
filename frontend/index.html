@@ -115,6 +115,44 @@
       padding: 16px;
     }
     .list { display: grid; gap: 12px; }
+    /* ── Agent Card Grid — Design System P1 ──────────────────────────── */
+    .agent-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .role-card-v2 {
+      padding: 12px 12px 12px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(128,168,225,0.14);
+      background: var(--panel);
+      position: relative; overflow: hidden;
+      display: flex; flex-direction: column; gap: 4px;
+      min-height: 86px;
+    }
+    .role-card-bar {
+      position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--sc, var(--accent));
+      box-shadow: 0 0 8px var(--sc, var(--accent));
+    }
+    .role-card-name {
+      font-size: 14px; font-weight: 700;
+      display: flex; align-items: center; gap: 7px;
+      margin-bottom: 2px;
+    }
+    .role-card-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+      background: var(--sc, var(--accent));
+      box-shadow: 0 0 6px var(--sc, var(--accent));
+    }
+    .role-card-state {
+      font-family: "IBM Plex Mono", monospace; font-size: 9px;
+      padding: 2px 6px; border-radius: 99px;
+      border: 1px solid rgba(128,168,225,0.14);
+      color: var(--muted); margin-left: auto; white-space: nowrap;
+    }
+    .role-card-detail { font-size: 11px; color: #c0d4ee; line-height: 1.4; }
+    .role-card-footer {
+      display: flex; gap: 8px; margin-top: auto; padding-top: 4px;
+      font-family: "IBM Plex Mono", monospace; font-size: 9px; color: var(--muted);
+    }
+    /* ─────────────────────────────────────────────────────────────────── */
     .row-top, .section-head, .split-line {
       display: flex;
       justify-content: space-between;
@@ -415,18 +453,6 @@
   </style>
 </head>
 <body>
-  <nav id="topNav" style="
-    position:sticky; top:0; z-index:200;
-    height:48px; display:flex; align-items:center; gap:4px; padding:0 24px;
-    background:rgba(6,16,27,0.92); backdrop-filter:blur(12px);
-    border-bottom:1px solid rgba(128,168,225,0.12);
-  ">
-    <span style="font-size:12px; font-weight:700; letter-spacing:0.06em; color:var(--accent); margin-right:12px;">Deepnoa AI Office</span>
-    <a id="inav-dashboard" href="/dashboard" style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--muted);">Dashboard</a>
-    <a id="inav-internal" href="/internal" style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--text); background:rgba(255,255,255,0.07);">Internal</a>
-    <a id="inav-runs" href="/runs" style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--muted);">Runs</a>
-    <a id="inav-health" href="/health" style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--muted);">Health</a>
-  </nav>
   <div class="detail-backdrop" id="detailBackdrop"></div>
   <div class="toast mono" id="toast"></div>
   <nav id="topNav" style="
@@ -540,7 +566,7 @@ dev・ops・research・フォールバックワーカーを確認できます。
             </div>
             <div class="pill mono" id="updatedAtPill">...</div>
           </div>
-          <div class="list" id="rolesList"></div>
+          <div class="agent-card-grid" id="rolesList"></div>
         </section>
 
         <section class="panel section">
@@ -1433,13 +1459,6 @@ manager カードの補足に使います。</div>
       if (inavRuns) inavRuns.href = withLang("/runs");
       if (inavHealth) inavHealth.href = withLang("/health");
       if (runsViewAllLink) runsViewAllLink.href = withLang("/runs?kind=health");
-      // Top nav lang links
-      const inavDashboard = document.getElementById("inav-dashboard");
-      const inavRuns      = document.getElementById("inav-runs");
-      const inavHealth    = document.getElementById("inav-health");
-      if (inavDashboard) inavDashboard.href = withLang("/dashboard");
-      if (inavRuns)      inavRuns.href      = withLang("/runs");
-      if (inavHealth)    inavHealth.href    = withLang("/health");
       for (const node of document.querySelectorAll("[data-i18n]")) {
         node.textContent = t(node.dataset.i18n, node.textContent);
       }
@@ -1629,25 +1648,30 @@ manager カードの補足に使います。</div>
     function renderRoles(items) {
       const target = document.getElementById("rolesList");
       if (!items || !items.length) return renderEmpty(target, t("empty.no_role_state", "No role state available."));
-      target.innerHTML = items.map((item) => `
-        <article class="role-card">
-          <div class="row-top">
-            <div>
-              <div class="name">${escapeHtml(item.name)}</div>
-              <div class="sub">${escapeHtml(item.role)} / ${escapeHtml(item.profile)}</div>
-            </div>
-            <div class="${badgeClass(item.public_status_label)} mono">${escapeHtml(translateEnum(item.state))} / ${escapeHtml(item.public_status_label)}</div>
+      const roleColor = (state, label) => {
+        const cls = badgeClass(label || state || "");
+        if (cls.includes("danger")) return "var(--danger)";
+        if (cls.includes("warn"))   return "var(--warn)";
+        return "var(--accent)";
+      };
+      target.innerHTML = items.map((item) => {
+        const sc = roleColor(item.state, item.public_status_label);
+        return `
+        <article class="role-card-v2" style="--sc:${sc}">
+          <div class="role-card-bar"></div>
+          <div class="role-card-name">
+            <div class="role-card-dot"></div>
+            ${escapeHtml(item.name)}
+            <span class="role-card-state">${escapeHtml(translateEnum(item.state))}</span>
           </div>
-          <div class="copy">${escapeHtml(item.detail || t("status.loading", "Loading"))}</div>
-          <div class="meta-grid">
-            <div class="meta-item"><div class="k mono">${escapeHtml(t("label.last_event", "Last event"))}</div><div class="v">${escapeHtml(item.last_event_type || t("label.none", "none"))}</div></div>
-            <div class="meta-item"><div class="k mono">${escapeHtml(t("label.last_source", "Last source"))}</div><div class="v">${escapeHtml(item.last_source || t("label.none", "none"))}</div></div>
-            <div class="meta-item"><div class="k mono">${escapeHtml(t("label.updated", "Updated"))}</div><div class="v">${escapeHtml(fmt(item.updated_at))}</div></div>
-            <div class="meta-item"><div class="k mono">${escapeHtml(t("label.tools", "Tools"))}</div><div class="v">${escapeHtml(String((item.allowed_tools || []).length))}</div></div>
+          <div class="role-card-detail">${escapeHtml(item.detail || t("status.loading", "Loading"))}</div>
+          <div class="role-card-footer">
+            <span>${escapeHtml(item.last_event_type || t("label.none", "none"))}</span>
+            <span>·</span>
+            <span>tools: ${escapeHtml(String((item.allowed_tools || []).length))}</span>
           </div>
-          <div class="tools">${(item.allowed_tools || []).map((tool) => `<span class="tool-chip mono">${escapeHtml(tool)}</span>`).join("")}</div>
-        </article>
-      `).join("");
+        </article>`;
+      }).join("");
     }
 
     function renderActivity(items) {
