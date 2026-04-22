@@ -415,6 +415,18 @@
   </style>
 </head>
 <body>
+  <nav id="topNav" style="
+    position:sticky; top:0; z-index:200;
+    height:48px; display:flex; align-items:center; gap:4px; padding:0 24px;
+    background:rgba(6,16,27,0.92); backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(128,168,225,0.12);
+  ">
+    <span style="font-size:12px; font-weight:700; letter-spacing:0.06em; color:var(--accent); margin-right:12px;">Deepnoa AI Office</span>
+    <a id="inav-dashboard" href="/dashboard" style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--muted);">Dashboard</a>
+    <a id="inav-internal" href="/internal" style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--text); background:rgba(255,255,255,0.07);">Internal</a>
+    <a id="inav-runs" href="/runs" style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--muted);">Runs</a>
+    <a id="inav-health" href="/health" style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--muted);">Health</a>
+  </nav>
   <div class="detail-backdrop" id="detailBackdrop"></div>
   <div class="toast mono" id="toast"></div>
   <nav id="topNav" style="
@@ -1411,7 +1423,15 @@ manager カードの補足に使います。</div>
     function applyI18n() {
       document.documentElement.lang = currentLang;
       document.title = t("page.title", "Deepnoa Internal View");
+      const inavDashboard = document.getElementById("inav-dashboard");
+      const inavInternal = document.getElementById("inav-internal");
+      const inavRuns = document.getElementById("inav-runs");
+      const inavHealth = document.getElementById("inav-health");
       const runsViewAllLink = document.getElementById("runsViewAllLink");
+      if (inavDashboard) inavDashboard.href = withLang("/dashboard");
+      if (inavInternal) inavInternal.href = withLang("/internal");
+      if (inavRuns) inavRuns.href = withLang("/runs");
+      if (inavHealth) inavHealth.href = withLang("/health");
       if (runsViewAllLink) runsViewAllLink.href = withLang("/runs?kind=health");
       // Top nav lang links
       const inavDashboard = document.getElementById("inav-dashboard");
