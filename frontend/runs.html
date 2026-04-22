@@ -213,9 +213,10 @@
 <body>
   <nav>
     <span class="nav-logo">Deepnoa AI Office</span>
+    <a id="nav-dashboard" href="/dashboard?lang=ja">Dashboard</a>
+    <a id="nav-internal" href="/internal?lang=ja">Internal</a>
     <a id="nav-runs" href="/runs?lang=ja" class="active">Runs</a>
     <a id="nav-health" href="/health?lang=ja">Health</a>
-    <a id="nav-internal" href="/internal?lang=ja">Internal</a>
   </nav>
 
   <main>
@@ -295,6 +296,7 @@
 
     function syncNavLinks() {
       document.documentElement.lang = currentLang;
+      document.getElementById('nav-dashboard').href = withLang('/dashboard');
       document.getElementById('nav-runs').href = withLang('/runs');
       document.getElementById('nav-health').href = withLang('/health');
       document.getElementById('nav-internal').href = withLang('/internal');
