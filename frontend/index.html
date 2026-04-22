@@ -448,7 +448,7 @@
           <div class="copy" id="runsSummaryStatus" data-i18n="status.runs_loading">読込中</div>
           <div class="runs-counts" id="runsCounts"></div>
           <div class="failed-runs-list" id="recentFailedRunsList" style="display:none"></div>
-          <a href="/runs?lang=ja" id="runsViewAllLink" class="footer-note mono" style="display:block; margin-top:10px" data-i18n="internal.runs_view_all">runs 一覧 →</a>
+          <a href="/runs?kind=health&lang=ja" id="runsViewAllLink" class="footer-note mono" style="display:block; margin-top:10px" data-i18n="internal.runs_view_all">runs 一覧 →</a>
         </div>
       </div>
     </section>
@@ -1386,7 +1386,7 @@ manager カードの補足に使います。</div>
       document.documentElement.lang = currentLang;
       document.title = t("page.title", "Deepnoa Internal View");
       const runsViewAllLink = document.getElementById("runsViewAllLink");
-      if (runsViewAllLink) runsViewAllLink.href = withLang("/runs");
+      if (runsViewAllLink) runsViewAllLink.href = withLang("/runs?kind=health");
       for (const node of document.querySelectorAll("[data-i18n]")) {
         node.textContent = t(node.dataset.i18n, node.textContent);
       }
@@ -1963,7 +1963,10 @@ manager カードの補足に使います。</div>
       };
       container.style.display = "";
       container.innerHTML = `
-        <div class="label mono" style="margin-top:6px; margin-bottom:4px">${escapeHtml(t("runs.recent_failures", "最近の失敗実行"))}</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:6px; margin-bottom:4px">
+          <div class="label mono" style="margin:0">${escapeHtml(t("runs.recent_failures", "最近の失敗実行"))}</div>
+          <a class="footer-note mono" style="margin:0" href="${withLang("/runs?status=failed")}" data-i18n="internal.runs_view_all">${escapeHtml(t("internal.runs_view_all", "runs 一覧 →"))}</a>
+        </div>
         ${runs.map((run) => {
           const shortId = escapeHtml(trunc(run.run_id, 12));
           const fullId = escapeHtml(run.run_id || "");
