@@ -1,0 +1,9 @@
+:root {
+  --color-bg: #07111d;
+  --color-text: #eef6ff;
+  --color-muted: #8ea4c1;
+  --color-line: rgba(130, 164, 214, 0.18);
+  --color-accent: #82f2cb;
+  --color-warn: #ffd08a;
+  --color-danger: #ff7a7a;
+}
