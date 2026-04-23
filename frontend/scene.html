@@ -2,6 +2,7 @@
 <html lang="ja" translate="no" class="notranslate">
 <head>
   <meta charset="UTF-8">
+  <script>(function(){try{var k="dn-theme",s=localStorage.getItem(k),m=window.matchMedia("(prefers-color-scheme: light)"),t=s==="light"||s==="dark"?s:m.matches?"light":"dark";document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="google" content="notranslate">
   <title>Deepnoa AI Office Scene</title>
@@ -11,24 +12,32 @@
   <link rel="stylesheet" href="/static/styles/tokens.css">
   <style>
     :root {
-      --bg: #08111d;
+      --bg: var(--color-scene-embed-bg);
       --surface: rgba(10, 18, 30, 0.42);
       --surface-line: rgba(255, 255, 255, 0.1);
       --text: var(--color-text);
       --muted: var(--color-muted);
-      --accent: #7ee2c2;
-      --danger: #ff6b7d;
+      --accent: var(--color-public-accent);
+      --danger: var(--color-danger);
       --scene-shadow: 0 34px 90px rgba(0, 0, 0, 0.35);
     }
 
     * { box-sizing: border-box; }
 
+    .scene-theme-fab {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      z-index: 60;
+      pointer-events: auto;
+    }
+
     html, body {
       margin: 0;
       min-height: 100%;
       background:
-        radial-gradient(circle at top left, rgba(73, 122, 197, 0.22), transparent 30%),
-        linear-gradient(180deg, #0b1525 0%, #08111d 100%);
+        radial-gradient(circle at top left, var(--color-scene-radial), transparent 30%),
+        linear-gradient(180deg, var(--color-scene-grad-top) 0%, var(--color-scene-grad-bottom) 100%);
       color: var(--text);
       font-family: "Space Grotesk", sans-serif;
     }
@@ -41,7 +50,7 @@
 
     body.embed-mode {
       padding: 0;
-      background: #08111d;
+      background: var(--color-scene-embed-bg);
     }
 
     .scene-shell {
@@ -53,7 +62,7 @@
       overflow: hidden;
       border: 1px solid rgba(255,255,255,0.09);
       box-shadow: var(--scene-shadow);
-      background: #0d1624;
+      background: var(--color-scene-canvas);
     }
 
     body.embed-mode .scene-shell {
@@ -62,6 +71,21 @@
       border-radius: 0;
       border: 0;
       box-shadow: none;
+    }
+
+    html[data-theme="light"] .scene-shell {
+      border-color: rgba(15, 23, 42, 0.12);
+    }
+    html[data-theme="light"] .scene-brand,
+    html[data-theme="light"] .scene-live,
+    html[data-theme="light"] .scene-legend {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(15, 23, 42, 0.12);
+    }
+    html[data-theme="light"] .scene-tooltip,
+    html[data-theme="light"] .scene-detail {
+      background: rgba(255, 255, 255, 0.94);
+      border-color: rgba(15, 23, 42, 0.12);
     }
 
     .background-layer,
@@ -701,6 +725,7 @@
   </style>
 </head>
 <body>
+  <button type="button" class="theme-toggle scene-theme-fab" data-theme-toggle title="Toggle light / dark theme">Theme</button>
   <main class="scene-shell">
     <div class="background-layer"></div>
     <img id="scene-walkmask" src="/static/scene-walkmask.png?v={{VERSION_TIMESTAMP}}" alt="" hidden>
@@ -1900,5 +1925,13 @@
       startPolling();
     });
   </script>
+<script>
+(function(){
+  var r=document.documentElement;
+  window.dnSetTheme=function(t){t=t==="light"?"light":"dark";r.setAttribute("data-theme",t);try{localStorage.setItem("dn-theme",t);}catch(e){}};
+  document.addEventListener("click",function(e){var x=e.target.closest("[data-theme-toggle]");if(!x)return;e.preventDefault();var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";window.dnSetTheme(c==="dark"?"light":"dark");});
+  try{var mq=window.matchMedia("(prefers-color-scheme: light)");mq.addEventListener("change",function(){try{if(localStorage.getItem("dn-theme"))return;}catch(z){}window.dnSetTheme(mq.matches?"light":"dark");});}catch(y){}
+})();
+</script>
 </body>
 </html>

@@ -2,23 +2,25 @@
 <html lang="ja" translate="no" class="notranslate">
 <head>
   <meta charset="UTF-8">
+  <script>(function(){try{var k="dn-theme",s=localStorage.getItem(k),m=window.matchMedia("(prefers-color-scheme: light)"),t=s==="light"||s==="dark"?s:m.matches?"light":"dark";document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="google" content="notranslate">
   <title>Deepnoa ダッシュボード</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles/tokens.css">
   <style>
     :root {
-      --bg: #06101b;
-      --panel: rgba(10, 18, 31, 0.90);
-      --panel2: rgba(255,255,255,0.035);
-      --line: rgba(128, 168, 225, 0.16);
-      --text: #eef5ff;
-      --muted: #7a97ba;
-      --accent: #88f0cf;
-      --warn: #ffc977;
-      --danger: #ff7e8f;
+      --bg: var(--color-bg);
+      --panel: var(--color-panel);
+      --panel2: var(--color-panel-2);
+      --line: var(--color-line);
+      --text: var(--color-text);
+      --muted: var(--color-muted);
+      --accent: var(--color-accent);
+      --warn: var(--color-warn);
+      --danger: var(--color-danger);
       --nav-h: 56px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -54,7 +56,7 @@
     nav {
       position: sticky; top: 0; z-index: 100;
       height: var(--nav-h); display: flex; align-items: center; gap: 6px; padding: 0 24px;
-      background: rgba(6,16,27,0.88); backdrop-filter: blur(18px);
+      background: var(--color-nav-bg); backdrop-filter: blur(18px);
       border-bottom: 1px solid var(--line);
     }
     .nav-logo {
@@ -274,6 +276,14 @@
     /* ── LOADING / ERROR ─────────────────── */
     .load-state { color: var(--muted); font-size: 13px; font-family: "IBM Plex Mono", monospace; }
 
+    html[data-theme="light"] .health-item {
+      border-color: rgba(15, 23, 42, 0.1);
+      background: rgba(255, 255, 255, 0.55);
+    }
+    html[data-theme="light"] .aitem:hover {
+      background: rgba(15, 23, 42, 0.04);
+    }
+
     /* ── RESPONSIVE ──────────────────────── */
     @media (max-width: 1100px) {
       .kpi-strip { grid-template-columns: repeat(3,1fr); }
@@ -303,6 +313,8 @@
   <a class="nav-tab" id="navRuns" data-i18n="nav.runs">Runs</a>
 
   <div class="nav-spacer"></div>
+
+  <button type="button" class="theme-toggle" data-theme-toggle title="Toggle light / dark theme">Theme</button>
 
   <div class="lang-row">
     <button class="lang-btn" data-lang-switch="ja">JA</button>
@@ -940,6 +952,14 @@
   // ── Boot ─────────────────────────────────────────────────────────
   applyI18n();
   refresh().then(schedule);
+</script>
+<script>
+(function(){
+  var r=document.documentElement;
+  window.dnSetTheme=function(t){t=t==="light"?"light":"dark";r.setAttribute("data-theme",t);try{localStorage.setItem("dn-theme",t);}catch(e){}};
+  document.addEventListener("click",function(e){var x=e.target.closest("[data-theme-toggle]");if(!x)return;e.preventDefault();var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";window.dnSetTheme(c==="dark"?"light":"dark");});
+  try{var mq=window.matchMedia("(prefers-color-scheme: light)");mq.addEventListener("change",function(){try{if(localStorage.getItem("dn-theme"))return;}catch(z){}window.dnSetTheme(mq.matches?"light":"dark");});}catch(y){}
+})();
 </script>
 </body>
 </html>

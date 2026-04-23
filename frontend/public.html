@@ -2,6 +2,7 @@
 <html lang="ja" translate="no" class="notranslate">
 <head>
   <meta charset="UTF-8">
+  <script>(function(){try{var k="dn-theme",s=localStorage.getItem(k),m=window.matchMedia("(prefers-color-scheme: light)"),t=s==="light"||s==="dark"?s:m.matches?"light":"dark";document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="google" content="notranslate">
   <title>Deepnoa AI Office</title>
@@ -11,18 +12,18 @@
   <link rel="stylesheet" href="/static/styles/tokens.css">
   <style>
     :root {
-      --bg: #09111e;
-      --bg-soft: #121d2e;
-      --panel: rgba(13, 22, 37, 0.82);
-      --panel-border: rgba(120, 161, 215, 0.18);
+      --bg: var(--color-public-bg);
+      --bg-soft: var(--color-public-bg-soft);
+      --panel: var(--color-public-panel);
+      --panel-border: var(--color-public-panel-border);
       --text: var(--color-text);
       --muted: var(--color-muted);
-      --line: rgba(255, 255, 255, 0.08);
-      --accent: #7ee2c2;
+      --line: var(--color-public-divider);
+      --accent: var(--color-public-accent);
       --accent-strong: #28d2a3;
       --warm: #ffc46b;
-      --danger: #ff6b7d;
-      --shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+      --danger: var(--color-danger);
+      --shadow: var(--shadow-elevated);
     }
 
     * { box-sizing: border-box; }
@@ -32,7 +33,7 @@
       background:
         radial-gradient(circle at top left, rgba(63, 104, 170, 0.34), transparent 28%),
         radial-gradient(circle at top right, rgba(32, 210, 163, 0.16), transparent 26%),
-        linear-gradient(180deg, #0b1525 0%, var(--bg) 58%, #08101b 100%);
+        linear-gradient(180deg, var(--color-public-grad-top) 0%, var(--bg) 58%, var(--color-public-grad-bottom) 100%);
       color: var(--text);
       font-family: "Space Grotesk", sans-serif;
     }
@@ -667,6 +668,19 @@
       font-size: 14px;
     }
 
+    html[data-theme="light"] .pill {
+      border-color: rgba(15, 23, 42, 0.1);
+      background: rgba(255, 255, 255, 0.78);
+    }
+    html[data-theme="light"] .status-card {
+      background: rgba(255, 255, 255, 0.88);
+      border-color: rgba(15, 23, 42, 0.08);
+    }
+    html[data-theme="light"] .metric-card {
+      background: rgba(255, 255, 255, 0.82);
+      border-color: rgba(15, 23, 42, 0.1);
+    }
+
     @media (max-width: 980px) {
       .hero,
       .summary-strip,
@@ -697,6 +711,7 @@
           Public-safe visibility into how Deepnoa's AI office is operating right now.
         </p>
         <div class="hero-meta">
+          <button type="button" class="theme-toggle" data-theme-toggle title="Toggle light / dark theme">Theme</button>
           <div class="pill mono" id="human-host">deepnoa.com</div>
           <div class="pill mono" id="gateway-host">bot.deepnoa.com</div>
           <div class="pill mono" data-i18n="public.safe_only">Public-safe view only</div>
@@ -1361,5 +1376,13 @@
     boot();
     setInterval(boot, 15000);
   </script>
+<script>
+(function(){
+  var r=document.documentElement;
+  window.dnSetTheme=function(t){t=t==="light"?"light":"dark";r.setAttribute("data-theme",t);try{localStorage.setItem("dn-theme",t);}catch(e){}};
+  document.addEventListener("click",function(e){var x=e.target.closest("[data-theme-toggle]");if(!x)return;e.preventDefault();var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";window.dnSetTheme(c==="dark"?"light":"dark");});
+  try{var mq=window.matchMedia("(prefers-color-scheme: light)");mq.addEventListener("change",function(){try{if(localStorage.getItem("dn-theme"))return;}catch(z){}window.dnSetTheme(mq.matches?"light":"dark");});}catch(y){}
+})();
+</script>
 </body>
 </html>
