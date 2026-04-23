@@ -46,14 +46,14 @@ def sync_github_dev() -> None:
         detail = "GitHub webhook queue is being processed and deployment flow is active."
         payload = {
             "source": "github",
-            "event_type": "github_webhook",
+            "event_type": "connector.status.changed",
             "state": "executing",
             "detail": detail,
         }
     else:
         payload = {
             "source": "github",
-            "event_type": "github_webhook",
+            "event_type": "connector.status.changed",
             "state": "idle",
             "detail": "GitHub webhook queue is idle.",
         }
