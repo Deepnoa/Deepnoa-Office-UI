@@ -205,6 +205,44 @@
     .attention-empty .check { font-size: 24px; }
 
     /* ── RUNS STRIP ──────────────────────── */
+    .health-summary {
+      border-radius: 18px; border: 1px solid var(--line); background: var(--panel);
+      backdrop-filter: blur(14px); padding: 18px 22px; margin-bottom: 20px;
+    }
+    .health-summary-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px;
+    }
+    .health-summary-title {
+      font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+    }
+    .health-summary-updated {
+      font-size: 11px; color: var(--muted); font-family: "IBM Plex Mono", monospace;
+    }
+    .health-summary-grid {
+      display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;
+    }
+    .health-item {
+      border-radius: 14px; border: 1px solid rgba(255,255,255,0.06); background: var(--panel2);
+      padding: 14px 15px; min-height: 86px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .health-item-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+    }
+    .health-item-value {
+      font-size: 22px; font-weight: 700; color: var(--text); line-height: 1.1;
+    }
+    .health-item-value.ok { color: var(--accent); }
+    .health-item-value.warn { color: var(--warn); }
+    .health-item-value.danger { color: var(--danger); }
+    .health-item-sub {
+      font-size: 12px; color: #c0d4ee; line-height: 1.45;
+    }
+    .health-link {
+      color: var(--danger); text-decoration: none; font-family: "IBM Plex Mono", monospace; font-size: 12px;
+    }
+    .health-link:hover { text-decoration: underline; }
     .runs-strip {
       border-radius: 18px; border: 1px solid var(--line); background: var(--panel);
       backdrop-filter: blur(14px); padding: 18px 22px; display: flex; align-items: center; gap: 20px;
@@ -240,11 +278,14 @@
     @media (max-width: 1100px) {
       .kpi-strip { grid-template-columns: repeat(3,1fr); }
       .main-grid { grid-template-columns: 1fr; }
+      .health-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 720px) {
       .shell { padding: 16px 14px 40px; }
       .kpi-strip { grid-template-columns: repeat(2,1fr); }
       .agent-grid { grid-template-columns: 1fr; }
+      .health-summary-grid { grid-template-columns: 1fr; }
+      .health-summary-header { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
@@ -260,7 +301,6 @@
   <a class="nav-tab active" href="/dashboard" id="navDashboard" data-i18n="nav.dashboard">ダッシュボード</a>
   <a class="nav-tab" id="navInternal" data-i18n="nav.internal">Internal</a>
   <a class="nav-tab" id="navRuns" data-i18n="nav.runs">Runs</a>
-  <a class="nav-tab" id="navHealth" data-i18n="nav.health">Health</a>
 
   <div class="nav-spacer"></div>
 
@@ -323,6 +363,36 @@
     </div>
   </div>
 
+  <!-- Health summary -->
+  <div class="health-summary">
+    <div class="health-summary-header">
+      <span class="health-summary-title" data-i18n="health.title">Health Summary</span>
+      <span class="health-summary-updated" id="healthUpdatedAt" data-i18n="health.loading">読込中…</span>
+    </div>
+    <div class="health-summary-grid">
+      <div class="health-item">
+        <div class="health-item-label" data-i18n="health.overall">Overall Health</div>
+        <div class="health-item-value" id="healthOverallValue">—</div>
+        <div class="health-item-sub" id="healthOverallSub">—</div>
+      </div>
+      <div class="health-item">
+        <div class="health-item-label" data-i18n="health.critical_alerts">Critical Alerts</div>
+        <div class="health-item-value" id="healthCriticalAlerts">—</div>
+        <div class="health-item-sub" data-i18n="health.critical_alerts_sub">重大な異常のみ</div>
+      </div>
+      <div class="health-item">
+        <div class="health-item-label" data-i18n="health.degraded_connectors">Degraded Connectors</div>
+        <div class="health-item-value" id="healthDegradedConnectors">—</div>
+        <div class="health-item-sub" data-i18n="health.degraded_connectors_sub">接続品質の低下</div>
+      </div>
+      <div class="health-item">
+        <div class="health-item-label" data-i18n="health.latest_failed_run">Latest Failed Run</div>
+        <div class="health-item-value" id="healthLatestFailedValue">—</div>
+        <div class="health-item-sub" id="healthLatestFailedSub">—</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Today's Runs strip -->
   <div class="runs-strip" id="runsStrip">
     <span class="runs-strip-label" data-i18n="dash.today_runs">本日の実行</span>
@@ -347,7 +417,6 @@
       "nav.dashboard": "ダッシュボード",
       "nav.internal": "Internal",
       "nav.runs": "Runs",
-      "nav.health": "Health",
       "kpi.active_agents": "稼働中 Agent",
       "kpi.active_agents_sub": "現在作業中",
       "kpi.active_tasks": "実行中タスク",
@@ -374,6 +443,23 @@
       "dash.agent_tools": "tools:",
       "dash.agent_idle": "待機中",
       "dash.agent_unknown": "不明",
+      "health.title": "Health Summary",
+      "health.loading": "読込中…",
+      "health.updated": "更新:",
+      "health.overall": "Overall Health",
+      "health.overall.ok": "正常",
+      "health.overall.degraded": "注意",
+      "health.overall.error": "要対応",
+      "health.overall.ok_sub": "重大な異常はありません",
+      "health.overall.degraded_sub": "失敗実行または劣化があります",
+      "health.overall.error_sub": "重大アラートまたは接続異常があります",
+      "health.critical_alerts": "Critical Alerts",
+      "health.critical_alerts_sub": "重大な異常のみ",
+      "health.degraded_connectors": "Degraded Connectors",
+      "health.degraded_connectors_sub": "接続品質の低下",
+      "health.latest_failed_run": "Latest Failed Run",
+      "health.latest_failed_run.none": "失敗はありません",
+      "health.latest_failed_run.view": "Runs で確認",
       "atype.approval": "承認待ち",
       "atype.blocked": "ブロック",
       "atype.alert": "アラート",
@@ -391,7 +477,6 @@
       "nav.dashboard": "Dashboard",
       "nav.internal": "Internal",
       "nav.runs": "Runs",
-      "nav.health": "Health",
       "kpi.active_agents": "Active Agents",
       "kpi.active_agents_sub": "currently working",
       "kpi.active_tasks": "Active Tasks",
@@ -418,6 +503,23 @@
       "dash.agent_tools": "tools:",
       "dash.agent_idle": "idle",
       "dash.agent_unknown": "unknown",
+      "health.title": "Health Summary",
+      "health.loading": "Loading…",
+      "health.updated": "updated:",
+      "health.overall": "Overall Health",
+      "health.overall.ok": "Healthy",
+      "health.overall.degraded": "Degraded",
+      "health.overall.error": "Needs Attention",
+      "health.overall.ok_sub": "No critical issues detected",
+      "health.overall.degraded_sub": "Some failures or degraded services detected",
+      "health.overall.error_sub": "Critical alerts or connector failures detected",
+      "health.critical_alerts": "Critical Alerts",
+      "health.critical_alerts_sub": "critical only",
+      "health.degraded_connectors": "Degraded Connectors",
+      "health.degraded_connectors_sub": "service quality reduced",
+      "health.latest_failed_run": "Latest Failed Run",
+      "health.latest_failed_run.none": "No failed runs",
+      "health.latest_failed_run.view": "Review in Runs",
       "atype.approval": "APPROVAL",
       "atype.blocked": "BLOCKED",
       "atype.alert": "ALERT",
@@ -435,7 +537,6 @@
       "nav.dashboard": "仪表盘",
       "nav.internal": "内部",
       "nav.runs": "执行",
-      "nav.health": "健康",
       "kpi.active_agents": "活跃 Agent",
       "kpi.active_agents_sub": "当前工作中",
       "kpi.active_tasks": "执行中任务",
@@ -462,6 +563,23 @@
       "dash.agent_tools": "tools:",
       "dash.agent_idle": "待机",
       "dash.agent_unknown": "未知",
+      "health.title": "健康摘要",
+      "health.loading": "加载中…",
+      "health.updated": "更新:",
+      "health.overall": "整体健康",
+      "health.overall.ok": "正常",
+      "health.overall.degraded": "需关注",
+      "health.overall.error": "需要处理",
+      "health.overall.ok_sub": "当前没有重大异常",
+      "health.overall.degraded_sub": "存在失败执行或服务降级",
+      "health.overall.error_sub": "存在严重告警或连接异常",
+      "health.critical_alerts": "严重告警",
+      "health.critical_alerts_sub": "仅统计严重级别",
+      "health.degraded_connectors": "降级连接器",
+      "health.degraded_connectors_sub": "连接质量下降",
+      "health.latest_failed_run": "最近失败执行",
+      "health.latest_failed_run.none": "暂无失败执行",
+      "health.latest_failed_run.view": "在 Runs 查看",
       "atype.approval": "审批",
       "atype.blocked": "阻塞",
       "atype.alert": "告警",
@@ -519,12 +637,10 @@
     const navDashboard = document.getElementById("navDashboard");
     const navInternal = document.getElementById("navInternal");
     const navRuns = document.getElementById("navRuns");
-    const navHealth = document.getElementById("navHealth");
     const runsViewAll = document.getElementById("runsViewAll");
     if (navDashboard) navDashboard.href = withLang("/dashboard");
     if (navInternal) navInternal.href = withLang("/internal");
     if (navRuns) navRuns.href = withLang("/runs");
-    if (navHealth) navHealth.href = withLang("/health");
     if (runsViewAll) runsViewAll.href = withLang("/runs");
   }
 
@@ -683,15 +799,77 @@
   }
 
   // ── Render: Nav status ───────────────────────────────────────────
-  function renderNavStatus(data) {
+  function renderNavStatus(state, health) {
     const dot  = document.getElementById("navStatusDot");
     const span = document.getElementById("navStatusText");
     if (!dot || !span) return;
-    const approvals = (data?.approvals || []).length;
-    const alerts    = (data?.alerts    || []).filter(a => a.severity === "error" || a.severity === "critical").length;
+    const overall = String(health?.overall_status || "").toLowerCase();
+    if (overall === "error" || overall === "degraded") {
+      dot.className = `sdot ${overall === "error" ? "crit" : "warn"}`;
+      span.textContent = t("status.crit");
+      return;
+    }
+    const approvals = (state?.approvals || []).length;
+    const alerts    = (state?.alerts    || []).filter(a => a.severity === "error" || a.severity === "critical").length;
     const isCrit = approvals > 0 || alerts > 0;
     dot.className  = `sdot ${isCrit ? "crit" : "ok"}`;
     span.textContent = t(isCrit ? "status.crit" : "status.ok");
+  }
+
+  function renderHealthSummary(health) {
+    const overallEl = document.getElementById("healthOverallValue");
+    const overallSubEl = document.getElementById("healthOverallSub");
+    const criticalEl = document.getElementById("healthCriticalAlerts");
+    const degradedEl = document.getElementById("healthDegradedConnectors");
+    const failedValueEl = document.getElementById("healthLatestFailedValue");
+    const failedSubEl = document.getElementById("healthLatestFailedSub");
+    const updatedEl = document.getElementById("healthUpdatedAt");
+    if (!overallEl || !overallSubEl || !criticalEl || !degradedEl || !failedValueEl || !failedSubEl || !updatedEl) return;
+
+    if (!health) {
+      overallEl.textContent = "—";
+      overallEl.className = "health-item-value";
+      overallSubEl.textContent = "—";
+      criticalEl.textContent = "—";
+      criticalEl.className = "health-item-value";
+      degradedEl.textContent = "—";
+      degradedEl.className = "health-item-value";
+      failedValueEl.textContent = "—";
+      failedValueEl.className = "health-item-value";
+      failedSubEl.textContent = "—";
+      updatedEl.textContent = t("health.loading");
+      return;
+    }
+
+    const overall = String(health.overall_status || "ok").toLowerCase();
+    const criticalAlerts = (health.alerts || []).filter(a => a.severity === "error" || a.severity === "critical").length;
+    const degradedConnectors = (health.connectors || []).filter(c => ["error", "offline", "degraded"].includes(c.status)).length;
+    const latestFailed = health.latest_failed_run || null;
+    const overallTone = overall === "error" ? "danger" : overall === "degraded" ? "warn" : "ok";
+
+    overallEl.textContent = t(`health.overall.${overall}`, overall);
+    overallEl.className = `health-item-value ${overallTone}`;
+    overallSubEl.textContent = t(`health.overall.${overall}_sub`, "—");
+
+    criticalEl.textContent = String(criticalAlerts);
+    criticalEl.className = `health-item-value ${criticalAlerts > 0 ? "danger" : "ok"}`;
+
+    degradedEl.textContent = String(degradedConnectors);
+    degradedEl.className = `health-item-value ${degradedConnectors > 0 ? "warn" : "ok"}`;
+
+    if (latestFailed?.run_id) {
+      failedValueEl.innerHTML = `<a class="health-link" href="${withLang(`/runs/${encodeURIComponent(latestFailed.run_id)}`)}">${esc(latestFailed.run_id)}</a>`;
+      failedValueEl.className = "health-item-value danger";
+      const kind = esc(latestFailed.kind || "—");
+      const time = esc(timeAgo(latestFailed.queued_at));
+      failedSubEl.textContent = `${kind} · ${time}`;
+    } else {
+      failedValueEl.textContent = t("health.latest_failed_run.none");
+      failedValueEl.className = "health-item-value ok";
+      failedSubEl.textContent = t("health.latest_failed_run.view");
+    }
+
+    updatedEl.textContent = health.generated_at ? `${esc(t("health.updated"))} ${esc(timeAgo(health.generated_at))}` : t("health.loading");
   }
 
   // ── Render: Runs strip ───────────────────────────────────────────
@@ -728,11 +906,12 @@
         renderAgents(state.roles);
         renderAttention(state);
         renderBanner(state);
-        renderNavStatus(state);
       }
       if (health) {
+        renderHealthSummary(health);
         renderRuns(health);
       }
+      renderNavStatus(state, health);
     } catch (_) {
       // silent — keep showing last good data
     }

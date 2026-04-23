@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Deepnoa Office UI - Backend State Service"""
 
-from flask import Flask, jsonify, send_from_directory, make_response, request, session
+from flask import Flask, jsonify, send_from_directory, make_response, redirect, request, session
 from datetime import datetime, timedelta
 import json
 import os
@@ -58,7 +58,6 @@ FRONTEND_GATEWAY_FILE = os.path.join(FRONTEND_DIR, "gateway.html")
 FRONTEND_ELECTRON_STANDALONE_FILE = os.path.join(FRONTEND_DIR, "electron-standalone.html")
 FRONTEND_RUNS_FILE = os.path.join(FRONTEND_DIR, "runs.html")
 FRONTEND_RUN_DETAIL_FILE = os.path.join(FRONTEND_DIR, "run_detail.html")
-FRONTEND_HEALTH_FILE = os.path.join(FRONTEND_DIR, "health.html")
 FRONTEND_DASHBOARD_FILE = os.path.join(FRONTEND_DIR, "dashboard.html")
 STATE_FILE = os.path.join(ROOT_DIR, "state.json")
 MANAGER_STATE_FILE = os.path.join(ROOT_DIR, "manager-state.json")
@@ -2069,10 +2068,12 @@ def dashboard_page():
 
 @app.route("/health", methods=["GET"])
 def health():
-    """Health dashboard page."""
-    with open(FRONTEND_HEALTH_FILE, "r", encoding="utf-8") as f:
-        content = f.read()
-    return make_response(content, 200, {"Content-Type": "text/html; charset=utf-8"})
+    """Legacy health page now redirects to the dashboard."""
+    lang = (request.args.get("lang") or "").strip()
+    target = "/dashboard"
+    if lang:
+        target = f"{target}?lang={lang}"
+    return redirect(target, code=302)
 
 
 @app.route("/api/health", methods=["GET"])

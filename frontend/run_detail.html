@@ -345,7 +345,6 @@
     <a id="nav-dashboard" href="/dashboard?lang=ja">Dashboard</a>
     <a id="nav-internal" href="/internal?lang=ja">Internal</a>
     <a id="nav-runs" href="/runs?lang=ja" class="active">Runs</a>
-    <a id="nav-health" href="/health?lang=ja">Health</a>
   </nav>
 
   <main>
@@ -544,8 +543,6 @@
       if (backToRunsLink) backToRunsLink.href = withLang('/runs');
       const navRunsLink = document.getElementById('nav-runs');
       if (navRunsLink) navRunsLink.href = withLang('/runs');
-      const navHealthLink = document.getElementById('nav-health');
-      if (navHealthLink) navHealthLink.href = withLang('/health');
       const navInternalLink = document.getElementById('nav-internal');
       if (navInternalLink) navInternalLink.href = withLang('/internal');
       const navDashboardLink = document.getElementById('nav-dashboard');
