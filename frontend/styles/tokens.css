@@ -6,4 +6,20 @@
   --color-accent: #82f2cb;
   --color-warn: #ffd08a;
   --color-danger: #ff7a7a;
+  /* Internal L1/L2 (dashboard + /internal): supporting copy & rhythm — additive */
+  --color-copy-soft: #d0def3;
+  --color-copy-emphasis: #d9e6fa;
+
+  --space-shell-x: 24px;
+  --space-shell-y: 24px;
+  --space-shell-bottom-l1: 60px;
+  --space-shell-bottom-l2: 40px;
+  --space-block-gap: 20px;
+  --space-mono-label-after: 12px;
+
+  --font-mono-label-size: 11px;
+  --font-mono-label-spacing: 0.08em;
+  --font-attention-title-size: 14px;
+  --font-attention-title-weight: 700;
+  --font-page-title-weight: 700;
 }
