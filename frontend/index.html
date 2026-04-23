@@ -465,7 +465,6 @@
     <a id="inav-dashboard" href="/dashboard" style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--muted);">Dashboard</a>
     <a id="inav-internal" href="/internal" style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--text); background:rgba(255,255,255,0.07);">Internal</a>
     <a id="inav-runs"     href="/runs"     style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--muted);">Runs</a>
-    <a id="inav-health"   href="/health"   style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--muted);">Health</a>
   </nav>
   <main class="shell">
     <section class="hero">
@@ -1452,12 +1451,10 @@ manager カードの補足に使います。</div>
       const inavDashboard = document.getElementById("inav-dashboard");
       const inavInternal = document.getElementById("inav-internal");
       const inavRuns = document.getElementById("inav-runs");
-      const inavHealth = document.getElementById("inav-health");
       const runsViewAllLink = document.getElementById("runsViewAllLink");
       if (inavDashboard) inavDashboard.href = withLang("/dashboard");
       if (inavInternal) inavInternal.href = withLang("/internal");
       if (inavRuns) inavRuns.href = withLang("/runs");
-      if (inavHealth) inavHealth.href = withLang("/health");
       if (runsViewAllLink) runsViewAllLink.href = withLang("/runs?kind=health");
       for (const node of document.querySelectorAll("[data-i18n]")) {
         node.textContent = t(node.dataset.i18n, node.textContent);
