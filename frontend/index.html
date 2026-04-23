@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles/card-panel.css">
   <style>
     :root {
       --bg: #06101b;
@@ -50,14 +51,6 @@
     .grid-secondary { grid-template-columns: 1fr 1fr; }
     .summary-strip { grid-template-columns: repeat(6, minmax(0, 1fr)); }
     .stack { display: grid; gap: 20px; }
-    .panel {
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      background: var(--panel);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-      overflow: hidden;
-    }
     .hero-main { padding: 28px; min-height: 260px; position: relative; }
     .hero-main::after {
       content: "";

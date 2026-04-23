@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles/card-panel.css">
   <style>
     :root {
       --bg: #06101b;
@@ -118,8 +119,7 @@
     /* ── KPI STRIP ───────────────────────── */
     .kpi-strip { display: grid; grid-template-columns: repeat(6,1fr); gap: 14px; margin-bottom: 20px; }
     .kpi-card {
-      padding: 18px 20px; border-radius: 18px; border: 1px solid var(--line);
-      background: var(--panel); backdrop-filter: blur(14px);
+      padding: 18px 20px;
       transition: border-color .2s, transform .15s;
     }
     .kpi-card:hover { transform: translateY(-1px); border-color: rgba(128,168,225,0.28); }
@@ -139,8 +139,7 @@
     /* ── AGENT GRID ──────────────────────── */
     .agent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .agent-card {
-      padding: 18px; border-radius: 18px; border: 1px solid var(--line); background: var(--panel);
-      backdrop-filter: blur(14px); position: relative; overflow: hidden;
+      padding: 18px; position: relative; overflow: hidden;
       transition: border-color .2s, transform .15s;
     }
     .agent-card::before {
@@ -165,8 +164,7 @@
 
     /* ── NEEDS ATTENTION ─────────────────── */
     .attention-panel {
-      border-radius: 18px; border: 1px solid var(--line); background: var(--panel);
-      backdrop-filter: blur(14px); overflow: hidden;
+      overflow: hidden;
     }
     .attention-header {
       padding: 16px 18px 14px; border-bottom: 1px solid var(--line);
@@ -206,8 +204,7 @@
 
     /* ── RUNS STRIP ──────────────────────── */
     .health-summary {
-      border-radius: 18px; border: 1px solid var(--line); background: var(--panel);
-      backdrop-filter: blur(14px); padding: 18px 22px; margin-bottom: 20px;
+      padding: 18px 22px; margin-bottom: 20px;
     }
     .health-summary-header {
       display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px;
@@ -244,8 +241,7 @@
     }
     .health-link:hover { text-decoration: underline; }
     .runs-strip {
-      border-radius: 18px; border: 1px solid var(--line); background: var(--panel);
-      backdrop-filter: blur(14px); padding: 18px 22px; display: flex; align-items: center; gap: 20px;
+      padding: 18px 22px; display: flex; align-items: center; gap: 20px;
     }
     .runs-strip-label {
       font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
