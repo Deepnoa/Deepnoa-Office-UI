@@ -394,16 +394,18 @@
     html[data-theme="light"] .agent-card,
     html[data-theme="light"] .route-card,
     html[data-theme="light"] .asset-card {
-      border-color: rgba(15, 23, 42, 0.1);
-      background: rgba(255, 255, 255, 0.75);
+      border-color: var(--color-line);
+      background: var(--color-panel);
+      box-shadow: var(--shadow-surface-sm);
     }
     html[data-theme="light"] .metric-card {
-      border-color: rgba(15, 23, 42, 0.12);
-      background: rgba(255, 255, 255, 0.82);
+      border-color: var(--color-line);
+      background: var(--color-panel-alt);
+      box-shadow: var(--shadow-surface-sm);
     }
     html[data-theme="light"] .meta-item {
-      background: rgba(255, 255, 255, 0.8);
-      border-color: rgba(15, 23, 42, 0.08);
+      background: var(--color-panel-alt);
+      border-color: var(--color-line);
     }
 
     @media (max-width: 1120px) {
