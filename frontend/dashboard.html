@@ -2,6 +2,7 @@
 <html lang="ja" translate="no" class="notranslate">
 <head>
   <meta charset="UTF-8">
+  <script>(function(){try{var k="dn-theme",s=localStorage.getItem(k),m=window.matchMedia("(prefers-color-scheme: light)"),t=s==="light"||s==="dark"?s:m.matches?"light":"dark";document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="google" content="notranslate">
   <title>Deepnoa ダッシュボード</title>
@@ -12,15 +13,15 @@
   <link rel="stylesheet" href="/static/styles/card-panel.css">
   <style>
     :root {
-      --bg: #06101b;
-      --panel: rgba(10, 18, 31, 0.90);
-      --panel2: rgba(255,255,255,0.035);
-      --line: rgba(128, 168, 225, 0.16);
+      --bg: var(--color-bg);
+      --panel: var(--color-panel);
+      --panel2: var(--color-panel-2);
+      --line: var(--color-line);
       --text: var(--color-text);
-      --muted: #7a97ba;
-      --accent: #88f0cf;
-      --warn: #ffc977;
-      --danger: #ff7e8f;
+      --muted: var(--color-muted);
+      --accent: var(--color-accent);
+      --warn: var(--color-warn);
+      --danger: var(--color-danger);
       --nav-h: 56px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -56,7 +57,7 @@
     nav {
       position: sticky; top: 0; z-index: 100;
       height: var(--nav-h); display: flex; align-items: center; gap: 6px; padding: 0 24px;
-      background: rgba(6,16,27,0.88); backdrop-filter: blur(18px);
+      background: var(--color-nav-bg); backdrop-filter: blur(18px);
       border-bottom: 1px solid var(--line);
     }
     .nav-logo {
@@ -284,6 +285,15 @@
     /* ── LOADING / ERROR ─────────────────── */
     .load-state { color: var(--muted); font-size: 13px; font-family: "IBM Plex Mono", monospace; }
 
+    html[data-theme="light"] .health-item {
+      border-color: var(--color-line);
+      background: var(--color-panel);
+      box-shadow: var(--shadow-surface-sm);
+    }
+    html[data-theme="light"] .aitem:hover {
+      background: var(--color-surface-soft);
+    }
+
     /* ── RESPONSIVE ──────────────────────── */
     @media (max-width: 1100px) {
       .kpi-strip { grid-template-columns: repeat(3,1fr); }
@@ -326,6 +336,10 @@
   </div>
 
   <span class="nav-time" id="navClock"></span>
+
+  <button type="button" class="theme-toggle" data-theme-toggle>
+    <span class="theme-toggle__state" aria-hidden="true"></span>
+  </button>
 </nav>
 
 <!-- ── SHELL ─────────────────────────────────────────────────────── -->
@@ -950,6 +964,40 @@
   // ── Boot ─────────────────────────────────────────────────────────
   applyI18n();
   refresh().then(schedule);
+</script>
+<script>
+(function(){
+  var r=document.documentElement;
+  window.dnSyncThemeToggleUi=function(){
+    var cur=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light",
+        tip=cur==="dark"?"Switch to light mode":"Switch to dark mode";
+    document.querySelectorAll("[data-theme-toggle]").forEach(function(b){
+      b.setAttribute("aria-label",tip);
+      b.setAttribute("title",tip);
+    });
+  };
+  window.dnSetTheme=function(t){
+    t=t==="light"?"light":"dark";
+    r.setAttribute("data-theme",t);
+    try{localStorage.setItem("dn-theme",t);}catch(e){}
+    try{window.dnSyncThemeToggleUi();}catch(z){}
+  };
+  document.addEventListener("click",function(e){
+    var x=e.target.closest("[data-theme-toggle]");
+    if(!x)return;
+    e.preventDefault();
+    var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";
+    window.dnSetTheme(c==="dark"?"light":"dark");
+  });
+  try{
+    var mq=window.matchMedia("(prefers-color-scheme: light)");
+    mq.addEventListener("change",function(){
+      try{if(localStorage.getItem("dn-theme"))return;}catch(z){}
+      window.dnSetTheme(mq.matches?"light":"dark");
+    });
+  }catch(y){}
+  try{window.dnSyncThemeToggleUi();}catch(z2){}
+})();
 </script>
 </body>
 </html>

@@ -2,6 +2,7 @@
 <html lang="ja" translate="no" class="notranslate">
 <head>
   <meta charset="UTF-8">
+  <script>(function(){try{var k="dn-theme",s=localStorage.getItem(k),m=window.matchMedia("(prefers-color-scheme: light)"),t=s==="light"||s==="dark"?s:m.matches?"light":"dark";document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="google" content="notranslate">
   <title>Deepnoa 内部ビュー</title>
@@ -12,15 +13,15 @@
   <link rel="stylesheet" href="/static/styles/card-panel.css">
   <style>
     :root {
-      --bg: #06101b;
-      --panel: rgba(10, 18, 31, 0.88);
-      --line: rgba(128, 168, 225, 0.16);
+      --bg: var(--color-bg);
+      --panel: var(--color-panel);
+      --line: var(--color-line);
       --text: var(--color-text);
       --muted: var(--color-muted);
-      --accent: #88f0cf;
-      --warn: #ffc977;
-      --danger: #ff7e8f;
-      --shadow: 0 26px 90px rgba(0, 0, 0, 0.34);
+      --accent: var(--color-accent);
+      --warn: var(--color-warn);
+      --danger: var(--color-danger);
+      --shadow: var(--shadow-elevated);
     }
     * { box-sizing: border-box; }
     body {
@@ -29,9 +30,9 @@
       color: var(--text);
       font-family: "Space Grotesk", sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(52, 98, 184, 0.28), transparent 26%),
-        radial-gradient(circle at top right, rgba(136, 240, 207, 0.10), transparent 24%),
-        linear-gradient(180deg, #091322 0%, #06101b 100%);
+        radial-gradient(circle at top left, var(--color-index-radial-blue), transparent 26%),
+        radial-gradient(circle at top right, var(--color-index-radial-accent), transparent 24%),
+        linear-gradient(180deg, var(--color-bg-gradient-top) 0%, var(--bg) 100%);
     }
     body::before {
       content: "";
@@ -386,6 +387,29 @@
       gap: 8px;
       margin-top: 10px;
     }
+
+    html[data-theme="light"] .status-card,
+    html[data-theme="light"] .summary-card,
+    html[data-theme="light"] .card,
+    html[data-theme="light"] .role-card,
+    html[data-theme="light"] .activity-card,
+    html[data-theme="light"] .agent-card,
+    html[data-theme="light"] .route-card,
+    html[data-theme="light"] .asset-card {
+      border-color: var(--color-line);
+      background: var(--color-panel);
+      box-shadow: var(--shadow-surface-sm);
+    }
+    html[data-theme="light"] .metric-card {
+      border-color: var(--color-line);
+      background: var(--color-panel-alt);
+      box-shadow: var(--shadow-surface-sm);
+    }
+    html[data-theme="light"] .meta-item {
+      background: var(--color-panel-alt);
+      border-color: var(--color-line);
+    }
+
     @media (max-width: 1120px) {
       .hero, .grid-main, .grid-secondary, .summary-strip { grid-template-columns: 1fr; }
       .detail-panel-shell {
@@ -461,13 +485,16 @@
   <nav id="topNav" style="
     position:sticky; top:0; z-index:200;
     height:48px; display:flex; align-items:center; gap:4px; padding:0 24px;
-    background:rgba(6,16,27,0.92); backdrop-filter:blur(12px);
-    border-bottom:1px solid rgba(128,168,225,0.12);
+    background:var(--color-nav-internal); backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--color-line);
   ">
     <span style="font-size:12px; font-weight:700; letter-spacing:0.06em; color:var(--accent); margin-right:12px;">Deepnoa AI Office</span>
     <a id="inav-dashboard" href="/dashboard" style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--muted);">Dashboard</a>
     <a id="inav-internal" href="/internal" style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--text); background:rgba(255,255,255,0.07);">Internal</a>
     <a id="inav-runs"     href="/runs"     style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--muted);">Runs</a>
+    <button type="button" class="theme-toggle" data-theme-toggle style="margin-left:auto">
+      <span class="theme-toggle__state" aria-hidden="true"></span>
+    </button>
   </nav>
   <main class="shell">
     <section class="hero">
@@ -2435,5 +2462,39 @@ manager カードの補足に使います。</div>
 
     render().then(() => scheduleRender());
   </script>
+<script>
+(function(){
+  var r=document.documentElement;
+  window.dnSyncThemeToggleUi=function(){
+    var cur=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light",
+        tip=cur==="dark"?"Switch to light mode":"Switch to dark mode";
+    document.querySelectorAll("[data-theme-toggle]").forEach(function(b){
+      b.setAttribute("aria-label",tip);
+      b.setAttribute("title",tip);
+    });
+  };
+  window.dnSetTheme=function(t){
+    t=t==="light"?"light":"dark";
+    r.setAttribute("data-theme",t);
+    try{localStorage.setItem("dn-theme",t);}catch(e){}
+    try{window.dnSyncThemeToggleUi();}catch(z){}
+  };
+  document.addEventListener("click",function(e){
+    var x=e.target.closest("[data-theme-toggle]");
+    if(!x)return;
+    e.preventDefault();
+    var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";
+    window.dnSetTheme(c==="dark"?"light":"dark");
+  });
+  try{
+    var mq=window.matchMedia("(prefers-color-scheme: light)");
+    mq.addEventListener("change",function(){
+      try{if(localStorage.getItem("dn-theme"))return;}catch(z){}
+      window.dnSetTheme(mq.matches?"light":"dark");
+    });
+  }catch(y){}
+  try{window.dnSyncThemeToggleUi();}catch(z2){}
+})();
+</script>
 </body>
 </html>

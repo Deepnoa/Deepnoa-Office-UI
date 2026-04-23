@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <script>(function(){try{var k="dn-theme",s=localStorage.getItem(k),m=window.matchMedia("(prefers-color-scheme: light)"),t=s==="light"||s==="dark"?s:m.matches?"light":"dark";document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Run List — Deepnoa AI Office</title>
   <link rel="stylesheet" href="/static/styles/tokens.css">
@@ -12,22 +13,22 @@
   <style>
     :root {
       --bg: var(--color-bg);
-      --panel: rgba(10, 20, 35, 0.82);
+      --panel: var(--color-panel-alt);
       --line: var(--color-line);
       --text: var(--color-text);
       --muted: var(--color-muted);
       --accent: var(--color-accent);
       --warn: var(--color-warn);
       --danger: var(--color-danger);
-      --shadow: 0 4px 32px rgba(0,0,0,0.32);
+      --shadow: var(--shadow-card);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: "Space Grotesk", sans-serif;
       color: var(--text);
       background:
-        radial-gradient(circle at top left, rgba(50, 110, 192, 0.18), transparent 40%),
-        linear-gradient(180deg, #0a1422 0%, #07111d 60%, #060e18 100%);
+        radial-gradient(circle at top left, var(--color-runs-radial), transparent 40%),
+        linear-gradient(180deg, var(--color-bg-gradient-mid) 0%, var(--color-bg-elevated) 60%, var(--color-bg-deep) 100%);
       min-height: 100vh;
     }
 
@@ -38,7 +39,7 @@
       gap: 24px;
       padding: 14px var(--space-shell-x);
       border-bottom: 1px solid var(--line);
-      background: rgba(7, 17, 29, 0.72);
+      background: var(--color-nav-bg-alt);
       backdrop-filter: blur(12px);
       position: sticky;
       top: 0;
@@ -151,6 +152,7 @@
     }
     tbody tr:last-child { border-bottom: none; }
     tbody tr:hover { background: rgba(255,255,255,0.03); }
+    html[data-theme="light"] tbody tr:hover { background: var(--color-surface-soft); }
 
     /* Status badge */
     .status-badge {
@@ -225,6 +227,9 @@
     <a id="nav-dashboard" href="/dashboard?lang=ja">Dashboard</a>
     <a id="nav-internal" href="/internal?lang=ja">Internal</a>
     <a id="nav-runs" href="/runs?lang=ja" class="active">Runs</a>
+    <button type="button" class="theme-toggle" data-theme-toggle style="margin-left:auto">
+      <span class="theme-toggle__state" aria-hidden="true"></span>
+    </button>
   </nav>
 
   <main>
@@ -447,5 +452,39 @@
     activateChip(initialStatusFilter);
     fetchRuns().then(schedulePoll);
   </script>
+<script>
+(function(){
+  var r=document.documentElement;
+  window.dnSyncThemeToggleUi=function(){
+    var cur=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light",
+        tip=cur==="dark"?"Switch to light mode":"Switch to dark mode";
+    document.querySelectorAll("[data-theme-toggle]").forEach(function(b){
+      b.setAttribute("aria-label",tip);
+      b.setAttribute("title",tip);
+    });
+  };
+  window.dnSetTheme=function(t){
+    t=t==="light"?"light":"dark";
+    r.setAttribute("data-theme",t);
+    try{localStorage.setItem("dn-theme",t);}catch(e){}
+    try{window.dnSyncThemeToggleUi();}catch(z){}
+  };
+  document.addEventListener("click",function(e){
+    var x=e.target.closest("[data-theme-toggle]");
+    if(!x)return;
+    e.preventDefault();
+    var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";
+    window.dnSetTheme(c==="dark"?"light":"dark");
+  });
+  try{
+    var mq=window.matchMedia("(prefers-color-scheme: light)");
+    mq.addEventListener("change",function(){
+      try{if(localStorage.getItem("dn-theme"))return;}catch(z){}
+      window.dnSetTheme(mq.matches?"light":"dark");
+    });
+  }catch(y){}
+  try{window.dnSyncThemeToggleUi();}catch(z2){}
+})();
+</script>
 </body>
 </html>

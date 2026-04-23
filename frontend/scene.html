@@ -2,32 +2,47 @@
 <html lang="ja" translate="no" class="notranslate">
 <head>
   <meta charset="UTF-8">
+  <script>(function(){try{var k="dn-theme",s=localStorage.getItem(k),m=window.matchMedia("(prefers-color-scheme: light)"),t=s==="light"||s==="dark"?s:m.matches?"light":"dark";document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="google" content="notranslate">
   <title>Deepnoa AI Office Scene</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles/tokens.css">
   <style>
     :root {
-      --bg: #08111d;
+      --bg: var(--color-scene-embed-bg);
       --surface: rgba(10, 18, 30, 0.42);
       --surface-line: rgba(255, 255, 255, 0.1);
-      --text: #eff6ff;
-      --muted: #99adc9;
-      --accent: #7ee2c2;
-      --danger: #ff6b7d;
+      --text: var(--color-text);
+      --muted: var(--color-muted);
+      --accent: var(--color-public-accent);
+      --danger: var(--color-danger);
       --scene-shadow: 0 34px 90px rgba(0, 0, 0, 0.35);
     }
 
+    html[data-theme="light"] {
+      --scene-shadow: 0 24px 56px rgba(15, 23, 42, 0.12);
+    }
+
     * { box-sizing: border-box; }
+
+    .scene-theme-fab {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      bottom: auto;
+      z-index: 60;
+      pointer-events: auto;
+    }
 
     html, body {
       margin: 0;
       min-height: 100%;
       background:
-        radial-gradient(circle at top left, rgba(73, 122, 197, 0.22), transparent 30%),
-        linear-gradient(180deg, #0b1525 0%, #08111d 100%);
+        radial-gradient(circle at top left, var(--color-scene-radial), transparent 30%),
+        linear-gradient(180deg, var(--color-scene-grad-top) 0%, var(--color-scene-grad-bottom) 100%);
       color: var(--text);
       font-family: "Space Grotesk", sans-serif;
     }
@@ -35,24 +50,24 @@
     body {
       display: grid;
       place-items: center;
-      padding: 18px;
+      padding: var(--space-public-shell-x);
     }
 
     body.embed-mode {
       padding: 0;
-      background: #08111d;
+      background: var(--color-scene-embed-bg);
     }
 
     .scene-shell {
       position: relative;
       width: min(100%, 1440px);
       aspect-ratio: 16 / 9;
-      min-height: min(100vh - 36px, 420px);
+      min-height: min(100vh - calc(var(--space-public-shell-x) * 2), 420px);
       border-radius: 28px;
       overflow: hidden;
       border: 1px solid rgba(255,255,255,0.09);
       box-shadow: var(--scene-shadow);
-      background: #0d1624;
+      background: var(--color-scene-canvas);
     }
 
     body.embed-mode .scene-shell {
@@ -61,6 +76,31 @@
       border-radius: 0;
       border: 0;
       box-shadow: none;
+    }
+
+    html[data-theme="light"] .scene-shell {
+      border-color: var(--color-line);
+    }
+    html[data-theme="light"] .scene-brand,
+    html[data-theme="light"] .scene-live,
+    html[data-theme="light"] .scene-legend {
+      background: var(--color-panel);
+      border-color: var(--color-line);
+      box-shadow: var(--shadow-surface-sm);
+    }
+    html[data-theme="light"] .scene-tooltip,
+    html[data-theme="light"] .scene-detail {
+      background: var(--color-panel);
+      border-color: var(--color-line);
+      box-shadow: var(--shadow-surface);
+    }
+    html[data-theme="light"] .legend-chip {
+      background: var(--color-panel-alt);
+    }
+    html[data-theme="light"] .legend-chip.is-active {
+      color: var(--color-text);
+      background: var(--color-panel-2);
+      box-shadow: 0 0 0 1px var(--color-line) inset;
     }
 
     .background-layer,
@@ -425,20 +465,20 @@
       color: var(--accent);
       font-size: 10px;
       font-family: "IBM Plex Mono", monospace;
-      letter-spacing: 0.08em;
+      letter-spacing: var(--font-public-eyebrow-spacing);
       text-transform: uppercase;
       margin-bottom: 4px;
     }
 
     .scene-title {
       font-size: clamp(15px, 1.7vw, 20px);
-      font-weight: 700;
+      font-weight: var(--font-public-title-weight);
       line-height: 1.05;
       margin: 0;
     }
 
     .scene-subtitle {
-      color: #d5e4fb;
+      color: var(--color-public-copy-soft);
       font-size: 11px;
       line-height: 1.35;
       margin-top: 3px;
@@ -480,7 +520,7 @@
     .legend-chip.syncing { --chip: #c4a2ff; }
     .legend-chip.error { --chip: #ff6b7d; }
     .legend-chip.is-active {
-      color: #eff6ff;
+      color: var(--color-text);
       background: rgba(255,255,255,0.1);
       box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset;
     }
@@ -499,9 +539,9 @@
       gap: 8px;
       font-size: 10px;
       font-family: "IBM Plex Mono", monospace;
-      letter-spacing: 0.08em;
+      letter-spacing: var(--font-public-eyebrow-spacing);
       text-transform: uppercase;
-      color: #d7e9ff;
+      color: var(--color-public-copy-support);
     }
 
     .live-pill::before {
@@ -549,7 +589,7 @@
     .tooltip-name,
     .detail-name {
       font-size: 13px;
-      font-weight: 700;
+      font-weight: var(--font-public-title-weight);
       line-height: 1.2;
     }
 
@@ -571,7 +611,7 @@
       border-radius: 999px;
       font-size: 10px;
       font-family: "IBM Plex Mono", monospace;
-      color: #eff6ff;
+      color: var(--color-text);
       background: rgba(255,255,255,0.07);
     }
 
@@ -586,7 +626,7 @@
     .tooltip-summary,
     .detail-summary {
       margin-top: 7px;
-      color: #dbe8f8;
+      color: var(--color-public-copy-support);
       font-size: 11px;
       line-height: 1.4;
     }
@@ -615,7 +655,7 @@
       appearance: none;
       border: 0;
       background: rgba(255,255,255,0.06);
-      color: #dce8f8;
+      color: var(--color-public-copy-support);
       width: 28px;
       height: 28px;
       border-radius: 999px;
@@ -643,7 +683,7 @@
     }
 
     .detail-value {
-      color: #eef6ff;
+      color: var(--color-text);
       min-width: 0;
       word-break: break-word;
     }
@@ -700,6 +740,9 @@
   </style>
 </head>
 <body>
+  <button type="button" class="theme-toggle scene-theme-fab" data-theme-toggle>
+    <span class="theme-toggle__state" aria-hidden="true"></span>
+  </button>
   <main class="scene-shell">
     <div class="background-layer"></div>
     <img id="scene-walkmask" src="/static/scene-walkmask.png?v={{VERSION_TIMESTAMP}}" alt="" hidden>
@@ -1899,5 +1942,39 @@
       startPolling();
     });
   </script>
+<script>
+(function(){
+  var r=document.documentElement;
+  window.dnSyncThemeToggleUi=function(){
+    var cur=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light",
+        tip=cur==="dark"?"Switch to light mode":"Switch to dark mode";
+    document.querySelectorAll("[data-theme-toggle]").forEach(function(b){
+      b.setAttribute("aria-label",tip);
+      b.setAttribute("title",tip);
+    });
+  };
+  window.dnSetTheme=function(t){
+    t=t==="light"?"light":"dark";
+    r.setAttribute("data-theme",t);
+    try{localStorage.setItem("dn-theme",t);}catch(e){}
+    try{window.dnSyncThemeToggleUi();}catch(z){}
+  };
+  document.addEventListener("click",function(e){
+    var x=e.target.closest("[data-theme-toggle]");
+    if(!x)return;
+    e.preventDefault();
+    var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";
+    window.dnSetTheme(c==="dark"?"light":"dark");
+  });
+  try{
+    var mq=window.matchMedia("(prefers-color-scheme: light)");
+    mq.addEventListener("change",function(){
+      try{if(localStorage.getItem("dn-theme"))return;}catch(z){}
+      window.dnSetTheme(mq.matches?"light":"dark");
+    });
+  }catch(y){}
+  try{window.dnSyncThemeToggleUi();}catch(z2){}
+})();
+</script>
 </body>
 </html>
