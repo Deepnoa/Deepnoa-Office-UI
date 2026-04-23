@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <script>(function(){try{var k="dn-theme",s=localStorage.getItem(k),m=window.matchMedia("(prefers-color-scheme: light)"),t=s==="light"||s==="dark"?s:m.matches?"light":"dark";document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Run List — Deepnoa AI Office</title>
+  <link rel="stylesheet" href="/static/styles/status-badge.css">
+  <link rel="stylesheet" href="/static/styles/tokens.css">
+  <link rel="stylesheet" href="/static/styles/card-panel.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: var(--color-bg);
+      --panel: var(--color-panel-alt);
+      --line: var(--color-line);
+      --text: var(--color-text);
+      --muted: var(--color-muted);
+      --accent: var(--color-accent);
+      --warn: var(--color-warn);
+      --danger: var(--color-danger);
+      --shadow: var(--shadow-card);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Space Grotesk", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, var(--color-runs-radial), transparent 40%),
+        linear-gradient(180deg, var(--color-bg-gradient-mid) 0%, var(--color-bg-elevated) 60%, var(--color-bg-deep) 100%);
+      min-height: 100vh;
+    }
+
+    /* Nav */
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 14px var(--space-shell-x);
+      border-bottom: 1px solid var(--line);
+      background: var(--color-nav-bg-alt);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .nav-logo { font-weight: 700; font-size: 15px; color: var(--accent); margin-right: auto; }
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+    nav a:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+    nav a.active { color: var(--text); background: rgba(255,255,255,0.07); }
+
+    /* Layout */
+    main {
+      max-width: 1100px; margin: 0 auto;
+      padding: var(--space-shell-y) var(--space-shell-x) var(--space-shell-bottom-l1);
+    }
+
+    /* Page header */
+    .page-header {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: var(--space-block-gap);
+    }
+    .page-header h1 {
+      font-size: 22px;
+      font-weight: var(--font-page-title-weight);
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .poll-badge {
+      font-size: var(--font-mono-label-size);
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    /* Summary strip */
+    .summary-strip {
+      display: flex;
+      gap: 12px;
+      margin-bottom: var(--space-block-gap);
+      flex-wrap: wrap;
+    }
+    .summary-chip {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .summary-chip .count { font-size: 18px; font-weight: 700; font-family: "IBM Plex Mono", monospace; }
+    .chip-done .count { color: var(--accent); }
+    .chip-running .count { color: var(--warn); }
+    .chip-failed .count { color: var(--danger); }
+    .chip-queued .count { color: var(--muted); }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    /* Filter chips */
+    .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .filter-chip {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 12px; font-weight: 500;
+      padding: 5px 12px; border-radius: 99px;
+      border: 1px solid var(--line);
+      background: transparent; color: var(--muted);
+      cursor: pointer;
+      transition: color 0.12s, border-color 0.12s, background 0.12s;
+      white-space: nowrap;
+    }
+    .filter-chip:hover { color: var(--text); border-color: rgba(255,255,255,0.18); }
+    .filter-chip.active { color: var(--text); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.07); }
+    .filter-chip[data-status="running"].active { color: var(--warn);   border-color: rgba(255,208,138,0.35); background: rgba(255,208,138,0.08); }
+    .filter-chip[data-status="done"].active    { color: var(--accent); border-color: rgba(130,242,203,0.35); background: rgba(130,242,203,0.08); }
+    .filter-chip[data-status="failed"].active  { color: var(--danger); border-color: rgba(255,122,122,0.35); background: rgba(255,122,122,0.08); }
+    .filter-chip[data-status="queued"].active,
+    .filter-chip[data-status="cancelled"].active { color: var(--muted); border-color: rgba(142,164,193,0.3); background: rgba(142,164,193,0.06); }
+    .toolbar-spacer { flex: 1; }
+    .last-updated { font-size: var(--font-mono-label-size); color: var(--muted); font-family: "IBM Plex Mono", monospace; }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { border-bottom: 1px solid var(--line); }
+    th {
+      text-align: left;
+      font-size: var(--font-mono-label-size);
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: var(--font-mono-label-spacing);
+      padding: 10px 14px;
+    }
+    td { padding: 11px 14px; font-size: 13px; vertical-align: middle; }
+    tbody tr {
+      border-bottom: 1px solid var(--line);
+      transition: background 0.1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
+    html[data-theme="light"] tbody tr:hover { background: var(--color-surface-soft); }
+
+    /* run_id link */
+    .run-link {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: var(--font-mono-label-size);
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .run-link:hover { text-decoration: underline; }
+
+    /* kind badge */
+    .kind-badge {
+      font-size: var(--font-mono-label-size);
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    /* summary text */
+    .summary-text {
+      color: var(--muted);
+      font-size: 12px;
+      max-width: 260px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Duration */
+    .duration { font-family: "IBM Plex Mono", monospace; font-size: var(--font-mono-label-size); color: var(--muted); }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* Error state */
+    .error-banner {
+      padding: 12px 16px;
+      background: rgba(255,122,122,0.1);
+      border: 1px solid rgba(255,122,122,0.25);
+      border-radius: 8px;
+      color: var(--danger);
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <span class="nav-logo">Deepnoa AI Office</span>
+    <a id="nav-dashboard" href="/dashboard?lang=ja">Dashboard</a>
+    <a id="nav-internal" href="/internal?lang=ja">Internal</a>
+    <a id="nav-runs" href="/runs?lang=ja" class="active">Runs</a>
+    <button type="button" class="theme-toggle" data-theme-toggle style="margin-left:auto">
+      <span class="theme-toggle__state" aria-hidden="true"></span>
+    </button>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <h1>Run List</h1>
+      <span class="poll-badge" id="poll-badge">—</span>
+    </div>
+
+    <div class="summary-strip" id="summary-strip">
+      <div class="summary-chip chip-done">
+        <span class="count" id="count-done">—</span>
+        <span>done</span>
+      </div>
+      <div class="summary-chip chip-running">
+        <span class="count" id="count-running">—</span>
+        <span>running</span>
+      </div>
+      <div class="summary-chip chip-failed">
+        <span class="count" id="count-failed">—</span>
+        <span>failed</span>
+      </div>
+      <div class="summary-chip chip-queued">
+        <span class="count" id="count-queued">—</span>
+        <span>queued</span>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="filter-chips" id="filter-chips">
+        <button class="filter-chip active" data-status="">すべて</button>
+        <button class="filter-chip" data-status="running">running</button>
+        <button class="filter-chip" data-status="done">done</button>
+        <button class="filter-chip" data-status="failed">failed</button>
+        <button class="filter-chip" data-status="queued">queued</button>
+        <button class="filter-chip" data-status="cancelled">cancelled</button>
+      </div>
+      <div class="toolbar-spacer"></div>
+      <span class="last-updated" id="last-updated"></span>
+    </div>
+
+    <div id="error-banner" class="error-banner" style="display:none"></div>
+
+    <div class="table-wrap" id="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>状態</th>
+            <th>run_id</th>
+            <th>種別</th>
+            <th>依頼者</th>
+            <th>受付</th>
+            <th>実行時間</th>
+            <th>サマリー</th>
+          </tr>
+        </thead>
+        <tbody id="runs-tbody"></tbody>
+      </table>
+      <div class="empty-state" id="empty-state" style="display:none">実行履歴がありません</div>
+    </div>
+  </main>
+
+  <script>
+    const POLL_INTERVAL_MS = 10000;
+    let pollTimer = null;
+    let allRuns = [];
+    const currentLang = (() => {
+      const params = new URLSearchParams(window.location.search);
+      const candidate = String(params.get('lang') || document.documentElement.lang || 'ja').toLowerCase();
+      return candidate === 'en' || candidate === 'zh' || candidate === 'ja' ? candidate : 'ja';
+    })();
+
+    function withLang(path) {
+      const url = new URL(path, window.location.origin);
+      url.searchParams.set('lang', currentLang);
+      return `${url.pathname}${url.search}${url.hash}`;
+    }
+
+    function syncNavLinks() {
+      document.documentElement.lang = currentLang;
+      document.getElementById('nav-dashboard').href = withLang('/dashboard');
+      document.getElementById('nav-internal').href = withLang('/internal');
+      document.getElementById('nav-runs').href = withLang('/runs');
+    }
+
+    const initialParams = new URLSearchParams(window.location.search);
+    const initialStatusFilter = initialParams.get('status') || '';
+    const initialKindFilter = initialParams.get('kind') || '';
+    let currentStatusFilter = initialStatusFilter;
+
+    function statusBadge(status) {
+      const icons = { queued: '⏳', running: '🔄', done: '✅', failed: '❌', cancelled: '⛔' };
+      const icon = icons[status] || '?';
+      return `<span class="status-badge s-${status}">${icon} ${status}</span>`;
+    }
+
+    function formatDuration(rec) {
+      const start = rec.started_at || rec.queued_at;
+      const end = rec.done_at;
+      if (!start || !end) return rec.status === 'running' ? '実行中' : '—';
+      const ms = Date.parse(end) - Date.parse(start);
+      if (!isFinite(ms) || ms < 0) return '—';
+      const s = Math.round(ms / 1000);
+      return s < 60 ? `${s}秒` : `${Math.floor(s/60)}分${s%60}秒`;
+    }
+
+    function formatTime(iso) {
+      if (!iso) return '—';
+      try {
+        const d = new Date(iso);
+        const now = new Date();
+        const isToday = d.toDateString() === now.toDateString();
+        if (isToday) {
+          return d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        return d.toLocaleString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+      } catch { return iso; }
+    }
+
+    function getSummary(rec) {
+      if (rec.status === 'failed') return rec.error?.message || '—';
+      return rec.result?.summary || '—';
+    }
+
+    function getRequestedBy(rec) {
+      const name = rec.requested_by_name;
+      if (!name) return rec.requested_by || '—';
+      // Strip "slack:channel:..." prefix if present
+      const m = name.match(/^[a-z]+:(?:channel|group):(.+)$/i);
+      if (m) return rec.requested_by || '—';
+      return name;
+    }
+
+    function renderRows(runs) {
+      const tbody = document.getElementById('runs-tbody');
+      const empty = document.getElementById('empty-state');
+      if (!runs.length) {
+        tbody.innerHTML = '';
+        empty.style.display = '';
+        return;
+      }
+      empty.style.display = 'none';
+      tbody.innerHTML = runs.map(rec => {
+        const summary = getSummary(rec);
+        const truncated = summary.length > 60 ? summary.slice(0, 60) + '…' : summary;
+        return `<tr>
+          <td>${statusBadge(rec.status)}</td>
+          <td><a class="run-link" href="${withLang(`/runs/${encodeURIComponent(rec.run_id)}`)}">${rec.run_id}</a></td>
+          <td><span class="kind-badge">${rec.kind}</span></td>
+          <td style="font-size:12px;color:var(--muted)">${getRequestedBy(rec)}</td>
+          <td style="font-size:12px;font-family:'IBM Plex Mono',monospace;white-space:nowrap">${formatTime(rec.queued_at)}</td>
+          <td class="duration">${formatDuration(rec)}</td>
+          <td><span class="summary-text" title="${summary.replace(/"/g,'&quot;')}">${truncated}</span></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function updateSummary(runs) {
+      const counts = { done: 0, running: 0, failed: 0, queued: 0 };
+      runs.forEach(r => { if (counts[r.status] !== undefined) counts[r.status]++; });
+      document.getElementById('count-done').textContent    = counts.done;
+      document.getElementById('count-running').textContent = counts.running;
+      document.getElementById('count-failed').textContent  = counts.failed;
+      document.getElementById('count-queued').textContent  = counts.queued;
+    }
+
+    function activateChip(status) {
+      currentStatusFilter = status;
+      document.querySelectorAll('.filter-chip').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.status === status);
+      });
+    }
+
+    function applyFilter() {
+      const filteredRuns = allRuns.filter((run) => {
+        if (currentStatusFilter && run.status !== currentStatusFilter) return false;
+        if (initialKindFilter && run.kind !== initialKindFilter) return false;
+        return true;
+      });
+      renderRows(filteredRuns);
+    }
+
+    async function fetchRuns() {
+      const badge = document.getElementById('poll-badge');
+      const errBanner = document.getElementById('error-banner');
+      try {
+        badge.textContent = '読込中…';
+        const res = await fetch('/api/internal/runs?limit=100&v={{VERSION_TIMESTAMP}}');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        allRuns = data.runs || [];
+        updateSummary(allRuns);
+        applyFilter();
+        errBanner.style.display = 'none';
+        const now = new Date().toLocaleTimeString('ja-JP');
+        document.getElementById('last-updated').textContent = `更新: ${now}`;
+        badge.textContent = `${POLL_INTERVAL_MS/1000}秒後に更新`;
+      } catch (err) {
+        badge.textContent = 'エラー';
+        errBanner.textContent = `取得エラー: ${err.message}`;
+        errBanner.style.display = '';
+      }
+    }
+
+    function schedulePoll() {
+      clearTimeout(pollTimer);
+      pollTimer = setTimeout(async () => {
+        await fetchRuns();
+        schedulePoll();
+      }, POLL_INTERVAL_MS);
+    }
+
+    document.getElementById('filter-chips').addEventListener('click', (e) => {
+      const chip = e.target.closest('.filter-chip');
+      if (!chip) return;
+      activateChip(chip.dataset.status);
+      applyFilter();
+    });
+
+    syncNavLinks();
+    activateChip(initialStatusFilter);
+    fetchRuns().then(schedulePoll);
+  </script>
+<script>
+(function(){
+  var r=document.documentElement;
+  window.dnSyncThemeToggleUi=function(){
+    var cur=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light",
+        tip=cur==="dark"?"Switch to light mode":"Switch to dark mode";
+    document.querySelectorAll("[data-theme-toggle]").forEach(function(b){
+      b.setAttribute("aria-label",tip);
+      b.setAttribute("title",tip);
+    });
+  };
+  window.dnSetTheme=function(t){
+    t=t==="light"?"light":"dark";
+    r.setAttribute("data-theme",t);
+    try{localStorage.setItem("dn-theme",t);}catch(e){}
+    try{window.dnSyncThemeToggleUi();}catch(z){}
+  };
+  document.addEventListener("click",function(e){
+    var x=e.target.closest("[data-theme-toggle]");
+    if(!x)return;
+    e.preventDefault();
+    var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";
+    window.dnSetTheme(c==="dark"?"light":"dark");
+  });
+  try{
+    var mq=window.matchMedia("(prefers-color-scheme: light)");
+    mq.addEventListener("change",function(){
+      try{if(localStorage.getItem("dn-theme"))return;}catch(z){}
+      window.dnSetTheme(mq.matches?"light":"dark");
+    });
+  }catch(y){}
+  try{window.dnSyncThemeToggleUi();}catch(z2){}
+})();
+</script>
+</body>
+</html>

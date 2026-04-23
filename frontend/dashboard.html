@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="ja" translate="no" class="notranslate">
+<head>
+  <meta charset="UTF-8">
+  <script>(function(){try{var k="dn-theme",s=localStorage.getItem(k),m=window.matchMedia("(prefers-color-scheme: light)"),t=s==="light"||s==="dark"?s:m.matches?"light":"dark";document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google" content="notranslate">
+  <title>Deepnoa ダッシュボード</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles/tokens.css">
+  <link rel="stylesheet" href="/static/styles/card-panel.css">
+  <style>
+    :root {
+      --bg: var(--color-bg);
+      --panel: var(--color-panel);
+      --panel2: var(--color-panel-2);
+      --line: var(--color-line);
+      --text: var(--color-text);
+      --muted: var(--color-muted);
+      --accent: var(--color-accent);
+      --warn: var(--color-warn);
+      --danger: var(--color-danger);
+      --nav-h: 56px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Space Grotesk", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 10% 0%, rgba(52,98,184,0.22) 0%, transparent 100%),
+        radial-gradient(ellipse 40% 30% at 90% 0%, rgba(136,240,207,0.08) 0%, transparent 100%);
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 36px 36px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,0.35), transparent 90%);
+    }
+
+    /* ── NAV ─────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      height: var(--nav-h); display: flex; align-items: center; gap: 6px; padding: 0 24px;
+      background: var(--color-nav-bg); backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-logo {
+      font-weight: 700; font-size: 14px; color: var(--accent); letter-spacing: .01em;
+      margin-right: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .nav-logo .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 8px var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }
+    .nav-tab {
+      padding: 5px 13px; border-radius: 8px; border: none; background: transparent;
+      color: var(--muted); font: 500 13px "Space Grotesk", sans-serif; cursor: pointer;
+      transition: color .15s, background .15s; text-decoration: none; display: inline-flex; align-items: center;
+    }
+    .nav-tab.active { color: var(--text); background: rgba(255,255,255,0.07); }
+    .nav-tab:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.04); }
+    .nav-spacer { flex: 1; }
+    .nav-status-pill {
+      display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px;
+      border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03);
+      font-size: 11px; color: var(--muted); font-family: "IBM Plex Mono", monospace;
+    }
+    .sdot { width: 6px; height: 6px; border-radius: 50%; }
+    .sdot.ok  { background: var(--accent); }
+    .sdot.warn { background: var(--warn); }
+    .sdot.crit { background: var(--danger); }
+    .nav-time { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); }
+    .lang-row { display: flex; gap: 4px; }
+    .lang-btn {
+      padding: 3px 9px; border-radius: 99px; border: 1px solid var(--line); background: transparent;
+      color: var(--muted); font-size: 11px; cursor: pointer; font-family: "Space Grotesk", sans-serif;
+      transition: all .15s;
+    }
+    .lang-btn.active { background: rgba(136,240,207,0.1); border-color: rgba(136,240,207,0.3); color: var(--accent); }
+
+    /* ── SHELL ───────────────────────────── */
+    .shell {
+      max-width: 1440px; margin: 0 auto;
+      padding: var(--space-shell-y) var(--space-shell-x) var(--space-shell-bottom-l1);
+      position: relative; z-index: 1;
+    }
+
+    /* ── ALERT BANNER ────────────────────── */
+    .alert-banner {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 20px; border-radius: 14px; margin-bottom: var(--space-block-gap);
+      border: 1px solid rgba(255,201,119,0.3); background: rgba(255,201,119,0.08);
+      animation: fadeIn .3s ease;
+    }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+    .alert-banner.critical { border-color: rgba(255,126,143,0.35); background: rgba(255,126,143,0.09); }
+    .alert-banner-icon { font-size: 16px; }
+    .alert-banner-text { font-size: 13px; font-weight: 600; color: var(--warn); flex: 1; }
+    .alert-banner.critical .alert-banner-text { color: var(--danger); }
+    .alert-banner-action {
+      font-size: 12px; padding: 4px 13px; border-radius: 99px; cursor: pointer; border: none;
+      background: rgba(255,201,119,0.15); color: var(--warn); font-family: "Space Grotesk", sans-serif;
+      transition: background .15s;
+    }
+    .alert-banner.critical .alert-banner-action { background: rgba(255,126,143,0.15); color: var(--danger); }
+
+    /* ── KPI STRIP ───────────────────────── */
+    .kpi-strip { display: grid; grid-template-columns: repeat(6,1fr); gap: 14px; margin-bottom: var(--space-block-gap); }
+    .kpi-card {
+      padding: 18px 20px;
+      transition: border-color .2s, transform .15s;
+    }
+    .kpi-card:hover { transform: translateY(-1px); border-color: rgba(128,168,225,0.28); }
+    .kpi-card.is-warn  { border-color: rgba(255,201,119,0.25); background: rgba(255,201,119,0.05); }
+    .kpi-card.is-danger{ border-color: rgba(255,126,143,0.25); background: rgba(255,126,143,0.05); }
+    .kpi-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: var(--font-mono-label-spacing);
+      color: var(--muted); margin-bottom: 8px; font-family: "IBM Plex Mono", monospace;
+    }
+    .kpi-value { font-size: 44px; font-weight: 700; line-height: 1; margin-bottom: 4px; color: var(--text); }
+    .kpi-value.ok   { color: var(--text); }
+    .kpi-value.warn { color: var(--warn); }
+    .kpi-value.danger { color: var(--danger); }
+    .kpi-sub { font-size: 11px; color: var(--muted); }
+
+    /* ── MAIN GRID ───────────────────────── */
+    .main-grid { display: grid; grid-template-columns: 1fr 380px; gap: var(--space-block-gap); margin-bottom: var(--space-block-gap); align-items: start; }
+    .section-label {
+      font-size: var(--font-mono-label-size); text-transform: uppercase;
+      letter-spacing: var(--font-mono-label-spacing); color: var(--muted);
+      margin-bottom: var(--space-mono-label-after); font-family: "IBM Plex Mono", monospace;
+    }
+
+    /* ── AGENT GRID ──────────────────────── */
+    .agent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .agent-card {
+      padding: 18px; position: relative; overflow: hidden;
+      transition: border-color .2s, transform .15s;
+    }
+    .agent-card::before {
+      content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px;
+      background: var(--sc, var(--muted)); box-shadow: 0 0 12px var(--sc, transparent);
+    }
+    .agent-card:hover { border-color: rgba(128,168,225,0.3); transform: translateY(-1px); }
+    .agent-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+    .agent-name { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .agent-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 1px; }
+    .agent-status-badge {
+      font-size: 10px; padding: 3px 8px; border-radius: 99px; font-family: "IBM Plex Mono", monospace;
+      font-weight: 500; white-space: nowrap; border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04); color: var(--muted);
+    }
+    .agent-detail {
+      font-size: 12px; color: var(--color-copy-soft); line-height: 1.5; margin-bottom: 10px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .agent-meta { display: flex; gap: 12px; flex-wrap: wrap; }
+    .agent-meta-item { font-size: 11px; color: var(--muted); font-family: "IBM Plex Mono", monospace; }
+
+    /* ── NEEDS ATTENTION ─────────────────── */
+    .attention-panel {
+      overflow: hidden;
+    }
+    .attention-header {
+      padding: 16px 18px 14px; border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .attention-title { font-size: var(--font-attention-title-size); font-weight: var(--font-attention-title-weight); }
+    .attention-count {
+      font-size: 11px; padding: 3px 9px; border-radius: 99px; font-family: "IBM Plex Mono", monospace;
+      font-weight: 700;
+    }
+    .attention-count.has-items { background: rgba(255,126,143,0.15); color: var(--danger); border: 1px solid rgba(255,126,143,0.25); }
+    .attention-count.clear     { background: rgba(136,240,207,0.10); color: var(--accent); border: 1px solid rgba(136,240,207,0.2); }
+    .attention-list { padding: 10px; }
+    .aitem {
+      padding: 11px 10px; border-radius: 12px; margin-bottom: 6px;
+      border: 1px solid transparent; transition: background .15s, border-color .15s;
+    }
+    .aitem:last-child { margin-bottom: 0; }
+    .aitem-top { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 5px; }
+    .atype-badge {
+      font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 99px; flex-shrink: 0; margin-top: 1px;
+      font-family: "IBM Plex Mono", monospace; text-transform: uppercase; letter-spacing: .04em;
+    }
+    .atype-approval { background: rgba(255,201,119,0.15); color: var(--warn); border: 1px solid rgba(255,201,119,0.25); }
+    .atype-blocked  { background: rgba(255,201,119,0.10); color: var(--warn); border: 1px solid rgba(255,201,119,0.20); }
+    .atype-alert    { background: rgba(255,126,143,0.10); color: var(--danger); border: 1px solid rgba(255,126,143,0.18); }
+    .atype-connector{ background: rgba(255,126,143,0.08); color: var(--danger); border: 1px solid rgba(255,126,143,0.15); }
+    .aitem-summary  { font-size: 12px; line-height: 1.4; flex: 1; color: var(--text); }
+    .aitem-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+    .aitem-id   { font-size: 10px; color: var(--muted); font-family: "IBM Plex Mono", monospace; }
+    .aitem-time { font-size: 10px; color: var(--muted); font-family: "IBM Plex Mono", monospace; }
+    .attention-empty {
+      padding: 28px 18px; text-align: center; color: var(--accent); font-size: 13px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .attention-empty .check { font-size: 24px; }
+
+    /* ── RUNS STRIP ──────────────────────── */
+    .health-summary {
+      padding: 18px 22px; margin-bottom: var(--space-block-gap);
+    }
+    .health-summary-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px;
+    }
+    .health-summary-title {
+      font-size: var(--font-mono-label-size); text-transform: uppercase;
+      letter-spacing: var(--font-mono-label-spacing); color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+    }
+    .health-summary-updated {
+      font-size: 11px; color: var(--muted); font-family: "IBM Plex Mono", monospace;
+    }
+    .health-summary-grid {
+      display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;
+    }
+    .health-item {
+      border-radius: 14px; border: 1px solid rgba(255,255,255,0.06); background: var(--panel2);
+      padding: 14px 15px; min-height: 86px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .health-item-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: var(--font-mono-label-spacing); color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+    }
+    .health-item-value {
+      font-size: 22px; font-weight: 700; color: var(--text); line-height: 1.1;
+    }
+    .health-item-value.ok { color: var(--accent); }
+    .health-item-value.warn { color: var(--warn); }
+    .health-item-value.danger { color: var(--danger); }
+    .health-item-sub {
+      font-size: 12px; color: var(--color-copy-soft); line-height: 1.45;
+    }
+    .health-link {
+      color: var(--danger); text-decoration: none; font-family: "IBM Plex Mono", monospace; font-size: 12px;
+    }
+    .health-link:hover { text-decoration: underline; }
+    .runs-strip {
+      padding: 18px 22px; display: flex; align-items: center; gap: var(--space-block-gap);
+    }
+    .runs-strip-label {
+      font-size: var(--font-mono-label-size); text-transform: uppercase;
+      letter-spacing: var(--font-mono-label-spacing); color: var(--muted);
+      font-family: "IBM Plex Mono", monospace; white-space: nowrap;
+    }
+    .runs-count-group { display: flex; gap: var(--space-block-gap); flex: 1; }
+    .run-count { display: flex; flex-direction: column; align-items: center; min-width: 48px; }
+    .run-count .n { font-size: 28px; font-weight: 700; line-height: 1.1; }
+    .run-count .n.ok   { color: var(--accent); }
+    .run-count .n.run  { color: var(--warn); }
+    .run-count .n.fail { color: var(--danger); }
+    .run-count .n.q    { color: var(--muted); }
+    .run-count .l {
+      font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+      margin-top: 2px; font-family: "IBM Plex Mono", monospace;
+    }
+    .runs-sep { width: 1px; background: var(--line); align-self: stretch; }
+    .view-all-btn {
+      padding: 8px 18px; border-radius: 10px; border: 1px solid rgba(136,240,207,0.22);
+      background: rgba(136,240,207,0.07); color: var(--accent); font: 600 13px "Space Grotesk", sans-serif;
+      text-decoration: none; display: inline-flex; align-items: center;
+      transition: background .15s, border-color .15s; white-space: nowrap;
+    }
+    .view-all-btn:hover { background: rgba(136,240,207,0.12); border-color: rgba(136,240,207,0.35); }
+
+    /* ── LOADING / ERROR ─────────────────── */
+    .load-state { color: var(--muted); font-size: 13px; font-family: "IBM Plex Mono", monospace; }
+
+    html[data-theme="light"] .health-item {
+      border-color: var(--color-line);
+      background: var(--color-panel);
+      box-shadow: var(--shadow-surface-sm);
+    }
+    html[data-theme="light"] .aitem:hover {
+      background: var(--color-surface-soft);
+    }
+
+    /* ── RESPONSIVE ──────────────────────── */
+    @media (max-width: 1100px) {
+      .kpi-strip { grid-template-columns: repeat(3,1fr); }
+      .main-grid { grid-template-columns: 1fr; }
+      .health-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 720px) {
+      .shell { padding: 16px 14px 40px; }
+      .kpi-strip { grid-template-columns: repeat(2,1fr); }
+      .agent-grid { grid-template-columns: 1fr; }
+      .health-summary-grid { grid-template-columns: 1fr; }
+      .health-summary-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ──────────────────────────────────────────────────────── -->
+<nav>
+  <div class="nav-logo">
+    <div class="dot"></div>
+    Deepnoa AI Office
+  </div>
+
+  <a class="nav-tab active" href="/dashboard" id="navDashboard" data-i18n="nav.dashboard">ダッシュボード</a>
+  <a class="nav-tab" id="navInternal" data-i18n="nav.internal">Internal</a>
+  <a class="nav-tab" id="navRuns" data-i18n="nav.runs">Runs</a>
+
+  <div class="nav-spacer"></div>
+
+  <div class="lang-row">
+    <button class="lang-btn" data-lang-switch="ja">JA</button>
+    <button class="lang-btn" data-lang-switch="en">EN</button>
+    <button class="lang-btn" data-lang-switch="zh">ZH</button>
+  </div>
+
+  <div class="nav-status-pill">
+    <div class="sdot ok" id="navStatusDot"></div>
+    <span id="navStatusText">—</span>
+  </div>
+
+  <span class="nav-time" id="navClock"></span>
+
+  <button type="button" class="theme-toggle" data-theme-toggle>
+    <span class="theme-toggle__state" aria-hidden="true"></span>
+  </button>
+</nav>
+
+<!-- ── SHELL ─────────────────────────────────────────────────────── -->
+<div class="shell">
+
+  <!-- Alert banner (conditional) -->
+  <div id="alertBanner" style="display:none" class="alert-banner">
+    <span class="alert-banner-icon">⚡</span>
+    <span class="alert-banner-text" id="alertBannerText"></span>
+    <button class="alert-banner-action" id="alertBannerAction" data-i18n="dash.alert_confirm">確認する</button>
+  </div>
+
+  <!-- KPI strip -->
+  <div class="kpi-strip" id="kpiStrip">
+    <div class="kpi-card"><div class="kpi-label" data-i18n="kpi.active_agents">稼働中 Agent</div><div class="kpi-value ok" id="kpiAgents">—</div><div class="kpi-sub" data-i18n="kpi.active_agents_sub">現在作業中</div></div>
+    <div class="kpi-card"><div class="kpi-label" data-i18n="kpi.active_tasks">実行中タスク</div><div class="kpi-value ok" id="kpiTasks">—</div><div class="kpi-sub" data-i18n="kpi.active_tasks_sub">オフィス全体</div></div>
+    <div class="kpi-card"><div class="kpi-label" data-i18n="kpi.blocked">ブロック中</div><div class="kpi-value ok" id="kpiBlocked">—</div><div class="kpi-sub" data-i18n="kpi.blocked_sub">解除待ち</div></div>
+    <div class="kpi-card"><div class="kpi-label" data-i18n="kpi.approval">承認待ち</div><div class="kpi-value ok" id="kpiApproval">—</div><div class="kpi-sub" data-i18n="kpi.approval_sub">人の判断待ち</div></div>
+    <div class="kpi-card"><div class="kpi-label" data-i18n="kpi.done_today">本日完了</div><div class="kpi-value ok" id="kpiDone">—</div><div class="kpi-sub" data-i18n="kpi.done_today_sub">完了件数</div></div>
+    <div class="kpi-card"><div class="kpi-label" data-i18n="kpi.alerts">アラート</div><div class="kpi-value ok" id="kpiAlerts">—</div><div class="kpi-sub" data-i18n="kpi.alerts_sub">異常シグナル</div></div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="main-grid">
+    <!-- Agent roster -->
+    <div>
+      <div class="section-label" data-i18n="dash.agents_label">AI エージェント — 運用状況</div>
+      <div class="agent-grid" id="agentGrid">
+        <div class="load-state" data-i18n="dash.loading">読込中…</div>
+      </div>
+    </div>
+
+    <!-- Needs Attention -->
+    <div>
+      <div class="section-label">&nbsp;</div>
+      <div class="attention-panel">
+        <div class="attention-header">
+          <span class="attention-title" data-i18n="dash.needs_attention">要対応</span>
+          <span class="attention-count clear" id="attentionCount">—</span>
+        </div>
+        <div class="attention-list" id="attentionList">
+          <div class="load-state" data-i18n="dash.loading">読込中…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Health summary -->
+  <div class="health-summary">
+    <div class="health-summary-header">
+      <span class="health-summary-title" data-i18n="health.title">Health Summary</span>
+      <span class="health-summary-updated" id="healthUpdatedAt" data-i18n="health.loading">読込中…</span>
+    </div>
+    <div class="health-summary-grid">
+      <div class="health-item">
+        <div class="health-item-label" data-i18n="health.overall">Overall Health</div>
+        <div class="health-item-value" id="healthOverallValue">—</div>
+        <div class="health-item-sub" id="healthOverallSub">—</div>
+      </div>
+      <div class="health-item">
+        <div class="health-item-label" data-i18n="health.critical_alerts">Critical Alerts</div>
+        <div class="health-item-value" id="healthCriticalAlerts">—</div>
+        <div class="health-item-sub" data-i18n="health.critical_alerts_sub">重大な異常のみ</div>
+      </div>
+      <div class="health-item">
+        <div class="health-item-label" data-i18n="health.degraded_connectors">Degraded Connectors</div>
+        <div class="health-item-value" id="healthDegradedConnectors">—</div>
+        <div class="health-item-sub" data-i18n="health.degraded_connectors_sub">接続品質の低下</div>
+      </div>
+      <div class="health-item">
+        <div class="health-item-label" data-i18n="health.latest_failed_run">Latest Failed Run</div>
+        <div class="health-item-value" id="healthLatestFailedValue">—</div>
+        <div class="health-item-sub" id="healthLatestFailedSub">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Today's Runs strip -->
+  <div class="runs-strip" id="runsStrip">
+    <span class="runs-strip-label" data-i18n="dash.today_runs">本日の実行</span>
+    <div class="runs-count-group" id="runsCountGroup">
+      <div class="run-count"><span class="n ok" id="rcDone">—</span><span class="l" data-i18n="runs.done">完了</span></div>
+      <div class="run-count"><span class="n run" id="rcRunning">—</span><span class="l" data-i18n="runs.running">実行中</span></div>
+      <div class="run-count"><span class="n fail" id="rcFailed">—</span><span class="l" data-i18n="runs.failed">失敗</span></div>
+      <div class="run-count"><span class="n q"   id="rcQueued">—</span><span class="l" data-i18n="runs.queued">待機</span></div>
+      <div class="run-count"><span class="n"     id="rcTotal" style="color:var(--text)">—</span><span class="l" data-i18n="runs.total">合計</span></div>
+    </div>
+    <div class="runs-sep"></div>
+    <a class="view-all-btn" id="runsViewAll" href="/runs" data-i18n="dash.runs_view_all">Runs 一覧 →</a>
+  </div>
+
+</div><!-- .shell -->
+
+<script>
+  // ── i18n ────────────────────────────────────────────────────────
+  const I18N = {
+    ja: {
+      "page.title": "Deepnoa ダッシュボード",
+      "nav.dashboard": "ダッシュボード",
+      "nav.internal": "Internal",
+      "nav.runs": "Runs",
+      "kpi.active_agents": "稼働中 Agent",
+      "kpi.active_agents_sub": "現在作業中",
+      "kpi.active_tasks": "実行中タスク",
+      "kpi.active_tasks_sub": "オフィス全体",
+      "kpi.blocked": "ブロック中",
+      "kpi.blocked_sub": "解除待ち",
+      "kpi.approval": "承認待ち",
+      "kpi.approval_sub": "人の判断待ち",
+      "kpi.done_today": "本日完了",
+      "kpi.done_today_sub": "完了件数",
+      "kpi.alerts": "アラート",
+      "kpi.alerts_sub": "異常シグナル",
+      "dash.agents_label": "AI エージェント — 運用状況",
+      "dash.needs_attention": "要対応",
+      "dash.today_runs": "本日の実行",
+      "dash.runs_view_all": "Runs 一覧 →",
+      "dash.loading": "読込中…",
+      "dash.alert_confirm": "確認する",
+      "dash.all_clear": "全て正常",
+      "dash.no_attention_items": "承認待ち・ブロック・アラートなし",
+      "dash.approval_pending": "承認待ちが {n} 件あります — 判断が必要です",
+      "dash.items_need_attention": "{n} 件の対応が必要です",
+      "dash.agent_last": "最終:",
+      "dash.agent_tools": "tools:",
+      "dash.agent_idle": "待機中",
+      "dash.agent_unknown": "不明",
+      "health.title": "Health Summary",
+      "health.loading": "読込中…",
+      "health.updated": "更新:",
+      "health.overall": "Overall Health",
+      "health.overall.ok": "正常",
+      "health.overall.degraded": "注意",
+      "health.overall.error": "要対応",
+      "health.overall.ok_sub": "重大な異常はありません",
+      "health.overall.degraded_sub": "失敗実行または劣化があります",
+      "health.overall.error_sub": "重大アラートまたは接続異常があります",
+      "health.critical_alerts": "Critical Alerts",
+      "health.critical_alerts_sub": "重大な異常のみ",
+      "health.degraded_connectors": "Degraded Connectors",
+      "health.degraded_connectors_sub": "接続品質の低下",
+      "health.latest_failed_run": "Latest Failed Run",
+      "health.latest_failed_run.none": "失敗はありません",
+      "health.latest_failed_run.view": "Runs で確認",
+      "atype.approval": "承認待ち",
+      "atype.blocked": "ブロック",
+      "atype.alert": "アラート",
+      "atype.connector": "コネクタ",
+      "runs.done": "完了",
+      "runs.running": "実行中",
+      "runs.failed": "失敗",
+      "runs.queued": "待機",
+      "runs.total": "合計",
+      "status.ok": "稼働中",
+      "status.crit": "確認中"
+    },
+    en: {
+      "page.title": "Deepnoa Dashboard",
+      "nav.dashboard": "Dashboard",
+      "nav.internal": "Internal",
+      "nav.runs": "Runs",
+      "kpi.active_agents": "Active Agents",
+      "kpi.active_agents_sub": "currently working",
+      "kpi.active_tasks": "Active Tasks",
+      "kpi.active_tasks_sub": "office-wide",
+      "kpi.blocked": "Blocked",
+      "kpi.blocked_sub": "awaiting unblock",
+      "kpi.approval": "Awaiting Approval",
+      "kpi.approval_sub": "needs human decision",
+      "kpi.done_today": "Done Today",
+      "kpi.done_today_sub": "completed tasks",
+      "kpi.alerts": "Alerts",
+      "kpi.alerts_sub": "anomaly signals",
+      "dash.agents_label": "AI Agents — Operational Status",
+      "dash.needs_attention": "Needs Attention",
+      "dash.today_runs": "Today's Runs",
+      "dash.runs_view_all": "View All Runs →",
+      "dash.loading": "Loading…",
+      "dash.alert_confirm": "Review",
+      "dash.all_clear": "All Clear",
+      "dash.no_attention_items": "No approvals, blocks, or alerts",
+      "dash.approval_pending": "{n} approval(s) pending — decision required",
+      "dash.items_need_attention": "{n} item(s) need attention",
+      "dash.agent_last": "last:",
+      "dash.agent_tools": "tools:",
+      "dash.agent_idle": "idle",
+      "dash.agent_unknown": "unknown",
+      "health.title": "Health Summary",
+      "health.loading": "Loading…",
+      "health.updated": "updated:",
+      "health.overall": "Overall Health",
+      "health.overall.ok": "Healthy",
+      "health.overall.degraded": "Degraded",
+      "health.overall.error": "Needs Attention",
+      "health.overall.ok_sub": "No critical issues detected",
+      "health.overall.degraded_sub": "Some failures or degraded services detected",
+      "health.overall.error_sub": "Critical alerts or connector failures detected",
+      "health.critical_alerts": "Critical Alerts",
+      "health.critical_alerts_sub": "critical only",
+      "health.degraded_connectors": "Degraded Connectors",
+      "health.degraded_connectors_sub": "service quality reduced",
+      "health.latest_failed_run": "Latest Failed Run",
+      "health.latest_failed_run.none": "No failed runs",
+      "health.latest_failed_run.view": "Review in Runs",
+      "atype.approval": "APPROVAL",
+      "atype.blocked": "BLOCKED",
+      "atype.alert": "ALERT",
+      "atype.connector": "CONNECTOR",
+      "runs.done": "done",
+      "runs.running": "running",
+      "runs.failed": "failed",
+      "runs.queued": "queued",
+      "runs.total": "total",
+      "status.ok": "Live",
+      "status.crit": "Monitoring"
+    },
+    zh: {
+      "page.title": "Deepnoa 管理仪表盘",
+      "nav.dashboard": "仪表盘",
+      "nav.internal": "内部",
+      "nav.runs": "执行",
+      "kpi.active_agents": "活跃 Agent",
+      "kpi.active_agents_sub": "当前工作中",
+      "kpi.active_tasks": "执行中任务",
+      "kpi.active_tasks_sub": "整体办公室",
+      "kpi.blocked": "阻塞中",
+      "kpi.blocked_sub": "待解除",
+      "kpi.approval": "待审批",
+      "kpi.approval_sub": "等待人工判断",
+      "kpi.done_today": "今日完成",
+      "kpi.done_today_sub": "完成件数",
+      "kpi.alerts": "告警",
+      "kpi.alerts_sub": "异常信号",
+      "dash.agents_label": "AI Agent — 运行状态",
+      "dash.needs_attention": "需要关注",
+      "dash.today_runs": "今日执行",
+      "dash.runs_view_all": "查看全部 →",
+      "dash.loading": "加载中…",
+      "dash.alert_confirm": "查看",
+      "dash.all_clear": "全部正常",
+      "dash.no_attention_items": "无待审批・阻塞・告警",
+      "dash.approval_pending": "有 {n} 个待审批 — 需要决策",
+      "dash.items_need_attention": "{n} 项需要处理",
+      "dash.agent_last": "最近:",
+      "dash.agent_tools": "tools:",
+      "dash.agent_idle": "待机",
+      "dash.agent_unknown": "未知",
+      "health.title": "健康摘要",
+      "health.loading": "加载中…",
+      "health.updated": "更新:",
+      "health.overall": "整体健康",
+      "health.overall.ok": "正常",
+      "health.overall.degraded": "需关注",
+      "health.overall.error": "需要处理",
+      "health.overall.ok_sub": "当前没有重大异常",
+      "health.overall.degraded_sub": "存在失败执行或服务降级",
+      "health.overall.error_sub": "存在严重告警或连接异常",
+      "health.critical_alerts": "严重告警",
+      "health.critical_alerts_sub": "仅统计严重级别",
+      "health.degraded_connectors": "降级连接器",
+      "health.degraded_connectors_sub": "连接质量下降",
+      "health.latest_failed_run": "最近失败执行",
+      "health.latest_failed_run.none": "暂无失败执行",
+      "health.latest_failed_run.view": "在 Runs 查看",
+      "atype.approval": "审批",
+      "atype.blocked": "阻塞",
+      "atype.alert": "告警",
+      "atype.connector": "连接器",
+      "runs.done": "完成",
+      "runs.running": "运行中",
+      "runs.failed": "失败",
+      "runs.queued": "等待",
+      "runs.total": "合计",
+      "status.ok": "运行中",
+      "status.crit": "监测中"
+    }
+  };
+
+  const POLL_MS = 15000;
+  const LANG_KEY = "deepnoa_ui_lang";
+
+  function safeGet(k){ try{ return localStorage.getItem(k); }catch(_){return null;} }
+  function safeSet(k,v){ try{ localStorage.setItem(k,v); }catch(_){} }
+  function resolveLang(){
+    const qs = new URLSearchParams(location.search).get("lang");
+    const s = String(qs || safeGet(LANG_KEY) || "ja").toLowerCase();
+    return ["ja","en","zh"].includes(s) ? s : "ja";
+  }
+  let currentLang = resolveLang();
+  const t = (k, fb="") => I18N[currentLang]?.[k] ?? fb ?? I18N.en?.[k] ?? k;
+  const withLang = (p) => { const u = new URL(p, location.origin); u.searchParams.set("lang",currentLang); return `${u.pathname}${u.search}`; };
+  const esc = (v) => String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const timeAgo = (iso) => {
+    if (!iso) return "—";
+    const s = Math.floor((Date.now() - new Date(iso)) / 1000);
+    if (s < 60) return `${s}s`;
+    if (s < 3600) return `${Math.floor(s/60)}m`;
+    return `${Math.floor(s/3600)}h`;
+  };
+
+  function stateColor(state) {
+    const s = (state||"").toLowerCase();
+    if (["executing","running","reviewing","researching","routing"].some(x=>s.includes(x))) return "var(--accent)";
+    if (["attention","blocked","investigating","warn"].some(x=>s.includes(x))) return "var(--warn)";
+    if (["error","failed","crit"].some(x=>s.includes(x))) return "var(--danger)";
+    return "var(--muted)";
+  }
+
+  function applyI18n() {
+    document.documentElement.lang = currentLang;
+    document.title = t("page.title");
+    for (const el of document.querySelectorAll("[data-i18n]")) {
+      el.textContent = t(el.dataset.i18n, el.textContent);
+    }
+    for (const btn of document.querySelectorAll("[data-lang-switch]")) {
+      btn.classList.toggle("active", btn.dataset.langSwitch === currentLang);
+    }
+    // Nav links
+    const navDashboard = document.getElementById("navDashboard");
+    const navInternal = document.getElementById("navInternal");
+    const navRuns = document.getElementById("navRuns");
+    const runsViewAll = document.getElementById("runsViewAll");
+    if (navDashboard) navDashboard.href = withLang("/dashboard");
+    if (navInternal) navInternal.href = withLang("/internal");
+    if (navRuns) navRuns.href = withLang("/runs");
+    if (runsViewAll) runsViewAll.href = withLang("/runs");
+  }
+
+  // ── Clock ────────────────────────────────────────────────────────
+  function tickClock() {
+    const el = document.getElementById("navClock");
+    if (el) el.textContent = new Date().toLocaleTimeString(
+      currentLang === "zh" ? "zh-CN" : currentLang === "ja" ? "ja-JP" : "en-US",
+      {hour:"2-digit", minute:"2-digit", second:"2-digit"}
+    );
+  }
+  setInterval(tickClock, 1000);
+  tickClock();
+
+  // ── Fetch ────────────────────────────────────────────────────────
+  async function fetchJson(url) {
+    const r = await fetch(url, {cache:"no-store"});
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+  }
+
+  // ── Render: KPI strip ────────────────────────────────────────────
+  function setKpi(id, value, tone) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = String(value ?? 0);
+    el.className = `kpi-value ${tone}`;
+    const card = el.closest(".kpi-card");
+    if (card) {
+      card.classList.toggle("is-warn", tone === "warn");
+      card.classList.toggle("is-danger", tone === "danger");
+    }
+  }
+
+  function renderKpi(summary) {
+    const s = summary || {};
+    const blocked = s.blocked ?? 0;
+    const approval = s.awaiting_approval ?? 0;
+    const alerts   = s.alerts ?? 0;
+    const total    = s.total_agents ?? 0;
+    const active   = s.active_agents ?? 0;
+    setKpi("kpiAgents", total ? `${active}/${total}` : active, "ok");
+    setKpi("kpiTasks",   s.active_tasks ?? 0, "ok");
+    setKpi("kpiBlocked", blocked,  blocked  > 0 ? "warn" : "ok");
+    setKpi("kpiApproval",approval, approval > 0 ? "warn" : "ok");
+    setKpi("kpiDone",    s.done_today ?? 0, "ok");
+    setKpi("kpiAlerts",  alerts,   alerts   > 0 ? "danger" : "ok");
+  }
+
+  // ── Render: Agent Grid ───────────────────────────────────────────
+  function renderAgents(roles) {
+    const grid = document.getElementById("agentGrid");
+    if (!grid) return;
+    const items = Array.isArray(roles) ? roles : [];
+    if (!items.length) {
+      grid.innerHTML = `<div class="load-state">—</div>`;
+      return;
+    }
+    grid.innerHTML = items.map(r => {
+      const color = stateColor(r.state);
+      const label = esc(r.public_status_label || t("dash.agent_idle"));
+      const name  = esc(r.name || r.id || t("dash.agent_unknown"));
+      const detail = esc(r.detail || "");
+      const last  = esc(r.last_event_type || "—");
+      const ago   = esc(timeAgo(r.updated_at));
+      const ntools = (r.allowed_tools || []).length;
+      return `
+        <div class="agent-card" style="--sc:${color}">
+          <div class="agent-header">
+            <div class="agent-name">
+              <div class="agent-dot" style="background:${color};box-shadow:0 0 8px ${color}"></div>
+              ${name}
+            </div>
+            <span class="agent-status-badge">${label}</span>
+          </div>
+          ${detail ? `<div class="agent-detail">${detail}</div>` : ""}
+          <div class="agent-meta">
+            <span class="agent-meta-item">${esc(t("dash.agent_last"))} ${last}</span>
+            <span class="agent-meta-item">${ago}</span>
+            ${ntools ? `<span class="agent-meta-item">${esc(t("dash.agent_tools"))} ${ntools}</span>` : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  // ── Render: Needs Attention ──────────────────────────────────────
+  function renderAttention(data) {
+    const countEl = document.getElementById("attentionCount");
+    const listEl  = document.getElementById("attentionList");
+    if (!countEl || !listEl) return;
+
+    const approvals  = (data?.approvals  || []);
+    const blocked    = (data?.blocked    || []);
+    const alerts     = (data?.alerts     || []).filter(a => a.severity === "error" || a.severity === "critical");
+    const badConns   = (data?.connectors || []).filter(c => ["error","offline","degraded"].includes(c.status));
+
+    const items = [
+      ...approvals.map(i => ({ type:"approval",  summary: i.summary || i.task_id || "", id: i.approval_id || i.task_id || "", time: i.requested_at })),
+      ...blocked.map(i   => ({ type:"blocked",   summary: i.summary || i.task_id || "", id: i.task_id || "", time: i.timestamp })),
+      ...alerts.map(i    => ({ type:"alert",     summary: i.summary || i.event_id || "", id: i.event_id || "", time: i.timestamp })),
+      ...badConns.map(c  => ({ type:"connector", summary: `${c.name}: ${c.auth_status_summary || c.status || ""}`, id: c.name || "", time: null })),
+    ];
+
+    const total = items.length;
+    countEl.textContent = total > 0 ? `${total}件` : t("dash.all_clear");
+    countEl.className = `attention-count ${total > 0 ? "has-items" : "clear"}`;
+
+    if (!total) {
+      listEl.innerHTML = `
+        <div class="attention-empty">
+          <div class="check">✓</div>
+          <div>${esc(t("dash.no_attention_items"))}</div>
+        </div>`;
+      return;
+    }
+
+    listEl.innerHTML = items.map(item => {
+      const typeLabel = esc(t(`atype.${item.type}`, item.type));
+      return `
+        <div class="aitem">
+          <div class="aitem-top">
+            <span class="atype-badge atype-${esc(item.type)}">${typeLabel}</span>
+            <span class="aitem-summary">${esc(item.summary)}</span>
+          </div>
+          <div class="aitem-meta">
+            <span class="aitem-id">${esc(item.id)}</span>
+            <span class="aitem-time">${item.time ? esc(timeAgo(item.time)) : ""}</span>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  // ── Render: Alert Banner ─────────────────────────────────────────
+  function renderBanner(data) {
+    const banner = document.getElementById("alertBanner");
+    const text   = document.getElementById("alertBannerText");
+    if (!banner || !text) return;
+
+    const approvals = (data?.approvals || []).length;
+    const blocked   = (data?.blocked   || []).length;
+    const alerts    = (data?.alerts    || []).filter(a => a.severity === "error" || a.severity === "critical").length;
+    const total     = approvals + blocked + alerts;
+
+    if (!total) { banner.style.display = "none"; return; }
+
+    const isCritical = approvals > 0 || alerts > 0;
+    banner.className = `alert-banner${isCritical ? " critical" : ""}`;
+    banner.style.display = "";
+
+    if (approvals > 0) {
+      text.textContent = t("dash.approval_pending").replace("{n}", approvals);
+    } else {
+      text.textContent = t("dash.items_need_attention").replace("{n}", total);
+    }
+  }
+
+  // ── Render: Nav status ───────────────────────────────────────────
+  function renderNavStatus(state, health) {
+    const dot  = document.getElementById("navStatusDot");
+    const span = document.getElementById("navStatusText");
+    if (!dot || !span) return;
+    const overall = String(health?.overall_status || "").toLowerCase();
+    if (overall === "error" || overall === "degraded") {
+      dot.className = `sdot ${overall === "error" ? "crit" : "warn"}`;
+      span.textContent = t("status.crit");
+      return;
+    }
+    const approvals = (state?.approvals || []).length;
+    const alerts    = (state?.alerts    || []).filter(a => a.severity === "error" || a.severity === "critical").length;
+    const isCrit = approvals > 0 || alerts > 0;
+    dot.className  = `sdot ${isCrit ? "crit" : "ok"}`;
+    span.textContent = t(isCrit ? "status.crit" : "status.ok");
+  }
+
+  function renderHealthSummary(health) {
+    const overallEl = document.getElementById("healthOverallValue");
+    const overallSubEl = document.getElementById("healthOverallSub");
+    const criticalEl = document.getElementById("healthCriticalAlerts");
+    const degradedEl = document.getElementById("healthDegradedConnectors");
+    const failedValueEl = document.getElementById("healthLatestFailedValue");
+    const failedSubEl = document.getElementById("healthLatestFailedSub");
+    const updatedEl = document.getElementById("healthUpdatedAt");
+    if (!overallEl || !overallSubEl || !criticalEl || !degradedEl || !failedValueEl || !failedSubEl || !updatedEl) return;
+
+    if (!health) {
+      overallEl.textContent = "—";
+      overallEl.className = "health-item-value";
+      overallSubEl.textContent = "—";
+      criticalEl.textContent = "—";
+      criticalEl.className = "health-item-value";
+      degradedEl.textContent = "—";
+      degradedEl.className = "health-item-value";
+      failedValueEl.textContent = "—";
+      failedValueEl.className = "health-item-value";
+      failedSubEl.textContent = "—";
+      updatedEl.textContent = t("health.loading");
+      return;
+    }
+
+    const overall = String(health.overall_status || "ok").toLowerCase();
+    const criticalAlerts = (health.alerts || []).filter(a => a.severity === "error" || a.severity === "critical").length;
+    const degradedConnectors = (health.connectors || []).filter(c => ["error", "offline", "degraded"].includes(c.status)).length;
+    const latestFailed = health.latest_failed_run || null;
+    const overallTone = overall === "error" ? "danger" : overall === "degraded" ? "warn" : "ok";
+
+    overallEl.textContent = t(`health.overall.${overall}`, overall);
+    overallEl.className = `health-item-value ${overallTone}`;
+    overallSubEl.textContent = t(`health.overall.${overall}_sub`, "—");
+
+    criticalEl.textContent = String(criticalAlerts);
+    criticalEl.className = `health-item-value ${criticalAlerts > 0 ? "danger" : "ok"}`;
+
+    degradedEl.textContent = String(degradedConnectors);
+    degradedEl.className = `health-item-value ${degradedConnectors > 0 ? "warn" : "ok"}`;
+
+    if (latestFailed?.run_id) {
+      failedValueEl.innerHTML = `<a class="health-link" href="${withLang(`/runs/${encodeURIComponent(latestFailed.run_id)}`)}">${esc(latestFailed.run_id)}</a>`;
+      failedValueEl.className = "health-item-value danger";
+      const kind = esc(latestFailed.kind || "—");
+      const time = esc(timeAgo(latestFailed.queued_at));
+      failedSubEl.textContent = `${kind} · ${time}`;
+    } else {
+      failedValueEl.textContent = t("health.latest_failed_run.none");
+      failedValueEl.className = "health-item-value ok";
+      failedSubEl.textContent = t("health.latest_failed_run.view");
+    }
+
+    updatedEl.textContent = health.generated_at ? `${esc(t("health.updated"))} ${esc(timeAgo(health.generated_at))}` : t("health.loading");
+  }
+
+  // ── Render: Runs strip ───────────────────────────────────────────
+  function renderRuns(health) {
+    const r = health?.runs_today || {};
+    const done    = r.done    ?? 0;
+    const running = r.running ?? 0;
+    const failed  = r.failed  ?? 0;
+    const queued  = r.queued  ?? 0;
+    const total   = r.total   ?? (done + running + failed + queued);
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
+    set("rcDone",    done);
+    set("rcRunning", running);
+    set("rcFailed",  failed);
+    set("rcQueued",  queued);
+    set("rcTotal",   total);
+  }
+
+  // ── Poll loop ────────────────────────────────────────────────────
+  let pollTimer = null;
+
+  async function refresh() {
+    try {
+      const [stateRes, healthRes] = await Promise.allSettled([
+        fetchJson("/api/internal/state"),
+        fetchJson("/api/internal/health"),
+      ]);
+
+      const state  = stateRes.status  === "fulfilled" ? stateRes.value  : null;
+      const health = healthRes.status === "fulfilled" ? healthRes.value : null;
+
+      if (state) {
+        renderKpi(state.summary);
+        renderAgents(state.roles);
+        renderAttention(state);
+        renderBanner(state);
+      }
+      if (health) {
+        renderHealthSummary(health);
+        renderRuns(health);
+      }
+      renderNavStatus(state, health);
+    } catch (_) {
+      // silent — keep showing last good data
+    }
+  }
+
+  function schedule() {
+    clearTimeout(pollTimer);
+    pollTimer = setTimeout(async () => { await refresh(); schedule(); }, POLL_MS);
+  }
+
+  // ── Lang switch ──────────────────────────────────────────────────
+  for (const btn of document.querySelectorAll("[data-lang-switch]")) {
+    btn.addEventListener("click", () => {
+      currentLang = btn.dataset.langSwitch;
+      safeSet(LANG_KEY, currentLang);
+      applyI18n();
+      refresh();
+    });
+  }
+
+  // ── Alert banner → scroll to attention panel ─────────────────────
+  document.getElementById("alertBannerAction")?.addEventListener("click", () => {
+    document.querySelector(".attention-panel")?.scrollIntoView({behavior:"smooth", block:"nearest"});
+  });
+
+  // ── Boot ─────────────────────────────────────────────────────────
+  applyI18n();
+  refresh().then(schedule);
+</script>
+<script>
+(function(){
+  var r=document.documentElement;
+  window.dnSyncThemeToggleUi=function(){
+    var cur=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light",
+        tip=cur==="dark"?"Switch to light mode":"Switch to dark mode";
+    document.querySelectorAll("[data-theme-toggle]").forEach(function(b){
+      b.setAttribute("aria-label",tip);
+      b.setAttribute("title",tip);
+    });
+  };
+  window.dnSetTheme=function(t){
+    t=t==="light"?"light":"dark";
+    r.setAttribute("data-theme",t);
+    try{localStorage.setItem("dn-theme",t);}catch(e){}
+    try{window.dnSyncThemeToggleUi();}catch(z){}
+  };
+  document.addEventListener("click",function(e){
+    var x=e.target.closest("[data-theme-toggle]");
+    if(!x)return;
+    e.preventDefault();
+    var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";
+    window.dnSetTheme(c==="dark"?"light":"dark");
+  });
+  try{
+    var mq=window.matchMedia("(prefers-color-scheme: light)");
+    mq.addEventListener("change",function(){
+      try{if(localStorage.getItem("dn-theme"))return;}catch(z){}
+      window.dnSetTheme(mq.matches?"light":"dark");
+    });
+  }catch(y){}
+  try{window.dnSyncThemeToggleUi();}catch(z2){}
+})();
+</script>
+</body>
+</html>

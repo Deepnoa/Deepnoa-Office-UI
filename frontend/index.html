@@ -2,23 +2,26 @@
 <html lang="ja" translate="no" class="notranslate">
 <head>
   <meta charset="UTF-8">
+  <script>(function(){try{var k="dn-theme",s=localStorage.getItem(k),m=window.matchMedia("(prefers-color-scheme: light)"),t=s==="light"||s==="dark"?s:m.matches?"light":"dark";document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="google" content="notranslate">
   <title>Deepnoa 内部ビュー</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles/tokens.css">
+  <link rel="stylesheet" href="/static/styles/card-panel.css">
   <style>
     :root {
-      --bg: #06101b;
-      --panel: rgba(10, 18, 31, 0.88);
-      --line: rgba(128, 168, 225, 0.16);
-      --text: #eef5ff;
-      --muted: #8ea4c1;
-      --accent: #88f0cf;
-      --warn: #ffc977;
-      --danger: #ff7e8f;
-      --shadow: 0 26px 90px rgba(0, 0, 0, 0.34);
+      --bg: var(--color-bg);
+      --panel: var(--color-panel);
+      --line: var(--color-line);
+      --text: var(--color-text);
+      --muted: var(--color-muted);
+      --accent: var(--color-accent);
+      --warn: var(--color-warn);
+      --danger: var(--color-danger);
+      --shadow: var(--shadow-elevated);
     }
     * { box-sizing: border-box; }
     body {
@@ -27,9 +30,9 @@
       color: var(--text);
       font-family: "Space Grotesk", sans-serif;
       background:
-        radial-gradient(circle at top left, rgba(52, 98, 184, 0.28), transparent 26%),
-        radial-gradient(circle at top right, rgba(136, 240, 207, 0.10), transparent 24%),
-        linear-gradient(180deg, #091322 0%, #06101b 100%);
+        radial-gradient(circle at top left, var(--color-index-radial-blue), transparent 26%),
+        radial-gradient(circle at top right, var(--color-index-radial-accent), transparent 24%),
+        linear-gradient(180deg, var(--color-bg-gradient-top) 0%, var(--bg) 100%);
     }
     body::before {
       content: "";
@@ -42,22 +45,17 @@
       background-size: 36px 36px;
       mask-image: linear-gradient(180deg, rgba(0,0,0,0.45), transparent 92%);
     }
-    .shell { max-width: 1460px; margin: 0 auto; padding: 28px 24px 40px; }
+    .shell {
+      max-width: 1460px; margin: 0 auto;
+      padding: var(--space-shell-y) var(--space-shell-x) var(--space-shell-bottom-l2);
+    }
     .mono { font-family: "IBM Plex Mono", monospace; letter-spacing: 0.06em; }
-    .hero, .grid-main, .grid-secondary, .summary-strip { display: grid; gap: 20px; margin-bottom: 20px; }
+    .hero, .grid-main, .grid-secondary, .summary-strip { display: grid; gap: var(--space-block-gap); margin-bottom: var(--space-block-gap); }
     .hero { grid-template-columns: 1.1fr 0.9fr; }
     .grid-main { grid-template-columns: 1.15fr 0.85fr; }
     .grid-secondary { grid-template-columns: 1fr 1fr; }
     .summary-strip { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-    .stack { display: grid; gap: 20px; }
-    .panel {
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      background: var(--panel);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-      overflow: hidden;
-    }
+    .stack { display: grid; gap: var(--space-block-gap); }
     .hero-main { padding: 28px; min-height: 260px; position: relative; }
     .hero-main::after {
       content: "";
@@ -75,14 +73,17 @@
       color: var(--accent);
       font-size: 12px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 12px;
+      letter-spacing: var(--font-mono-label-spacing);
+      margin-bottom: var(--space-mono-label-after);
     }
     .label { color: var(--muted); margin-bottom: 8px; }
-    h1 { margin: 0 0 14px; font-size: clamp(34px, 6vw, 62px); line-height: 0.95; max-width: 8ch; }
-    h2 { margin: 0; font-size: 22px; }
+    h1 {
+      margin: 0 0 14px; font-size: clamp(34px, 6vw, 62px); line-height: 0.95; max-width: 8ch;
+      font-weight: var(--font-page-title-weight);
+    }
+    h2 { margin: 0; font-size: 22px; font-weight: var(--font-attention-title-weight); letter-spacing: -0.01em; }
     .hero-copy, .copy, .section-copy {
-      color: #d0def3;
+      color: var(--color-copy-soft);
       line-height: 1.6;
       font-size: 14px;
       white-space: pre-line;
@@ -115,6 +116,44 @@
       padding: 16px;
     }
     .list { display: grid; gap: 12px; }
+    /* ── Agent Card Grid — Design System P1 ──────────────────────────── */
+    .agent-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .role-card-v2 {
+      padding: 12px 12px 12px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(128,168,225,0.14);
+      background: var(--panel);
+      position: relative; overflow: hidden;
+      display: flex; flex-direction: column; gap: 4px;
+      min-height: 86px;
+    }
+    .role-card-bar {
+      position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--sc, var(--accent));
+      box-shadow: 0 0 8px var(--sc, var(--accent));
+    }
+    .role-card-name {
+      font-size: 14px; font-weight: 700;
+      display: flex; align-items: center; gap: 7px;
+      margin-bottom: 2px;
+    }
+    .role-card-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+      background: var(--sc, var(--accent));
+      box-shadow: 0 0 6px var(--sc, var(--accent));
+    }
+    .role-card-state {
+      font-family: "IBM Plex Mono", monospace; font-size: 9px;
+      padding: 2px 6px; border-radius: 99px;
+      border: 1px solid rgba(128,168,225,0.14);
+      color: var(--muted); margin-left: auto; white-space: nowrap;
+    }
+    .role-card-detail { font-size: 11px; color: var(--color-copy-soft); line-height: 1.4; }
+    .role-card-footer {
+      display: flex; gap: 8px; margin-top: auto; padding-top: 4px;
+      font-family: "IBM Plex Mono", monospace; font-size: 9px; color: var(--muted);
+    }
+    /* ─────────────────────────────────────────────────────────────────── */
     .row-top, .section-head, .split-line {
       display: flex;
       justify-content: space-between;
@@ -149,20 +188,31 @@
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.05);
     }
-    .meta-item .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
-    .meta-item .v { font-size: 14px; color: #d9e6fa; word-break: break-word; }
+    .meta-item .k {
+      color: var(--muted); font-size: var(--font-mono-label-size); text-transform: uppercase;
+      letter-spacing: var(--font-mono-label-spacing); margin-bottom: 6px;
+    }
+    .meta-item .v { font-size: 14px; color: var(--color-copy-emphasis); word-break: break-word; }
     .metric-card {
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 18px;
       background: rgba(255,255,255,0.03);
-      padding: 16px;
+      padding: 18px 20px;
+      transition: transform .15s, border-color .2s;
     }
+    .metric-card:hover { transform: translateY(-1px); border-color: rgba(128,168,225,0.28); }
+    .metric-card.is-warn { border-color: rgba(255,201,119,0.25); background: rgba(255,201,119,0.05); }
+    .metric-card.is-danger { border-color: rgba(255,126,143,0.25); background: rgba(255,126,143,0.05); }
     .metric-value {
-      font-size: 30px;
+      font-size: 44px;
       font-weight: 700;
-      margin-bottom: 6px;
+      line-height: 1;
+      margin-bottom: 4px;
     }
-    .metric-sub { color: #d0def3; font-size: 13px; }
+    .metric-value.ok { color: var(--text); }
+    .metric-value.warn { color: var(--warn); }
+    .metric-value.danger { color: var(--danger); }
+    .metric-sub { color: var(--muted); font-size: 11px; }
     .route-list, .policy-list, .mini-list { display: grid; gap: 10px; }
     .mini-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
     .mini-chip {
@@ -211,7 +261,7 @@
       border-radius: 14px;
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.06);
-      color: #d8e6fa;
+      color: var(--color-copy-emphasis);
       font-size: 14px;
     }
     .status-line.warn { border-color: rgba(255,201,119,0.22); color: var(--warn); }
@@ -337,6 +387,29 @@
       gap: 8px;
       margin-top: 10px;
     }
+
+    html[data-theme="light"] .status-card,
+    html[data-theme="light"] .summary-card,
+    html[data-theme="light"] .card,
+    html[data-theme="light"] .role-card,
+    html[data-theme="light"] .activity-card,
+    html[data-theme="light"] .agent-card,
+    html[data-theme="light"] .route-card,
+    html[data-theme="light"] .asset-card {
+      border-color: var(--color-line);
+      background: var(--color-panel);
+      box-shadow: var(--shadow-surface-sm);
+    }
+    html[data-theme="light"] .metric-card {
+      border-color: var(--color-line);
+      background: var(--color-panel-alt);
+      box-shadow: var(--shadow-surface-sm);
+    }
+    html[data-theme="light"] .meta-item {
+      background: var(--color-panel-alt);
+      border-color: var(--color-line);
+    }
+
     @media (max-width: 1120px) {
       .hero, .grid-main, .grid-secondary, .summary-strip { grid-template-columns: 1fr; }
       .detail-panel-shell {
@@ -362,11 +435,67 @@
       .hero-main, .hero-side, .section { padding: 18px; }
       .meta-grid { grid-template-columns: 1fr; }
     }
+    /* ── Standalone color modifiers (used with .copy etc.) ─────────────────── */
+    .danger { color: var(--danger); }
+    .warn { color: var(--warn); }
+    /* ── Needs Attention panel ─────────────────────────────────────────────── */
+    .attention-strip { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding-top: 4px; }
+    .attention-item { display: flex; align-items: center; gap: 10px; }
+    button.attention-item {
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      text-align: left;
+    }
+    /* ── Today's Runs counts ───────────────────────────────────────────────── */
+    .runs-counts { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
+    .run-count-item { display: flex; flex-direction: column; align-items: center; min-width: 38px; }
+    .run-count-value { font-size: 22px; font-weight: 700; line-height: 1.2; }
+    .run-count-value.is-danger { color: var(--danger); }
+    .run-count-label { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-top: 2px; }
+    /* ── Recent Failed Runs mini list ───────────────────────────────────────── */
+    .failed-runs-list { display: grid; gap: 8px; margin-top: 10px; }
+    .failed-run-item {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,126,143,0.06);
+      border: 1px solid rgba(255,126,143,0.16);
+      cursor: pointer;
+      transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+    }
+    .failed-run-item:hover,
+    .failed-run-item:focus-visible {
+      background: rgba(255,126,143,0.1);
+      border-color: rgba(255,126,143,0.28);
+      outline: none;
+      transform: translateY(-1px);
+    }
+    .failed-run-item .run-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 4px; }
+    .failed-run-link { color: var(--danger); text-decoration: none; }
+    .failed-run-link:hover,
+    .failed-run-link:focus-visible { text-decoration: underline; outline: none; }
+    .failed-run-item .run-err { color: var(--muted); font-size: 12px; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   </style>
 </head>
 <body>
   <div class="detail-backdrop" id="detailBackdrop"></div>
   <div class="toast mono" id="toast"></div>
+  <nav id="topNav" style="
+    position:sticky; top:0; z-index:200;
+    height:48px; display:flex; align-items:center; gap:4px; padding:0 24px;
+    background:var(--color-nav-internal); backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--color-line);
+  ">
+    <span style="font-size:12px; font-weight:700; letter-spacing:0.06em; color:var(--accent); margin-right:12px;">Deepnoa AI Office</span>
+    <a id="inav-dashboard" href="/dashboard" style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--muted);">Dashboard</a>
+    <a id="inav-internal" href="/internal" style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--text); background:rgba(255,255,255,0.07);">Internal</a>
+    <a id="inav-runs"     href="/runs"     style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--muted);">Runs</a>
+    <button type="button" class="theme-toggle" data-theme-toggle style="margin-left:auto">
+      <span class="theme-toggle__state" aria-hidden="true"></span>
+    </button>
+  </nav>
   <main class="shell">
     <section class="hero">
       <div class="panel hero-main">
@@ -400,6 +529,13 @@
         <div class="summary-card">
           <div class="label mono" data-i18n="internal.asset_auth">アセット認証</div>
           <div class="copy" id="assetAuthSummary" data-i18n="status.asset_auth_loading">アセット認証を読込中です。</div>
+        </div>
+        <div class="summary-card" id="runsSummaryCard">
+          <div class="label mono" data-i18n="internal.today_runs">本日の実行</div>
+          <div class="copy" id="runsSummaryStatus" data-i18n="status.runs_loading">読込中</div>
+          <div class="runs-counts" id="runsCounts"></div>
+          <div class="failed-runs-list" id="recentFailedRunsList" style="display:none"></div>
+          <a href="/runs?kind=health&lang=ja" id="runsViewAllLink" class="footer-note mono" style="display:block; margin-top:10px" data-i18n="internal.runs_view_all">runs 一覧 →</a>
         </div>
       </div>
     </section>
@@ -437,6 +573,17 @@
       </div>
     </section>
 
+    <section class="panel section" id="needsAttentionPanel" style="display:none; margin-bottom:20px">
+      <div class="section-head">
+        <div>
+          <h2 data-i18n="section.needs_attention">要対応</h2>
+          <div class="section-copy" data-i18n="section.needs_attention_sub">承認・ブロック・アラート・コネクタ異常をまとめて表示します。</div>
+        </div>
+        <div class="badge mono" id="attentionStatusBadge"></div>
+      </div>
+      <div class="attention-strip" id="attentionStrip"></div>
+    </section>
+
     <section class="grid-main">
       <div class="stack">
         <section class="panel section">
@@ -448,7 +595,7 @@ dev・ops・research・フォールバックワーカーを確認できます。
             </div>
             <div class="pill mono" id="updatedAtPill">...</div>
           </div>
-          <div class="list" id="rolesList"></div>
+          <div class="agent-card-grid" id="rolesList"></div>
         </section>
 
         <section class="panel section">
@@ -695,8 +842,8 @@ manager カードの補足に使います。</div>
         "summary.awaiting_approval_sub": "人の判断待ちです。",
         "summary.done_today": "本日完了",
         "summary.done_today_sub": "本日完了した件数です。",
-        "summary.alerts": "アラート",
-        "summary.alerts_sub": "異常や劣化シグナルです。",
+        "summary.alerts": "全アラート",
+        "summary.alerts_sub": "異常や劣化シグナルの総数です。",
         "internal.eyebrow": "internal / 運用ビュー",
         "internal.hero_copy": "AI オフィスの運用状況を確認します。\nルーティング、intake、フォールバック、保護された操作を見られます。",
         "internal.gateway": "ゲートウェイ",
@@ -711,7 +858,7 @@ manager カードの補足に使います。</div>
         "section.failed_tasks": "失敗タスク",
         "section.connector_health": "コネクタ健全性",
         "section.completed_recently": "直近の完了",
-        "section.alerts": "アラート",
+        "section.alerts": "重要アラート",
         "section.low_priority_activity": "低優先アクティビティ",
         "section.low_priority_activity_sub": "優先度の低い進行ログです。\n状態変化の確認に使います。",
         "section.routing_table": "ルーティングテーブル",
@@ -922,7 +1069,22 @@ manager カードの補足に使います。</div>
         "enum.degraded": "劣化",
         "enum.error": "異常",
         "enum.connected": "接続中",
-        "enum.offline": "オフライン"
+        "enum.offline": "オフライン",
+        "internal.today_runs": "本日の実行",
+        "internal.runs_view_all": "runs 一覧 →",
+        "status.runs_loading": "読込中",
+        "status.runs_unavailable": "実行状態を取得できませんでした。",
+        "section.needs_attention": "要対応",
+        "section.needs_attention_sub": "承認・ブロック・重要アラート・コネクタ異常をまとめて表示します。",
+        "runs.done": "完了",
+        "runs.failed": "失敗",
+        "runs.running": "実行中",
+        "runs.queued": "待機",
+        "runs.total": "合計",
+        "runs.recent_failures": "最近の失敗実行",
+        "runs.retry": "再試行",
+        "attention.all_clear": "全て正常",
+        "attention.no_items": "承認待ち・ブロック・アラートなし"
       },
       en: {
         "page.title": "Deepnoa Internal View",
@@ -1004,7 +1166,22 @@ manager カードの補足に使います。</div>
         "task.untitled": "Untitled",
         "task.approval_default": "Approval",
         "approval.signal_prefix": "approval",
-        "enum.ok": "OK"
+        "internal.today_runs": "Today's Runs",
+        "internal.runs_view_all": "view all runs →",
+        "status.runs_loading": "Loading",
+        "status.runs_unavailable": "Run status unavailable.",
+        "section.needs_attention": "Needs Attention",
+        "section.needs_attention_sub": "Pending approvals, blocked tasks, critical alerts, and connector issues.",
+        "enum.ok": "OK",
+        "runs.done": "done",
+        "runs.failed": "failed",
+        "runs.running": "running",
+        "runs.queued": "queued",
+        "runs.total": "total",
+        "runs.recent_failures": "Recent Failed Runs",
+        "runs.retry": "Retry",
+        "attention.all_clear": "All Clear",
+        "attention.no_items": "No approvals, blocks, or alerts"
       },
       zh: {
         "page.title": "Deepnoa 内部视图",
@@ -1019,8 +1196,8 @@ manager カードの補足に使います。</div>
         "summary.awaiting_approval_sub": "仍需人工判断。",
         "summary.done_today": "今日完成",
         "summary.done_today_sub": "今天完成的数量。",
-        "summary.alerts": "告警",
-        "summary.alerts_sub": "错误与退化信号。",
+        "summary.alerts": "全部告警",
+        "summary.alerts_sub": "错误与退化信号总数。",
         "internal.eyebrow": "仅内部 / manager-first runtime",
         "internal.hero_copy": "AI 办公室的运维控制界面。这里展示 manager routing、role worker、gateway intake、fallback 使用情况与受保护的 asset lab 控制，同时不暴露敏感值。",
         "internal.gateway": "网关",
@@ -1035,7 +1212,7 @@ manager カードの補足に使います。</div>
         "section.failed_tasks": "失败任务",
         "section.connector_health": "连接器健康",
         "section.completed_recently": "最近完成",
-        "section.alerts": "告警",
+        "section.alerts": "重要告警",
         "section.low_priority_activity": "低优先级活动",
         "section.low_priority_activity_sub": "紧急度较低的进度日志与状态更新。",
         "section.routing_table": "路由表",
@@ -1237,7 +1414,22 @@ manager カードの補足に使います。</div>
         "enum.degraded": "退化",
         "enum.error": "错误",
         "enum.connected": "已连接",
-        "enum.offline": "离线"
+        "enum.offline": "离线",
+        "internal.today_runs": "今日执行",
+        "internal.runs_view_all": "查看全部 →",
+        "status.runs_loading": "加载中",
+        "status.runs_unavailable": "无法获取执行状态。",
+        "section.needs_attention": "需要关注",
+        "section.needs_attention_sub": "待审批、阻塞任务、重要告警与连接器异常。",
+        "runs.done": "完成",
+        "runs.failed": "失败",
+        "runs.running": "运行中",
+        "runs.queued": "等待",
+        "runs.total": "合计",
+        "runs.recent_failures": "最近失败执行",
+        "runs.retry": "重试",
+        "attention.all_clear": "全部正常",
+        "attention.no_items": "无待审批・阻塞・告警"
       }
     };
     const DEFAULT_LANG = "ja";
@@ -1256,6 +1448,11 @@ manager カードの補足に使います。</div>
     };
     let currentLang = resolveLang();
     const t = (key, fallback = "") => I18N[currentLang]?.[key] || fallback || I18N.en?.[key] || key;
+    const withLang = (path) => {
+      const url = new URL(path, window.location.origin);
+      url.searchParams.set("lang", currentLang);
+      return `${url.pathname}${url.search}${url.hash}`;
+    };
     const detailQueryState = () => {
       const params = new URLSearchParams(window.location.search);
       return {
@@ -1281,6 +1478,14 @@ manager カードの補足に使います。</div>
     function applyI18n() {
       document.documentElement.lang = currentLang;
       document.title = t("page.title", "Deepnoa Internal View");
+      const inavDashboard = document.getElementById("inav-dashboard");
+      const inavInternal = document.getElementById("inav-internal");
+      const inavRuns = document.getElementById("inav-runs");
+      const runsViewAllLink = document.getElementById("runsViewAllLink");
+      if (inavDashboard) inavDashboard.href = withLang("/dashboard");
+      if (inavInternal) inavInternal.href = withLang("/internal");
+      if (inavRuns) inavRuns.href = withLang("/runs");
+      if (runsViewAllLink) runsViewAllLink.href = withLang("/runs?kind=health");
       for (const node of document.querySelectorAll("[data-i18n]")) {
         node.textContent = t(node.dataset.i18n, node.textContent);
       }
@@ -1313,7 +1518,7 @@ manager カードの補足に使います。</div>
     };
     const ACTIVE_POLL_MS = 15000;
     const HIDDEN_POLL_MS = 60000;
-    const state = { internal: null, assetAuth: null, bgPollTimer: null, selectedDetail: null, renderTimer: null, renderInFlight: null, toastTimer: null };
+    const state = { internal: null, health: null, failedRuns: null, assetAuth: null, bgPollTimer: null, selectedDetail: null, renderTimer: null, renderInFlight: null, toastTimer: null };
 
     function detailItemKey(kind, item) {
       if (!item) return "";
@@ -1470,25 +1675,30 @@ manager カードの補足に使います。</div>
     function renderRoles(items) {
       const target = document.getElementById("rolesList");
       if (!items || !items.length) return renderEmpty(target, t("empty.no_role_state", "No role state available."));
-      target.innerHTML = items.map((item) => `
-        <article class="role-card">
-          <div class="row-top">
-            <div>
-              <div class="name">${escapeHtml(item.name)}</div>
-              <div class="sub">${escapeHtml(item.role)} / ${escapeHtml(item.profile)}</div>
-            </div>
-            <div class="${badgeClass(item.public_status_label)} mono">${escapeHtml(translateEnum(item.state))} / ${escapeHtml(item.public_status_label)}</div>
+      const roleColor = (state, label) => {
+        const cls = badgeClass(label || state || "");
+        if (cls.includes("danger")) return "var(--danger)";
+        if (cls.includes("warn"))   return "var(--warn)";
+        return "var(--accent)";
+      };
+      target.innerHTML = items.map((item) => {
+        const sc = roleColor(item.state, item.public_status_label);
+        return `
+        <article class="role-card-v2" style="--sc:${sc}">
+          <div class="role-card-bar"></div>
+          <div class="role-card-name">
+            <div class="role-card-dot"></div>
+            ${escapeHtml(item.name)}
+            <span class="role-card-state">${escapeHtml(translateEnum(item.state))}</span>
           </div>
-          <div class="copy">${escapeHtml(item.detail || t("status.loading", "Loading"))}</div>
-          <div class="meta-grid">
-            <div class="meta-item"><div class="k mono">${escapeHtml(t("label.last_event", "Last event"))}</div><div class="v">${escapeHtml(item.last_event_type || t("label.none", "none"))}</div></div>
-            <div class="meta-item"><div class="k mono">${escapeHtml(t("label.last_source", "Last source"))}</div><div class="v">${escapeHtml(item.last_source || t("label.none", "none"))}</div></div>
-            <div class="meta-item"><div class="k mono">${escapeHtml(t("label.updated", "Updated"))}</div><div class="v">${escapeHtml(fmt(item.updated_at))}</div></div>
-            <div class="meta-item"><div class="k mono">${escapeHtml(t("label.tools", "Tools"))}</div><div class="v">${escapeHtml(String((item.allowed_tools || []).length))}</div></div>
+          <div class="role-card-detail">${escapeHtml(item.detail || t("status.loading", "Loading"))}</div>
+          <div class="role-card-footer">
+            <span>${escapeHtml(item.last_event_type || t("label.none", "none"))}</span>
+            <span>·</span>
+            <span>tools: ${escapeHtml(String((item.allowed_tools || []).length))}</span>
           </div>
-          <div class="tools">${(item.allowed_tools || []).map((tool) => `<span class="tool-chip mono">${escapeHtml(tool)}</span>`).join("")}</div>
-        </article>
-      `).join("");
+        </article>`;
+      }).join("");
     }
 
     function renderActivity(items) {
@@ -1528,12 +1738,26 @@ manager カードの補足に使います。</div>
     }
 
     function renderSummary(summary) {
-      document.getElementById("summaryActiveAgents").textContent = String(summary?.active_agents ?? 0);
-      document.getElementById("summaryActiveTasks").textContent = String(summary?.active_tasks ?? 0);
-      document.getElementById("summaryBlocked").textContent = String(summary?.blocked ?? 0);
-      document.getElementById("summaryApproval").textContent = String(summary?.awaiting_approval ?? 0);
-      document.getElementById("summaryDoneToday").textContent = String(summary?.done_today ?? 0);
-      document.getElementById("summaryAlerts").textContent = String(summary?.alerts ?? 0);
+      function setMetric(id, value, tone) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = String(value ?? 0);
+        el.className = `metric-value${tone === "warn" ? " warn" : tone === "danger" ? " danger" : " ok"}`;
+        const card = el.closest(".metric-card");
+        if (card) {
+          card.classList.toggle("is-warn", tone === "warn");
+          card.classList.toggle("is-danger", tone === "danger");
+        }
+      }
+      const blocked = summary?.blocked ?? 0;
+      const approval = summary?.awaiting_approval ?? 0;
+      const alerts = summary?.alerts ?? 0;
+      setMetric("summaryActiveAgents", summary?.active_agents ?? 0, "ok");
+      setMetric("summaryActiveTasks", summary?.active_tasks ?? 0, "ok");
+      setMetric("summaryBlocked", blocked, blocked > 0 ? "warn" : "ok");
+      setMetric("summaryApproval", approval, approval > 0 ? "warn" : "ok");
+      setMetric("summaryDoneToday", summary?.done_today ?? 0, "ok");
+      setMetric("summaryAlerts", alerts, alerts > 0 ? "danger" : "ok");
     }
 
     function renderDetailPane() {
@@ -1745,6 +1969,162 @@ manager カードの補足に使います。</div>
       return fetchJson(`/api/internal/state?v={{VERSION_TIMESTAMP}}`);
     }
 
+    async function loadHealthData() {
+      return fetchJson("/api/internal/health");
+    }
+
+    async function loadRecentFailedRuns() {
+      return fetchJson("/api/internal/runs?status=failed&limit=5");
+    }
+
+    function renderNeedsAttention(data) {
+      const panel = document.getElementById("needsAttentionPanel");
+      if (!panel) return;
+      // null means render failed entirely — keep panel hidden until data is available
+      if (data === null) {
+        panel.style.display = "none";
+        return;
+      }
+      const pendingApprovals = (data?.approvals || []).length;
+      const blocked = (data?.blocked || []).length;
+      const criticalAlerts = (data?.alerts || []).filter(
+        (a) => a.severity === "error" || a.severity === "critical"
+      ).length;
+      const badConnectors = (data?.connectors || []).filter(
+        (c) => c.status === "error" || c.status === "offline" || c.status === "degraded"
+      ).length;
+      const hasItems = pendingApprovals > 0 || blocked > 0 || criticalAlerts > 0 || badConnectors > 0;
+      panel.style.display = "";  // always visible when data is available
+      const badge = document.getElementById("attentionStatusBadge");
+      const strip = document.getElementById("attentionStrip");
+      if (!hasItems) {
+        // "All clear" — quiet positive state
+        if (badge) {
+          badge.className = "badge mono";  // default badge = accent/green
+          badge.textContent = t("attention.all_clear", "全て正常");
+        }
+        if (strip) {
+          strip.innerHTML = `
+            <div class="attention-item">
+              <span class="badge mono" style="font-size:15px; padding:5px 10px">✓</span>
+              <span class="copy" style="font-size:13px; color:var(--muted)">${escapeHtml(t("attention.no_items", "承認待ち・ブロック・アラートなし"))}</span>
+            </div>
+          `;
+        }
+        return;
+      }
+      const status = data?.summary?.status ?? "watch";
+      if (badge) {
+        badge.className = `${badgeClass(status)} mono`;
+        badge.textContent = translateEnum(status);
+      }
+      const items = [];
+      if (pendingApprovals > 0) items.push({ key: "section.pending_approvals", fallback: "承認待ち", count: pendingApprovals, tone: "warn", targetId: "approvalList" });
+      if (blocked > 0) items.push({ key: "section.blocked_tasks", fallback: "ブロック中", count: blocked, tone: "warn", targetId: "blockedList" });
+      if (criticalAlerts > 0) items.push({ key: "section.alerts", fallback: "アラート", count: criticalAlerts, tone: "danger", targetId: "alertList" });
+      if (badConnectors > 0) items.push({ key: "section.connector_health", fallback: "コネクタ", count: badConnectors, tone: criticalAlerts > 0 ? "danger" : "warn", targetId: "connectorList" });
+      if (strip) {
+        strip.innerHTML = items.map((item) => `
+          <button class="attention-item" type="button" data-attention-target="${escapeHtml(item.targetId)}">
+            <span class="badge ${escapeHtml(item.tone)} mono">${escapeHtml(String(item.count))}</span>
+            <span class="copy" style="font-size:13px">${escapeHtml(t(item.key, item.fallback))}</span>
+          </button>
+        `).join("");
+      }
+    }
+
+    function scrollToAttentionSection(targetId) {
+      const aliases = {
+        approvalsList: "approvalList",
+        alertsList: "alertList",
+        connectorsList: "connectorList",
+        blockedList: "blockedList"
+      };
+      const resolvedId = aliases[targetId] || targetId;
+      const target = document.getElementById(resolvedId);
+      if (!target) return;
+      target.scrollIntoView({ block: "start", behavior: "smooth" });
+    }
+
+    function renderRunsSummaryCard(health) {
+      const statusEl = document.getElementById("runsSummaryStatus");
+      const countsEl = document.getElementById("runsCounts");
+      if (!statusEl || !countsEl) return;
+      if (!health) {
+        statusEl.textContent = t("status.runs_unavailable", "実行状態を取得できませんでした。");
+        statusEl.className = "copy";
+        countsEl.innerHTML = "";
+        return;
+      }
+      const runs = health.runs_today || {};
+      const overallStatus = health.overall_status || "ok";
+      const failed = runs.failed ?? 0;
+      statusEl.className = `copy${overallStatus === "error" ? " danger" : overallStatus === "degraded" ? " warn" : ""}`;
+      statusEl.textContent = translateEnum(overallStatus);
+      countsEl.innerHTML = [
+        ["runs.done", "done", runs.done ?? 0, ""],
+        ["runs.failed", "failed", runs.failed ?? 0, failed > 0 ? "is-danger" : ""],
+        ["runs.running", "running", runs.running ?? 0, ""],
+        ["runs.queued", "queued", runs.queued ?? 0, ""],
+        ["runs.total", "total", runs.total ?? 0, ""],
+      ].map(([key, fallback, val, cls]) => `
+        <div class="run-count-item">
+          <div class="run-count-value${cls ? ` ${escapeHtml(cls)}` : ""}">${escapeHtml(String(val))}</div>
+          <div class="run-count-label">${escapeHtml(t(key, fallback))}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderRecentFailedRuns(failedRuns) {
+      const container = document.getElementById("recentFailedRunsList");
+      if (!container) return;
+      const runs = Array.isArray(failedRuns?.runs) ? failedRuns.runs : [];
+      if (!runs.length) {
+        container.style.display = "none";
+        return;
+      }
+      const trunc = (s, n) => { const str = String(s == null ? "" : s); return str.length > n ? `${str.slice(0, n)}…` : str; };
+      const relTime = (iso) => {
+        if (!iso) return t("label.not_available", "n/a");
+        const ms = Date.now() - new Date(iso).getTime();
+        if (ms < 0 || Number.isNaN(ms)) return fmt(iso);
+        const sec = Math.floor(ms / 1000);
+        if (sec < 60) return `${sec}s`;
+        const min = Math.floor(sec / 60);
+        if (min < 60) return `${min}m`;
+        const hr = Math.floor(min / 60);
+        if (hr < 24) return `${hr}h`;
+        return `${Math.floor(hr / 24)}d`;
+      };
+      container.style.display = "";
+      container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:6px; margin-bottom:4px">
+          <div class="label mono" style="margin:0">${escapeHtml(t("runs.recent_failures", "最近の失敗実行"))}</div>
+          <a class="footer-note mono" style="margin:0" href="${withLang("/runs?status=failed")}" data-i18n="internal.runs_view_all">${escapeHtml(t("internal.runs_view_all", "runs 一覧 →"))}</a>
+        </div>
+        ${runs.map((run) => {
+          const shortId = escapeHtml(trunc(run.run_id, 12));
+          const fullId = escapeHtml(run.run_id || "");
+          const runDetailHref = withLang(`/runs/${encodeURIComponent(run.run_id || "")}`);
+          const kind = escapeHtml(run.kind || t("label.unknown", "?"));
+          const errMsg = escapeHtml(trunc((run.error || {}).message, 60));
+          const ago = escapeHtml(relTime(run.queued_at));
+          const isRetry = !!run.retry_of;
+          return `
+            <div class="failed-run-item" data-run-href="${runDetailHref}" role="link" tabindex="0">
+              <div class="run-meta">
+                <a class="mono failed-run-link" style="font-size:12px" href="${runDetailHref}" title="${fullId}">${shortId}</a>
+                <span class="mini-chip mono">${kind}</span>
+                ${isRetry ? `<span class="badge danger mono" style="font-size:10px; padding:3px 7px">${escapeHtml(t("runs.retry", "再試行"))}</span>` : ""}
+                <span class="sub" style="margin-left:auto; font-size:11px">${ago}</span>
+              </div>
+              ${errMsg ? `<div class="run-err">${errMsg}</div>` : ""}
+            </div>
+          `;
+        }).join("")}
+      `;
+    }
+
     async function refreshAssetAuthStatus() {
       try {
         const data = await fetchJson("/assets/auth/status");
@@ -1941,8 +2321,17 @@ manager カードの補足に使います。</div>
       state.renderInFlight = (async () => {
       const snapshot = captureRenderState();
       try {
-        const data = await loadInternalState();
+        // Fetch internal state, health, and recent failed runs in parallel; health and runs are best-effort
+        const [stateRes, healthRes, failedRunsRes] = await Promise.allSettled([
+          loadInternalState(),
+          loadHealthData(),
+          loadRecentFailedRuns(),
+        ]);
+        if (stateRes.status === "rejected") throw stateRes.reason;
+        const data = stateRes.value;
         state.internal = data;
+        if (healthRes.status === "fulfilled") state.health = healthRes.value;
+        if (failedRunsRes.status === "fulfilled") state.failedRuns = failedRunsRes.value;
         if (!state.selectedDetail) {
           const queryDetail = detailQueryState();
           if (queryDetail.kind && queryDetail.key) state.selectedDetail = queryDetail;
@@ -1970,6 +2359,9 @@ manager カードの補足に使います。</div>
         renderIntake(data.intake);
         renderPolicies(data.policies);
         renderDetailPane();
+        renderNeedsAttention(state.internal);
+        renderRunsSummaryCard(state.health);
+        renderRecentFailedRuns(state.failedRuns);
         await refreshAssetAuthStatus();
       } catch (error) {
         const targets = ["rolesList", "activityList", "routingList", "assetsList", "agentsList", "intakeList", "policyList", "blockedList", "approvalList", "failedList", "connectorList", "completedList", "alertList"];
@@ -1977,6 +2369,9 @@ manager カードの補足に使います。</div>
         renderSummary({});
         state.selectedDetail = null;
         renderDetailPane();
+        renderNeedsAttention(null);
+        renderRunsSummaryCard(state.health);
+        renderRecentFailedRuns(state.failedRuns);
         document.getElementById("gatewayStatus").textContent = translateEnum("error");
         document.getElementById("gatewayDetail").textContent = error.message || t("error.failed_internal_state", "Failed to load internal state.");
       } finally {
@@ -2000,6 +2395,21 @@ manager カードの補足に使います。</div>
       button.addEventListener("click", () => setLanguage(button.dataset.langSwitch));
     }
     document.addEventListener("click", (event) => {
+      const failedRunLink = event.target.closest(".failed-run-link");
+      if (failedRunLink) {
+        event.stopPropagation();
+        return;
+      }
+      const failedRunItem = event.target.closest("[data-run-href]");
+      if (failedRunItem) {
+        window.location.href = failedRunItem.dataset.runHref;
+        return;
+      }
+      const attentionTrigger = event.target.closest("[data-attention-target]");
+      if (attentionTrigger) {
+        scrollToAttentionSection(attentionTrigger.dataset.attentionTarget);
+        return;
+      }
       const trigger = event.target.closest("[data-detail-kind][data-detail-key]");
       if (!trigger || !state.internal) return;
       const kind = trigger.dataset.detailKind;
@@ -2014,6 +2424,13 @@ manager カードの補足に使います。</div>
       setSelectedDetail(kind, item);
       if (window.innerWidth > 1120) return;
       document.getElementById("detailPanelShell")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      const failedRunItem = event.target.closest("[data-run-href]");
+      if (!failedRunItem) return;
+      event.preventDefault();
+      window.location.href = failedRunItem.dataset.runHref;
     });
     document.getElementById("detailCloseButton").addEventListener("click", closeDetailPane);
     document.getElementById("detailBackdrop").addEventListener("click", closeDetailPane);
@@ -2045,5 +2462,39 @@ manager カードの補足に使います。</div>
 
     render().then(() => scheduleRender());
   </script>
+<script>
+(function(){
+  var r=document.documentElement;
+  window.dnSyncThemeToggleUi=function(){
+    var cur=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light",
+        tip=cur==="dark"?"Switch to light mode":"Switch to dark mode";
+    document.querySelectorAll("[data-theme-toggle]").forEach(function(b){
+      b.setAttribute("aria-label",tip);
+      b.setAttribute("title",tip);
+    });
+  };
+  window.dnSetTheme=function(t){
+    t=t==="light"?"light":"dark";
+    r.setAttribute("data-theme",t);
+    try{localStorage.setItem("dn-theme",t);}catch(e){}
+    try{window.dnSyncThemeToggleUi();}catch(z){}
+  };
+  document.addEventListener("click",function(e){
+    var x=e.target.closest("[data-theme-toggle]");
+    if(!x)return;
+    e.preventDefault();
+    var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";
+    window.dnSetTheme(c==="dark"?"light":"dark");
+  });
+  try{
+    var mq=window.matchMedia("(prefers-color-scheme: light)");
+    mq.addEventListener("change",function(){
+      try{if(localStorage.getItem("dn-theme"))return;}catch(z){}
+      window.dnSetTheme(mq.matches?"light":"dark");
+    });
+  }catch(y){}
+  try{window.dnSyncThemeToggleUi();}catch(z2){}
+})();
+</script>
 </body>
 </html>

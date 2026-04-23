@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <script>(function(){try{var k="dn-theme",s=localStorage.getItem(k),m=window.matchMedia("(prefers-color-scheme: light)"),t=s==="light"||s==="dark"?s:m.matches?"light":"dark";document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Run Detail — Deepnoa AI Office</title>
+  <link rel="stylesheet" href="/static/styles/status-badge.css">
+  <link rel="stylesheet" href="/static/styles/tokens.css">
+  <link rel="stylesheet" href="/static/styles/card-panel.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: var(--color-bg);
+      --panel: var(--color-panel-alt);
+      --line: var(--color-line);
+      --text: var(--color-text);
+      --muted: var(--color-muted);
+      --accent: var(--color-accent);
+      --warn: var(--color-warn);
+      --danger: var(--color-danger);
+      --shadow: var(--shadow-card);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Space Grotesk", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, var(--color-runs-radial), transparent 40%),
+        linear-gradient(180deg, var(--color-bg-gradient-mid) 0%, var(--color-bg-elevated) 60%, var(--color-bg-deep) 100%);
+      min-height: 100vh;
+    }
+
+    /* Nav */
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 14px var(--space-shell-x);
+      border-bottom: 1px solid var(--line);
+      background: var(--color-nav-bg-alt);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .nav-logo { font-weight: 700; font-size: 15px; color: var(--accent); margin-right: auto; }
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+    nav a:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+    nav a.active { color: var(--text); background: rgba(255,255,255,0.07); }
+
+    /* Layout */
+    main {
+      max-width: 860px; margin: 0 auto;
+      padding: var(--space-shell-y) var(--space-shell-x) var(--space-shell-bottom-l1);
+    }
+
+    /* Back link */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 13px;
+      margin-bottom: var(--space-block-gap);
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--text); }
+
+    /* Page header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .page-header-links {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: auto;
+    }
+    .page-header h1 {
+      font-size: 16px;
+      font-weight: var(--font-page-title-weight);
+      font-family: "IBM Plex Mono", monospace;
+      color: var(--accent);
+      letter-spacing: 0.01em;
+    }
+
+    /* Cards */
+    .card {
+      padding: 20px 22px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: var(--font-mono-label-size);
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: var(--font-mono-label-spacing);
+      margin-bottom: 14px;
+    }
+
+    /* Meta grid */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 8px 16px;
+    }
+    .meta-label {
+      font-size: var(--font-mono-label-size);
+      color: var(--muted);
+      font-family: "IBM Plex Mono", monospace;
+      padding-top: 1px;
+    }
+    .meta-value {
+      font-size: 13px;
+      word-break: break-all;
+    }
+    .meta-mono {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+    }
+
+    /* Command block */
+    .cmd-block {
+      background: rgba(0,0,0,0.28);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 13px;
+      color: var(--text);
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    /* Result summary */
+    .result-summary {
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    /* Key points list */
+    .key-points {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .key-points li {
+      font-size: 13px;
+      color: var(--muted);
+      padding-left: 16px;
+      position: relative;
+      line-height: 1.5;
+    }
+    .key-points li::before {
+      content: "·";
+      position: absolute;
+      left: 4px;
+      color: var(--accent);
+    }
+
+    /* Error block */
+    .error-block {
+      background: rgba(255,122,122,0.08);
+      border: 1px solid rgba(255,122,122,0.22);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .error-message {
+      font-size: 13px;
+      color: var(--danger);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .error-detail {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: var(--font-mono-label-size);
+      color: var(--muted);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Collapsible raw output */
+    details {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    summary {
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      font-family: "IBM Plex Mono", monospace;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::before {
+      content: "▶";
+      font-size: 9px;
+      transition: transform 0.15s;
+    }
+    details[open] summary::before { transform: rotate(90deg); }
+    details[open] summary { border-bottom: 1px solid var(--line); }
+    .raw-output {
+      padding: 12px 14px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: var(--font-mono-label-size);
+      color: var(--muted);
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 360px;
+      overflow-y: auto;
+      background: rgba(0,0,0,0.18);
+    }
+
+    /* Loading / error state */
+    .loading-state, .error-state {
+      text-align: center;
+      padding: 64px 24px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .error-state { color: var(--danger); }
+
+    /* sense_job_id badge */
+    .job-id-badge {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: var(--font-mono-label-size);
+      color: var(--muted);
+      background: rgba(130,164,214,0.08);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 2px 8px;
+      display: inline-block;
+    }
+
+    /* Retry button */
+    .btn-retry {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 7px;
+      border: 1px solid rgba(255,208,138,0.4);
+      background: rgba(255,208,138,0.1);
+      color: var(--warn);
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      margin-left: auto;
+    }
+    .btn-retry:hover:not(:disabled) {
+      background: rgba(255,208,138,0.18);
+      border-color: rgba(255,208,138,0.65);
+    }
+    .btn-retry:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Retry toast */
+    .retry-toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      padding: 12px 18px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 500;
+      background: rgba(10,20,35,0.96);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+      transition: opacity 0.3s;
+      z-index: 100;
+    }
+    .toast-success { border-color: rgba(130,242,203,0.4); color: var(--accent); }
+    .toast-error   { border-color: rgba(255,122,122,0.4); color: var(--danger); }
+    .toast-hidden  { opacity: 0; pointer-events: none; }
+
+    /* Result / Error card emphasis — outcome cards visually dominate context cards */
+    #card-result {
+      border-color: rgba(130,242,203,0.24);
+      background: rgba(130,242,203,0.04);
+      margin-top: 28px;
+    }
+    #card-result .card-title { color: var(--accent); }
+
+    #card-error {
+      border-color: rgba(255,122,122,0.32);
+      background: rgba(255,122,122,0.06);
+      margin-top: 28px;
+    }
+    #card-error .card-title { color: var(--danger); }
+
+    /* retry_of link in meta */
+    .meta-run-link {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .meta-run-link:hover { text-decoration: underline; }
+
+    html[data-theme="light"] .cmd-block {
+      background: var(--color-panel-2);
+      border-color: var(--color-line);
+    }
+    html[data-theme="light"] .raw-output {
+      background: var(--color-panel-2);
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <span class="nav-logo">Deepnoa AI Office</span>
+    <a id="nav-dashboard" href="/dashboard?lang=ja">Dashboard</a>
+    <a id="nav-internal" href="/internal?lang=ja">Internal</a>
+    <a id="nav-runs" href="/runs?lang=ja" class="active">Runs</a>
+    <button type="button" class="theme-toggle" data-theme-toggle style="margin-left:auto">
+      <span class="theme-toggle__state" aria-hidden="true"></span>
+    </button>
+  </nav>
+
+  <main>
+    <a id="back-to-runs-link" href="/runs?lang=ja" class="back-link">← Run List</a>
+
+    <div id="loading" class="loading-state">読込中…</div>
+    <div id="error-state" class="error-state" style="display:none"></div>
+    <div id="content" style="display:none">
+
+      <div class="page-header">
+        <div class="page-header-links">
+          <a id="back-to-office-link" class="back-link" href="/internal?lang=ja">← Back to AIOffice</a>
+        </div>
+        <h1 id="hdr-run-id"></h1>
+        <span id="hdr-status"></span>
+        <button class="btn-retry" id="btn-retry" style="display:none" onclick="retryRun()">
+          ↺ 再実行
+        </button>
+      </div>
+
+      <!-- Meta -->
+      <div class="card">
+        <div class="card-title">メタ情報</div>
+        <div class="meta-grid">
+          <span class="meta-label">kind</span>
+          <span class="meta-value meta-mono" id="meta-kind"></span>
+
+          <span class="meta-label">requested_by</span>
+          <span class="meta-value" id="meta-requested-by"></span>
+
+          <span class="meta-label">channel_id</span>
+          <span class="meta-value meta-mono" id="meta-channel-id"></span>
+
+          <span class="meta-label">queued_at</span>
+          <span class="meta-value meta-mono" id="meta-queued-at"></span>
+
+          <span class="meta-label">started_at</span>
+          <span class="meta-value meta-mono" id="meta-started-at"></span>
+
+          <span class="meta-label">done_at</span>
+          <span class="meta-value meta-mono" id="meta-done-at"></span>
+
+          <span class="meta-label">実行時間</span>
+          <span class="meta-value meta-mono" id="meta-duration"></span>
+
+          <span class="meta-label">sense_job_id</span>
+          <span class="meta-value" id="meta-sense-job-id"></span>
+
+          <span class="meta-label" id="lbl-retry-of" style="display:none">retry_of</span>
+          <span class="meta-value" id="meta-retry-of" style="display:none"></span>
+
+          <span class="meta-label" id="lbl-retry-count" style="display:none">retry_count</span>
+          <span class="meta-value meta-mono" id="meta-retry-count" style="display:none"></span>
+        </div>
+      </div>
+
+      <!-- Command -->
+      <div class="card">
+        <div class="card-title">コマンド</div>
+        <div class="cmd-block" id="cmd-block"></div>
+      </div>
+
+      <!-- Result (shown when done) -->
+      <div class="card" id="card-result" style="display:none">
+        <div class="card-title">結果</div>
+        <div class="result-summary" id="result-summary"></div>
+        <ul class="key-points" id="result-key-points"></ul>
+      </div>
+
+      <!-- Error (shown when failed) -->
+      <div class="card" id="card-error" style="display:none">
+        <div class="card-title">エラー</div>
+        <div class="error-block">
+          <div class="error-message" id="error-message"></div>
+          <div class="error-detail" id="error-detail"></div>
+        </div>
+      </div>
+
+      <!-- Raw output (collapsible) -->
+      <div class="card" id="card-raw" style="display:none">
+        <div class="card-title">Raw Output</div>
+        <details>
+          <summary>raw_output を表示</summary>
+          <div class="raw-output" id="raw-output"></div>
+        </details>
+      </div>
+
+    </div><!-- #content -->
+  </main>
+
+  <div class="retry-toast toast-hidden" id="retry-toast"></div>
+
+  <script>
+    let _currentRunId = null;
+
+    function showToast(msg, type) {
+      const el = document.getElementById('retry-toast');
+      el.textContent = msg;
+      el.className = `retry-toast toast-${type}`;
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => { el.className += ' toast-hidden'; }, 4000);
+    }
+
+    async function retryRun() {
+      if (!_currentRunId) return;
+      const btn = document.getElementById('btn-retry');
+      btn.disabled = true;
+      btn.textContent = '…';
+      try {
+        const res = await fetch(`/api/internal/runs/${encodeURIComponent(_currentRunId)}/retry`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
+        showToast(`受付しました: ${data.run_id}`, 'success');
+        // Navigate to the new run after a short delay
+        setTimeout(() => {
+          window.location.href = withLang(`/runs/${encodeURIComponent(data.run_id)}`);
+        }, 900);
+      } catch (err) {
+        showToast(`再実行エラー: ${esc(err.message)}`, 'error');
+        btn.disabled = false;
+        btn.textContent = '↺ 再実行';
+      }
+    }
+
+    function statusBadge(status) {
+      const icons = { queued: '⏳', running: '🔄', done: '✅', failed: '❌', cancelled: '⛔' };
+      const icon = icons[status] || '?';
+      return `<span class="status-badge s-${status}">${icon} ${status}</span>`;
+    }
+
+    function formatTime(iso) {
+      if (!iso) return '—';
+      try {
+        return new Date(iso).toLocaleString('ja-JP', {
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+      } catch { return iso; }
+    }
+
+    function formatDuration(rec) {
+      const start = rec.started_at || rec.queued_at;
+      const end = rec.done_at;
+      if (!start || !end) return rec.status === 'running' ? '実行中' : '—';
+      const ms = Date.parse(end) - Date.parse(start);
+      if (!isFinite(ms) || ms < 0) return '—';
+      const s = Math.round(ms / 1000);
+      return s < 60 ? `${s}秒` : `${Math.floor(s / 60)}分${s % 60}秒`;
+    }
+
+    function esc(str) {
+      return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function set(id, html) {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = html;
+    }
+
+    function setText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text ?? '—';
+    }
+
+    function show(id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = '';
+    }
+
+    function hide(id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    }
+
+    function currentLang() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('lang') || document.documentElement.lang || 'ja';
+    }
+
+    function withLang(path) {
+      const url = new URL(path, window.location.origin);
+      url.searchParams.set('lang', currentLang());
+      return `${url.pathname}${url.search}${url.hash}`;
+    }
+
+    function updateBackToOfficeLink() {
+      document.documentElement.lang = currentLang();
+      const backToOfficeLink = document.getElementById('back-to-office-link');
+      if (backToOfficeLink) backToOfficeLink.href = withLang('/internal');
+      const backToRunsLink = document.getElementById('back-to-runs-link');
+      if (backToRunsLink) backToRunsLink.href = withLang('/runs');
+      const navRunsLink = document.getElementById('nav-runs');
+      if (navRunsLink) navRunsLink.href = withLang('/runs');
+      const navInternalLink = document.getElementById('nav-internal');
+      if (navInternalLink) navInternalLink.href = withLang('/internal');
+      const navDashboardLink = document.getElementById('nav-dashboard');
+      if (navDashboardLink) navDashboardLink.href = withLang('/dashboard');
+    }
+
+    function render(rec) {
+      _currentRunId = rec.run_id;
+
+      // Header
+      set('hdr-run-id', esc(rec.run_id));
+      set('hdr-status', statusBadge(rec.status));
+      document.title = `${rec.run_id} — Deepnoa AI Office`;
+
+      // Retry button: show only for failed or cancelled runs
+      if (rec.status === 'failed' || rec.status === 'cancelled') {
+        show('btn-retry');
+      }
+
+      // Meta
+      setText('meta-kind', rec.kind);
+      setText('meta-requested-by', rec.requested_by_name || rec.requested_by || '—');
+      setText('meta-channel-id', rec.channel_id || '—');
+      setText('meta-queued-at', formatTime(rec.queued_at));
+      setText('meta-started-at', formatTime(rec.started_at));
+      setText('meta-done-at', formatTime(rec.done_at));
+      setText('meta-duration', formatDuration(rec));
+
+      if (rec.sense_job_id) {
+        set('meta-sense-job-id', `<span class="job-id-badge">${esc(rec.sense_job_id)}</span>`);
+      } else {
+        setText('meta-sense-job-id', '—');
+      }
+
+      // retry_of / retry_count
+      if (rec.retry_of) {
+        show('lbl-retry-of');
+        show('meta-retry-of');
+        set('meta-retry-of', `<a class="meta-run-link" href="${withLang(`/runs/${encodeURIComponent(rec.retry_of)}`)}">${esc(rec.retry_of)}</a>`);
+      }
+      if (rec.retry_count != null && rec.retry_count > 0) {
+        show('lbl-retry-count');
+        show('meta-retry-count');
+        setText('meta-retry-count', String(rec.retry_count));
+      }
+
+      // Command
+      set('cmd-block', esc(rec.raw_text || rec.normalized_task || '—'));
+
+      // Result
+      if (rec.result && rec.status === 'done') {
+        show('card-result');
+        const summary = rec.result.summary || '';
+        set('result-summary', esc(summary));
+        const kps = Array.isArray(rec.result.key_points) ? rec.result.key_points : [];
+        if (kps.length) {
+          set('result-key-points', kps.map(p => `<li>${esc(p)}</li>`).join(''));
+        } else {
+          hide('result-key-points');
+        }
+      }
+
+      // Error
+      if (rec.error && rec.status === 'failed') {
+        show('card-error');
+        setText('error-message', rec.error.message || '不明なエラー');
+        const detail = rec.error.detail || rec.error.stack || '';
+        if (detail) {
+          setText('error-detail', detail);
+        } else {
+          hide('error-detail');
+        }
+      }
+
+      // Raw output
+      const rawOut = rec.result?.raw_output ?? rec.error?.raw_output ?? null;
+      if (rawOut) {
+        show('card-raw');
+        set('raw-output', esc(rawOut));
+      }
+    }
+
+    async function load() {
+      const runId = window.location.pathname.split('/').filter(Boolean).pop();
+      if (!runId) {
+        hide('loading');
+        set('error-state', 'run_id が URL から取得できませんでした');
+        show('error-state');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/internal/runs/${encodeURIComponent(runId)}`);
+        if (res.status === 404) throw new Error(`Run が見つかりません: ${runId}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (!data.run) throw new Error('レスポンスに run フィールドがありません');
+        hide('loading');
+        render(data.run);
+        show('content');
+      } catch (err) {
+        hide('loading');
+        set('error-state', `取得エラー: ${esc(err.message)}`);
+        show('error-state');
+      }
+    }
+
+    updateBackToOfficeLink();
+    load();
+  </script>
+<script>
+(function(){
+  var r=document.documentElement;
+  window.dnSyncThemeToggleUi=function(){
+    var cur=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light",
+        tip=cur==="dark"?"Switch to light mode":"Switch to dark mode";
+    document.querySelectorAll("[data-theme-toggle]").forEach(function(b){
+      b.setAttribute("aria-label",tip);
+      b.setAttribute("title",tip);
+    });
+  };
+  window.dnSetTheme=function(t){
+    t=t==="light"?"light":"dark";
+    r.setAttribute("data-theme",t);
+    try{localStorage.setItem("dn-theme",t);}catch(e){}
+    try{window.dnSyncThemeToggleUi();}catch(z){}
+  };
+  document.addEventListener("click",function(e){
+    var x=e.target.closest("[data-theme-toggle]");
+    if(!x)return;
+    e.preventDefault();
+    var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";
+    window.dnSetTheme(c==="dark"?"light":"dark");
+  });
+  try{
+    var mq=window.matchMedia("(prefers-color-scheme: light)");
+    mq.addEventListener("change",function(){
+      try{if(localStorage.getItem("dn-theme"))return;}catch(z){}
+      window.dnSetTheme(mq.matches?"light":"dark");
+    });
+  }catch(y){}
+  try{window.dnSyncThemeToggleUi();}catch(z2){}
+})();
+</script>
+</body>
+</html>

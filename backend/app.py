@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Deepnoa Office UI - Backend State Service"""
 
-from flask import Flask, jsonify, send_from_directory, make_response, request, session
+from flask import Flask, jsonify, send_from_directory, make_response, redirect, request, session
 from datetime import datetime, timedelta
 import json
 import os
@@ -10,6 +10,7 @@ import math
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import threading
 from pathlib import Path
@@ -27,6 +28,7 @@ from services.schemas import (
     normalize_event_payload,
     normalize_internal_state,
 )
+from services.source_adapters import RunsAdapter
 from store_utils import (
     load_agents_state as _store_load_agents_state,
     save_agents_state as _store_save_agents_state,
@@ -54,6 +56,9 @@ FRONTEND_PUBLIC_FILE = os.path.join(FRONTEND_DIR, "public.html")
 FRONTEND_SCENE_FILE = os.path.join(FRONTEND_DIR, "scene.html")
 FRONTEND_GATEWAY_FILE = os.path.join(FRONTEND_DIR, "gateway.html")
 FRONTEND_ELECTRON_STANDALONE_FILE = os.path.join(FRONTEND_DIR, "electron-standalone.html")
+FRONTEND_RUNS_FILE = os.path.join(FRONTEND_DIR, "runs.html")
+FRONTEND_RUN_DETAIL_FILE = os.path.join(FRONTEND_DIR, "run_detail.html")
+FRONTEND_DASHBOARD_FILE = os.path.join(FRONTEND_DIR, "dashboard.html")
 STATE_FILE = os.path.join(ROOT_DIR, "state.json")
 MANAGER_STATE_FILE = os.path.join(ROOT_DIR, "manager-state.json")
 AGENTS_STATE_FILE = os.path.join(ROOT_DIR, "agents-state.json")
@@ -65,6 +70,14 @@ WORKSPACE_DIR = os.path.dirname(ROOT_DIR)
 OPENCLAW_WORKSPACE = os.environ.get("OPENCLAW_WORKSPACE") or os.path.join(os.path.expanduser("~"), ".openclaw", "workspace")
 IDENTITY_FILE = os.path.join(OPENCLAW_WORKSPACE, "IDENTITY.md")
 OPENCLAW_CRON_JOBS_FILE = os.path.join(os.path.expanduser("~"), ".openclaw", "cron", "jobs.json")
+OPENCLAW_STATE_DIR = (
+    os.environ.get("OPENCLAW_STATE_DIR")
+    or os.environ.get("CLAWDBOT_STATE_DIR")
+    or os.path.join(os.path.expanduser("~"), ".openclaw")
+)
+OPENCLAW_RUNS_DIR = os.path.join(OPENCLAW_STATE_DIR, "runs")
+OPENCLAW_GATEWAY_URL = os.environ.get("OPENCLAW_GATEWAY_URL", "").strip()
+OPENCLAW_GATEWAY_TOKEN = os.environ.get("OPENCLAW_GATEWAY_TOKEN", "").strip()
 GITHUB_WORKER_LOG_FILE = os.path.join(os.path.expanduser("~"), "bot", "github_queue_local", "log", "worker.log")
 GITHUB_DEPLOY_LOG_FILE = os.path.join(os.path.expanduser("~"), "bot", "github_queue_local", "log", "deploy.log")
 GEMINI_SCRIPT = os.path.join(WORKSPACE_DIR, "skills", "gemini-image-generate", "scripts", "gemini_image_generate.py")
@@ -451,6 +464,279 @@ def invite_page():
     resp = make_response(html)
     resp.headers["Content-Type"] = "text/html; charset=utf-8"
     return resp
+
+
+@app.route("/runs", methods=["GET"])
+def runs_page():
+    """Serve the run list operator console."""
+    with open(FRONTEND_RUNS_FILE, "r", encoding="utf-8") as f:
+        html = f.read()
+    resp = make_response(html.replace("{{VERSION_TIMESTAMP}}", VERSION_TIMESTAMP))
+    resp.headers["Content-Type"] = "text/html; charset=utf-8"
+    return resp
+
+
+@app.route("/runs/<run_id>", methods=["GET"])
+def run_detail_page(run_id):
+    """Serve the run detail page for a single run."""
+    with open(FRONTEND_RUN_DETAIL_FILE, "r", encoding="utf-8") as f:
+        html = f.read()
+    resp = make_response(html.replace("{{VERSION_TIMESTAMP}}", VERSION_TIMESTAMP))
+    resp.headers["Content-Type"] = "text/html; charset=utf-8"
+    return resp
+
+
+# ---------------------------------------------------------------------------
+# Run record helpers
+# ---------------------------------------------------------------------------
+
+_RUN_ID_RE = re.compile(r'^run_[A-Za-z0-9_]+$')
+_RUN_DATE_RE = re.compile(r'^run_(\d{4})(\d{2})(\d{2})_')
+_RUNS_LIST_LIMIT_MAX = 200
+_RUNS_LIST_LIMIT_DEFAULT = 50
+
+
+def _read_run_json(filepath):
+    """Read and validate a single run JSON file. Returns dict or None."""
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            return None
+        run_id = data.get("run_id", "")
+        if not isinstance(run_id, str) or not _RUN_ID_RE.match(run_id):
+            return None
+        return data
+    except Exception:
+        return None
+
+
+def _find_run_file(run_id):
+    """Locate the .json file for a given run_id. Returns path str or None."""
+    if not _RUN_ID_RE.match(run_id):
+        return None
+    # Fast path: extract date from run_id format run_YYYYMMDD_HHMMSS_xxx
+    m = _RUN_DATE_RE.match(run_id)
+    if m:
+        date_str = f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
+        candidate = os.path.join(OPENCLAW_RUNS_DIR, date_str, f"{run_id}.json")
+        if os.path.isfile(candidate):
+            return candidate
+    # Fallback: scan all date directories newest first
+    if not os.path.isdir(OPENCLAW_RUNS_DIR):
+        return None
+    try:
+        date_dirs = sorted(
+            (d for d in os.listdir(OPENCLAW_RUNS_DIR)
+             if os.path.isdir(os.path.join(OPENCLAW_RUNS_DIR, d))),
+            reverse=True,
+        )
+    except OSError:
+        return None
+    for date_dir in date_dirs:
+        candidate = os.path.join(OPENCLAW_RUNS_DIR, date_dir, f"{run_id}.json")
+        if os.path.isfile(candidate):
+            return candidate
+    return None
+
+
+def _load_runs(limit=_RUNS_LIST_LIMIT_DEFAULT, status_filter=None, date_filter=None):
+    """
+    Scan OPENCLAW_RUNS_DIR and return run records sorted by queued_at descending.
+
+    Args:
+        limit: Maximum number of records to return.
+        status_filter: If set, only return records with this status string.
+        date_filter: If set (YYYY-MM-DD), only scan that date directory.
+    """
+    limit = min(max(1, int(limit)), _RUNS_LIST_LIMIT_MAX)
+    if not os.path.isdir(OPENCLAW_RUNS_DIR):
+        return []
+
+    try:
+        if date_filter and re.match(r'^\d{4}-\d{2}-\d{2}$', date_filter):
+            date_dirs = [date_filter]
+        else:
+            date_dirs = sorted(
+                (d for d in os.listdir(OPENCLAW_RUNS_DIR)
+                 if os.path.isdir(os.path.join(OPENCLAW_RUNS_DIR, d))),
+                reverse=True,
+            )
+    except OSError:
+        return []
+
+    records = []
+    for date_dir in date_dirs:
+        dir_path = os.path.join(OPENCLAW_RUNS_DIR, date_dir)
+        try:
+            filenames = [f for f in os.listdir(dir_path) if f.endswith(".json") and not f.endswith(".tmp")]
+        except OSError:
+            continue
+        for fname in filenames:
+            rec = _read_run_json(os.path.join(dir_path, fname))
+            if rec is None:
+                continue
+            if status_filter and rec.get("status") != status_filter:
+                continue
+            records.append(rec)
+            if len(records) >= limit * 4:
+                # Gather enough to sort, then truncate after sort
+                break
+        if len(records) >= limit * 4:
+            break
+
+    records.sort(key=lambda r: r.get("queued_at") or "", reverse=True)
+    return records[:limit]
+
+
+# ---------------------------------------------------------------------------
+# Run retry helpers
+# ---------------------------------------------------------------------------
+
+_SENSE_BRIDGE_SCRIPT = (
+    os.environ.get("SENSE_BRIDGE_SCRIPT")
+    or os.path.join(
+        os.path.dirname(ROOT_DIR),
+        "openclaw", "scripts", "runtime", "sense_runtime_manager_task.py",
+    )
+)
+
+
+def _format_run_id(now=None):
+    """Generate a new run_id in the format run_YYYYMMDD_HHMMSS_xxx (3-char hex suffix)."""
+    import uuid as _uuid
+    now = now or datetime.utcnow()
+    suffix = _uuid.uuid4().hex[:3]
+    return now.strftime(f"run_%Y%m%d_%H%M%S_{suffix}")
+
+
+def _write_run_record_atomic(record):
+    """Atomically write a run record JSON to OPENCLAW_RUNS_DIR/<date>/<run_id>.json."""
+    run_id = record["run_id"]
+    m = _RUN_DATE_RE.match(run_id)
+    if not m:
+        raise ValueError(f"Cannot derive date from run_id: {run_id}")
+    date_str = f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
+    dir_path = os.path.join(OPENCLAW_RUNS_DIR, date_str)
+    os.makedirs(dir_path, mode=0o700, exist_ok=True)
+    target = os.path.join(dir_path, f"{run_id}.json")
+    tmp_fd, tmp_path = tempfile.mkstemp(dir=dir_path, suffix=".tmp")
+    try:
+        with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
+            json.dump(record, f, ensure_ascii=False)
+        os.chmod(tmp_path, 0o600)
+        os.rename(tmp_path, target)
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
+    return target
+
+
+def _build_bridge_task(kind):
+    if kind in ("health", "digest"):
+        return kind
+    return "free"
+
+
+def _build_bridge_params(kind):
+    if kind == "digest":
+        return {"mode": "digest_ready_probe", "digest_ready_probe": True, "task_type": "digest"}
+    return {"mode": "nemoclaw_job", "task_type": kind}
+
+
+def _execute_run_background(record):
+    """Execute a queued run in a background thread, updating the run file on disk."""
+    run_id = record["run_id"]
+
+    # Transition: queued → running
+    running_record = dict(record)
+    running_record["status"] = "running"
+    running_record["started_at"] = datetime.utcnow().isoformat() + "Z"
+    try:
+        _write_run_record_atomic(running_record)
+    except Exception as exc:
+        print(f"[retry] failed to write running state for {run_id}: {exc}", flush=True)
+        return
+
+    # Build python3 invocation
+    raw_text = record.get("raw_text") or record.get("normalized_task") or ""
+    cmd = [
+        "python3",
+        _SENSE_BRIDGE_SCRIPT,
+        "--task", _build_bridge_task(record.get("kind", "free")),
+        "--input", raw_text,
+        "--params-json", json.dumps(_build_bridge_params(record.get("kind", "free")), ensure_ascii=False),
+        "--base-url", os.environ.get("SENSE_WORKER_URL", "http://192.168.11.11:8787"),
+    ]
+
+    done_record = dict(running_record)
+
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        stdout = proc.stdout.strip()
+        stderr = proc.stderr.strip()
+
+        if not stdout:
+            raise RuntimeError(
+                f"Bridge returned no output. stderr={stderr[:300]}"
+            )
+
+        payload = json.loads(stdout)
+
+        exit_code = payload.get("exit_code")
+        error_str = payload.get("error")
+        failed = (
+            proc.returncode != 0
+            or (isinstance(exit_code, int) and exit_code != 0)
+            or (isinstance(error_str, str) and error_str.strip())
+        )
+
+        done_record["sense_job_id"] = (
+            str(payload["sense_job_id"]) if payload.get("sense_job_id") else None
+        )
+
+        if failed:
+            done_record["done_at"] = datetime.utcnow().isoformat() + "Z"
+            done_record["status"] = "failed"
+            msg = (
+                error_str.strip()
+                if isinstance(error_str, str) and error_str.strip()
+                else f"Bridge exited {proc.returncode}"
+            )
+            done_record["error"] = {"message": msg, "detail": stderr or None}
+            done_record["result"] = None
+        else:
+            done_record["done_at"] = datetime.utcnow().isoformat() + "Z"
+            done_record["status"] = "done"
+            done_record["error"] = None
+            kps = payload.get("key_points")
+            done_record["result"] = {
+                "summary": payload.get("summary"),
+                "key_points": kps if isinstance(kps, list) else [],
+                "suggested_next_action": payload.get("suggested_next_action"),
+                "exit_code": exit_code,
+                "raw_output": payload.get("raw_output"),
+            }
+
+    except subprocess.TimeoutExpired:
+        done_record["done_at"] = datetime.utcnow().isoformat() + "Z"
+        done_record["status"] = "failed"
+        done_record["error"] = {"message": "Bridge timed out after 300s", "detail": None}
+        done_record["result"] = None
+
+    except Exception as exc:
+        done_record["done_at"] = datetime.utcnow().isoformat() + "Z"
+        done_record["status"] = "failed"
+        done_record["error"] = {"message": str(exc)[:500], "detail": None}
+        done_record["result"] = None
+
+    try:
+        _write_run_record_atomic(done_record)
+    except Exception as exc:
+        print(f"[retry] failed to write final state for {run_id}: {exc}", flush=True)
 
 
 DEFAULT_AGENTS = [
@@ -1772,13 +2058,168 @@ def agent_push():
         return jsonify({"ok": False, "msg": str(e)}), 500
 
 
+@app.route("/dashboard", methods=["GET"])
+def dashboard_page():
+    """Serve the executive dashboard page."""
+    with open(FRONTEND_DASHBOARD_FILE, "r", encoding="utf-8") as f:
+        content = f.read()
+    return make_response(content, 200, {"Content-Type": "text/html; charset=utf-8"})
+
+
 @app.route("/health", methods=["GET"])
 def health():
-    """Health check"""
+    """Legacy health page now redirects to the dashboard."""
+    lang = (request.args.get("lang") or "").strip()
+    target = "/dashboard"
+    if lang:
+        target = f"{target}?lang={lang}"
+    return redirect(target, code=302)
+
+
+@app.route("/api/health", methods=["GET"])
+def api_health():
+    """Machine-readable health check (was /health)."""
     return jsonify({
         "status": "ok",
         "service": "deepnoa-office-ui",
         "timestamp": datetime.now().isoformat(),
+    })
+
+
+# ---------------------------------------------------------------------------
+# Run scan helpers (shared with /api/internal/health)
+# ---------------------------------------------------------------------------
+
+_HEALTH_RUN_DATE_RE = re.compile(r'^run_(\d{4})(\d{2})(\d{2})_')
+_HEALTH_RUNS_SCAN_MAX = 200
+
+
+def _make_runs_adapter() -> "RunsAdapter | None":
+    """Instantiate a RunsAdapter from environment, or return None if not configured."""
+    if not OPENCLAW_GATEWAY_URL or not OPENCLAW_GATEWAY_TOKEN:
+        return None
+    try:
+        return RunsAdapter(gateway_url=OPENCLAW_GATEWAY_URL, gateway_token=OPENCLAW_GATEWAY_TOKEN)
+    except Exception:
+        return None
+
+
+# Module-level adapter singleton (None when gateway env vars not set)
+_RUNS_ADAPTER: "RunsAdapter | None" = _make_runs_adapter()
+
+
+def _health_read_run_json(filepath):
+    """Read and minimally validate a single run JSON file."""
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict) or not isinstance(data.get("run_id"), str):
+            return None
+        return data
+    except Exception:
+        return None
+
+
+def _health_load_runs_today(today_str):
+    """Load all runs for a specific YYYY-MM-DD date directory."""
+    if not os.path.isdir(OPENCLAW_RUNS_DIR):
+        return []
+    dir_path = os.path.join(OPENCLAW_RUNS_DIR, today_str)
+    if not os.path.isdir(dir_path):
+        return []
+    records = []
+    try:
+        filenames = [f for f in os.listdir(dir_path) if f.endswith(".json") and not f.endswith(".tmp")]
+    except OSError:
+        return []
+    for fname in filenames:
+        rec = _health_read_run_json(os.path.join(dir_path, fname))
+        if rec is not None:
+            records.append(rec)
+    records.sort(key=lambda r: r.get("queued_at") or "", reverse=True)
+    return records[:_HEALTH_RUNS_SCAN_MAX]
+
+
+@app.route("/api/internal/health", methods=["GET"])
+def api_internal_health():
+    """Aggregated health snapshot: today's run stats, connectors, alerts, roles.
+
+    Primary source: RunsAdapter (gateway → run-viewer plugin).
+    Fallback: direct file read from OPENCLAW_RUNS_DIR.
+    """
+    from datetime import date as _date
+    today = _date.today().isoformat()
+
+    # Today's run stats — try adapter first, fall back to file read
+    today_runs = None
+    if _RUNS_ADAPTER is not None:
+        try:
+            today_runs = _RUNS_ADAPTER.fetch_recent_json(
+                limit=_HEALTH_RUNS_SCAN_MAX,
+                date=today,
+            )
+        except Exception as _exc:
+            print(f"[health] RunsAdapter.fetch_recent_json failed, falling back to file read: {_exc}", file=sys.stderr)
+            today_runs = None
+
+    if today_runs is None:
+        today_runs = _health_load_runs_today(today)
+
+    counts = {"done": 0, "running": 0, "failed": 0, "queued": 0, "cancelled": 0}
+    latest_failed = None
+    for rec in today_runs:
+        s = rec.get("status", "")
+        if s in counts:
+            counts[s] += 1
+        if s == "failed" and latest_failed is None:
+            latest_failed = {
+                "run_id": rec.get("run_id"),
+                "queued_at": rec.get("queued_at"),
+                "kind": rec.get("kind"),
+                "error_message": (rec.get("error") or {}).get("message"),
+            }
+
+    # System state (connectors=degraded only, alerts, roles, summary)
+    state = build_internal_view_state()
+    connectors = list(state.get("connectors") or [])   # degraded only
+    alerts = list(state.get("alerts") or [])[:8]
+    roles = list(state.get("roles") or [])
+    summary = dict(state.get("summary") or {})
+    connector_total = len(
+        (state.get("policies") or {}).get("connector_health_rules") or {}
+    )
+
+    # Derive overall status
+    error_connectors = [c for c in connectors if c.get("status") in ("error", "offline")]
+    degraded_connectors = [c for c in connectors if c.get("status") == "degraded"]
+    critical_alerts = [a for a in alerts if a.get("severity") in ("error", "critical")]
+
+    if error_connectors or critical_alerts:
+        overall_status = "error"
+    elif degraded_connectors or counts["failed"] > 0:
+        overall_status = "degraded"
+    else:
+        overall_status = "ok"
+
+    return jsonify({
+        "ok": True,
+        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "overall_status": overall_status,
+        "runs_today": {
+            "date": today,
+            "done": counts["done"],
+            "running": counts["running"],
+            "failed": counts["failed"],
+            "queued": counts["queued"],
+            "cancelled": counts["cancelled"],
+            "total": len(today_runs),
+        },
+        "latest_failed_run": latest_failed,
+        "connectors": connectors,
+        "connector_total": connector_total,
+        "alerts": alerts,
+        "roles": roles,
+        "summary": summary,
     })
 
 
@@ -1818,6 +2259,139 @@ def api_internal_events():
     since = (request.args.get("since") or "").strip()
     data = build_internal_view_state()
     return jsonify(build_events_contract(events=list(data.get("events") or []), since=since))
+
+
+@app.route("/api/internal/runs", methods=["GET"])
+def api_internal_runs():
+    """Return paginated list of run records from ~/.openclaw/runs/.
+
+    Primary source: RunsAdapter (gateway → run-viewer plugin).
+    Fallback: direct file read from OPENCLAW_RUNS_DIR.
+    """
+    try:
+        raw_limit = request.args.get("limit", str(_RUNS_LIST_LIMIT_DEFAULT))
+        limit = min(max(1, int(raw_limit)), _RUNS_LIST_LIMIT_MAX)
+    except (ValueError, TypeError):
+        limit = _RUNS_LIST_LIMIT_DEFAULT
+    status_filter = (request.args.get("status") or "").strip() or None
+    date_filter = (request.args.get("date") or "").strip() or None
+
+    records = None
+    if _RUNS_ADAPTER is not None:
+        try:
+            records = _RUNS_ADAPTER.fetch_recent_json(
+                limit=limit,
+                status=status_filter,
+                date=date_filter,
+            )
+        except Exception as _exc:
+            print(f"[runs] RunsAdapter.fetch_recent_json failed, falling back to file read: {_exc}", file=sys.stderr)
+            records = None
+
+    if records is None:
+        records = _load_runs(limit=limit, status_filter=status_filter, date_filter=date_filter)
+
+    return jsonify({
+        "ok": True,
+        "schema_version": "2026-04-14",
+        "runs": records,
+        "total": len(records),
+        "limit": limit,
+    })
+
+
+@app.route("/api/internal/runs/<run_id>", methods=["GET"])
+def api_internal_run_detail(run_id):
+    """Return a single run record by run_id.
+
+    Primary source: RunsAdapter (gateway → run-viewer plugin).
+    Fallback: direct file read from OPENCLAW_RUNS_DIR.
+    """
+    if not _RUN_ID_RE.match(run_id):
+        return jsonify({"ok": False, "error": "invalid_run_id"}), 400
+
+    rec = None
+    if _RUNS_ADAPTER is not None:
+        try:
+            rec = _RUNS_ADAPTER.fetch_detail_json(run_id)
+            # fetch_detail_json returns None on 404 (run not found via gateway)
+        except Exception as _exc:
+            print(f"[run_detail] RunsAdapter.fetch_detail_json failed, falling back to file read: {_exc}", file=sys.stderr)
+            rec = None
+
+    if rec is None:
+        # Adapter unavailable, timed out, or returned 404 — try file read
+        filepath = _find_run_file(run_id)
+        if filepath is None:
+            return jsonify({"ok": False, "error": "not_found"}), 404
+        rec = _read_run_json(filepath)
+        if rec is None:
+            return jsonify({"ok": False, "error": "unreadable"}), 500
+
+    return jsonify({"ok": True, "run": rec})
+
+
+@app.route("/api/internal/runs/<run_id>/retry", methods=["POST"])
+def api_internal_run_retry(run_id):
+    """Enqueue a retry of an existing run, returning the new run_id immediately (202)."""
+    if not _RUN_ID_RE.match(run_id):
+        return jsonify({"ok": False, "error": "invalid_run_id"}), 400
+
+    filepath = _find_run_file(run_id)
+    if filepath is None:
+        return jsonify({"ok": False, "error": "not_found"}), 404
+
+    original = _read_run_json(filepath)
+    if original is None:
+        return jsonify({"ok": False, "error": "unreadable"}), 500
+
+    status = original.get("status")
+    if status not in ("failed", "cancelled"):
+        return jsonify({
+            "ok": False,
+            "error": "not_retryable",
+            "status": status,
+        }), 409
+
+    now = datetime.utcnow()
+    new_run_id = _format_run_id(now)
+
+    new_record = {
+        "run_id": new_run_id,
+        "requested_by": original.get("requested_by"),
+        "requested_by_name": original.get("requested_by_name"),
+        "channel_id": original.get("channel_id"),
+        "channel_name": original.get("channel_name"),
+        "raw_text": original.get("raw_text"),
+        "kind": original.get("kind"),
+        "normalized_task": original.get("normalized_task"),
+        "params": original.get("params") or {},
+        "status": "queued",
+        "sense_job_id": None,
+        "queued_at": now.isoformat() + "Z",
+        "started_at": None,
+        "done_at": None,
+        "result": None,
+        "error": None,
+        "retry_of": run_id,
+        "retry_count": int(original.get("retry_count") or 0) + 1,
+        "slack_ts": original.get("slack_ts"),
+    }
+
+    try:
+        _write_run_record_atomic(new_record)
+    except Exception as exc:
+        return jsonify({"ok": False, "error": f"write_failed: {exc}"}), 500
+
+    t = threading.Thread(target=_execute_run_background, args=(new_record,), daemon=True)
+    t.start()
+
+    return jsonify({
+        "ok": True,
+        "run_id": new_run_id,
+        "retry_of": run_id,
+        "status": "queued",
+    }), 202
 
 
 @app.route("/manager/event", methods=["POST"])
