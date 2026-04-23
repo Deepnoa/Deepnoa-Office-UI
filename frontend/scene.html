@@ -8,13 +8,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles/tokens.css">
   <style>
     :root {
       --bg: #08111d;
       --surface: rgba(10, 18, 30, 0.42);
       --surface-line: rgba(255, 255, 255, 0.1);
-      --text: #eff6ff;
-      --muted: #99adc9;
+      --text: var(--color-text);
+      --muted: var(--color-muted);
       --accent: #7ee2c2;
       --danger: #ff6b7d;
       --scene-shadow: 0 34px 90px rgba(0, 0, 0, 0.35);
@@ -35,7 +36,7 @@
     body {
       display: grid;
       place-items: center;
-      padding: 18px;
+      padding: var(--space-public-shell-x);
     }
 
     body.embed-mode {
@@ -47,7 +48,7 @@
       position: relative;
       width: min(100%, 1440px);
       aspect-ratio: 16 / 9;
-      min-height: min(100vh - 36px, 420px);
+      min-height: min(100vh - calc(var(--space-public-shell-x) * 2), 420px);
       border-radius: 28px;
       overflow: hidden;
       border: 1px solid rgba(255,255,255,0.09);
@@ -425,20 +426,20 @@
       color: var(--accent);
       font-size: 10px;
       font-family: "IBM Plex Mono", monospace;
-      letter-spacing: 0.08em;
+      letter-spacing: var(--font-public-eyebrow-spacing);
       text-transform: uppercase;
       margin-bottom: 4px;
     }
 
     .scene-title {
       font-size: clamp(15px, 1.7vw, 20px);
-      font-weight: 700;
+      font-weight: var(--font-public-title-weight);
       line-height: 1.05;
       margin: 0;
     }
 
     .scene-subtitle {
-      color: #d5e4fb;
+      color: var(--color-public-copy-soft);
       font-size: 11px;
       line-height: 1.35;
       margin-top: 3px;
@@ -480,7 +481,7 @@
     .legend-chip.syncing { --chip: #c4a2ff; }
     .legend-chip.error { --chip: #ff6b7d; }
     .legend-chip.is-active {
-      color: #eff6ff;
+      color: var(--color-text);
       background: rgba(255,255,255,0.1);
       box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset;
     }
@@ -499,9 +500,9 @@
       gap: 8px;
       font-size: 10px;
       font-family: "IBM Plex Mono", monospace;
-      letter-spacing: 0.08em;
+      letter-spacing: var(--font-public-eyebrow-spacing);
       text-transform: uppercase;
-      color: #d7e9ff;
+      color: var(--color-public-copy-support);
     }
 
     .live-pill::before {
@@ -549,7 +550,7 @@
     .tooltip-name,
     .detail-name {
       font-size: 13px;
-      font-weight: 700;
+      font-weight: var(--font-public-title-weight);
       line-height: 1.2;
     }
 
@@ -571,7 +572,7 @@
       border-radius: 999px;
       font-size: 10px;
       font-family: "IBM Plex Mono", monospace;
-      color: #eff6ff;
+      color: var(--color-text);
       background: rgba(255,255,255,0.07);
     }
 
@@ -586,7 +587,7 @@
     .tooltip-summary,
     .detail-summary {
       margin-top: 7px;
-      color: #dbe8f8;
+      color: var(--color-public-copy-support);
       font-size: 11px;
       line-height: 1.4;
     }
@@ -615,7 +616,7 @@
       appearance: none;
       border: 0;
       background: rgba(255,255,255,0.06);
-      color: #dce8f8;
+      color: var(--color-public-copy-support);
       width: 28px;
       height: 28px;
       border-radius: 999px;
@@ -643,7 +644,7 @@
     }
 
     .detail-value {
-      color: #eef6ff;
+      color: var(--color-text);
       min-width: 0;
       word-break: break-word;
     }

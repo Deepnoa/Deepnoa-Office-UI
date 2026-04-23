@@ -6,4 +6,15 @@
   --color-accent: #82f2cb;
   --color-warn: #ffd08a;
   --color-danger: #ff7a7a;
+
+  /* Public /office (public.html) + /scene — supporting copy & rhythm (additive) */
+  --color-public-copy-soft: #d5e4fb;
+  --color-public-copy-muted: #cedcf1;
+  --color-public-copy-support: #dbe8f8;
+  --space-public-shell-y: 32px;
+  --space-public-shell-x: 24px;
+  --space-public-shell-bottom: 48px;
+  --space-public-grid-gap: 24px;
+  --font-public-title-weight: 700;
+  --font-public-eyebrow-spacing: 0.08em;
 }
