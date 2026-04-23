@@ -36,7 +36,7 @@
       display: flex;
       align-items: center;
       gap: 24px;
-      padding: 14px 28px;
+      padding: 14px var(--space-shell-x);
       border-bottom: 1px solid var(--line);
       background: rgba(7, 17, 29, 0.72);
       backdrop-filter: blur(12px);
@@ -58,7 +58,10 @@
     nav a.active { color: var(--text); background: rgba(255,255,255,0.07); }
 
     /* Layout */
-    main { max-width: 860px; margin: 0 auto; padding: 28px 24px 60px; }
+    main {
+      max-width: 860px; margin: 0 auto;
+      padding: var(--space-shell-y) var(--space-shell-x) var(--space-shell-bottom-l1);
+    }
 
     /* Back link */
     .back-link {
@@ -68,7 +71,7 @@
       color: var(--muted);
       text-decoration: none;
       font-size: 13px;
-      margin-bottom: 20px;
+      margin-bottom: var(--space-block-gap);
       transition: color 0.15s;
     }
     .back-link:hover { color: var(--text); }
@@ -89,9 +92,10 @@
     }
     .page-header h1 {
       font-size: 16px;
-      font-weight: 700;
+      font-weight: var(--font-page-title-weight);
       font-family: "IBM Plex Mono", monospace;
       color: var(--accent);
+      letter-spacing: 0.01em;
     }
 
     /* Status badge */
@@ -99,7 +103,7 @@
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      font-size: 11px;
+      font-size: var(--font-mono-label-size);
       font-weight: 600;
       padding: 3px 9px;
       border-radius: 5px;
@@ -118,11 +122,11 @@
       margin-bottom: 16px;
     }
     .card-title {
-      font-size: 11px;
+      font-size: var(--font-mono-label-size);
       font-weight: 600;
       color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: var(--font-mono-label-spacing);
       margin-bottom: 14px;
     }
 
@@ -133,7 +137,7 @@
       gap: 8px 16px;
     }
     .meta-label {
-      font-size: 11px;
+      font-size: var(--font-mono-label-size);
       color: var(--muted);
       font-family: "IBM Plex Mono", monospace;
       padding-top: 1px;
@@ -203,7 +207,7 @@
     }
     .error-detail {
       font-family: "IBM Plex Mono", monospace;
-      font-size: 11px;
+      font-size: var(--font-mono-label-size);
       color: var(--muted);
       white-space: pre-wrap;
       word-break: break-word;
@@ -238,7 +242,7 @@
     .raw-output {
       padding: 12px 14px;
       font-family: "IBM Plex Mono", monospace;
-      font-size: 11px;
+      font-size: var(--font-mono-label-size);
       color: var(--muted);
       white-space: pre-wrap;
       word-break: break-word;
@@ -259,7 +263,7 @@
     /* sense_job_id badge */
     .job-id-badge {
       font-family: "IBM Plex Mono", monospace;
-      font-size: 11px;
+      font-size: var(--font-mono-label-size);
       color: var(--muted);
       background: rgba(130,164,214,0.08);
       border: 1px solid var(--line);

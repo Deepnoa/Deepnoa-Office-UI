@@ -6,7 +6,7 @@
   --color-accent: #82f2cb;
   --color-warn: #ffd08a;
   --color-danger: #ff7a7a;
-  /* Internal L1/L2 (dashboard + /internal): supporting copy & rhythm — additive */
+  /* Internal UI (L1–L4): supporting copy & rhythm — additive; core palette above unchanged */
   --color-copy-soft: #d0def3;
   --color-copy-emphasis: #d9e6fa;
 
