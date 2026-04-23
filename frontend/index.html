@@ -490,7 +490,9 @@
     <a id="inav-dashboard" href="/dashboard" style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--muted);">Dashboard</a>
     <a id="inav-internal" href="/internal" style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--text); background:rgba(255,255,255,0.07);">Internal</a>
     <a id="inav-runs"     href="/runs"     style="font-size:13px; padding:4px 10px; border-radius:6px; text-decoration:none; color:var(--muted);">Runs</a>
-    <button type="button" class="theme-toggle" data-theme-toggle title="Toggle light / dark theme" style="margin-left:auto">Theme</button>
+    <button type="button" class="theme-toggle" data-theme-toggle style="margin-left:auto">
+      <span class="theme-toggle__state" aria-hidden="true"></span>
+    </button>
   </nav>
   <main class="shell">
     <section class="hero">
@@ -2461,9 +2463,35 @@ manager カードの補足に使います。</div>
 <script>
 (function(){
   var r=document.documentElement;
-  window.dnSetTheme=function(t){t=t==="light"?"light":"dark";r.setAttribute("data-theme",t);try{localStorage.setItem("dn-theme",t);}catch(e){}};
-  document.addEventListener("click",function(e){var x=e.target.closest("[data-theme-toggle]");if(!x)return;e.preventDefault();var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";window.dnSetTheme(c==="dark"?"light":"dark");});
-  try{var mq=window.matchMedia("(prefers-color-scheme: light)");mq.addEventListener("change",function(){try{if(localStorage.getItem("dn-theme"))return;}catch(z){}window.dnSetTheme(mq.matches?"light":"dark");});}catch(y){}
+  window.dnSyncThemeToggleUi=function(){
+    var cur=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light",
+        tip=cur==="dark"?"Switch to light mode":"Switch to dark mode";
+    document.querySelectorAll("[data-theme-toggle]").forEach(function(b){
+      b.setAttribute("aria-label",tip);
+      b.setAttribute("title",tip);
+    });
+  };
+  window.dnSetTheme=function(t){
+    t=t==="light"?"light":"dark";
+    r.setAttribute("data-theme",t);
+    try{localStorage.setItem("dn-theme",t);}catch(e){}
+    try{window.dnSyncThemeToggleUi();}catch(z){}
+  };
+  document.addEventListener("click",function(e){
+    var x=e.target.closest("[data-theme-toggle]");
+    if(!x)return;
+    e.preventDefault();
+    var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";
+    window.dnSetTheme(c==="dark"?"light":"dark");
+  });
+  try{
+    var mq=window.matchMedia("(prefers-color-scheme: light)");
+    mq.addEventListener("change",function(){
+      try{if(localStorage.getItem("dn-theme"))return;}catch(z){}
+      window.dnSetTheme(mq.matches?"light":"dark");
+    });
+  }catch(y){}
+  try{window.dnSyncThemeToggleUi();}catch(z2){}
 })();
 </script>
 </body>

@@ -315,8 +315,6 @@
 
   <div class="nav-spacer"></div>
 
-  <button type="button" class="theme-toggle" data-theme-toggle title="Toggle light / dark theme">Theme</button>
-
   <div class="lang-row">
     <button class="lang-btn" data-lang-switch="ja">JA</button>
     <button class="lang-btn" data-lang-switch="en">EN</button>
@@ -329,6 +327,10 @@
   </div>
 
   <span class="nav-time" id="navClock"></span>
+
+  <button type="button" class="theme-toggle" data-theme-toggle>
+    <span class="theme-toggle__state" aria-hidden="true"></span>
+  </button>
 </nav>
 
 <!-- ── SHELL ─────────────────────────────────────────────────────── -->
@@ -957,9 +959,35 @@
 <script>
 (function(){
   var r=document.documentElement;
-  window.dnSetTheme=function(t){t=t==="light"?"light":"dark";r.setAttribute("data-theme",t);try{localStorage.setItem("dn-theme",t);}catch(e){}};
-  document.addEventListener("click",function(e){var x=e.target.closest("[data-theme-toggle]");if(!x)return;e.preventDefault();var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";window.dnSetTheme(c==="dark"?"light":"dark");});
-  try{var mq=window.matchMedia("(prefers-color-scheme: light)");mq.addEventListener("change",function(){try{if(localStorage.getItem("dn-theme"))return;}catch(z){}window.dnSetTheme(mq.matches?"light":"dark");});}catch(y){}
+  window.dnSyncThemeToggleUi=function(){
+    var cur=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light",
+        tip=cur==="dark"?"Switch to light mode":"Switch to dark mode";
+    document.querySelectorAll("[data-theme-toggle]").forEach(function(b){
+      b.setAttribute("aria-label",tip);
+      b.setAttribute("title",tip);
+    });
+  };
+  window.dnSetTheme=function(t){
+    t=t==="light"?"light":"dark";
+    r.setAttribute("data-theme",t);
+    try{localStorage.setItem("dn-theme",t);}catch(e){}
+    try{window.dnSyncThemeToggleUi();}catch(z){}
+  };
+  document.addEventListener("click",function(e){
+    var x=e.target.closest("[data-theme-toggle]");
+    if(!x)return;
+    e.preventDefault();
+    var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";
+    window.dnSetTheme(c==="dark"?"light":"dark");
+  });
+  try{
+    var mq=window.matchMedia("(prefers-color-scheme: light)");
+    mq.addEventListener("change",function(){
+      try{if(localStorage.getItem("dn-theme"))return;}catch(z){}
+      window.dnSetTheme(mq.matches?"light":"dark");
+    });
+  }catch(y){}
+  try{window.dnSyncThemeToggleUi();}catch(z2){}
 })();
 </script>
 </body>

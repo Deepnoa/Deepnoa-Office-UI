@@ -50,6 +50,18 @@
       mask-image: linear-gradient(180deg, rgba(0,0,0,0.4), transparent 85%);
     }
 
+    .public-theme-bar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      z-index: 80;
+      padding: 14px 20px;
+      pointer-events: none;
+    }
+    .public-theme-bar .theme-toggle {
+      pointer-events: auto;
+    }
+
     .shell {
       max-width: 1320px;
       margin: 0 auto;
@@ -705,6 +717,11 @@
   </style>
 </head>
 <body>
+  <div class="public-theme-bar">
+    <button type="button" class="theme-toggle" data-theme-toggle>
+      <span class="theme-toggle__state" aria-hidden="true"></span>
+    </button>
+  </div>
   <main class="shell">
     <section class="hero">
       <article class="panel hero-main">
@@ -714,7 +731,6 @@
           Public-safe visibility into how Deepnoa's AI office is operating right now.
         </p>
         <div class="hero-meta">
-          <button type="button" class="theme-toggle" data-theme-toggle title="Toggle light / dark theme">Theme</button>
           <div class="pill mono" id="human-host">deepnoa.com</div>
           <div class="pill mono" id="gateway-host">bot.deepnoa.com</div>
           <div class="pill mono" data-i18n="public.safe_only">Public-safe view only</div>
@@ -1382,9 +1398,35 @@
 <script>
 (function(){
   var r=document.documentElement;
-  window.dnSetTheme=function(t){t=t==="light"?"light":"dark";r.setAttribute("data-theme",t);try{localStorage.setItem("dn-theme",t);}catch(e){}};
-  document.addEventListener("click",function(e){var x=e.target.closest("[data-theme-toggle]");if(!x)return;e.preventDefault();var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";window.dnSetTheme(c==="dark"?"light":"dark");});
-  try{var mq=window.matchMedia("(prefers-color-scheme: light)");mq.addEventListener("change",function(){try{if(localStorage.getItem("dn-theme"))return;}catch(z){}window.dnSetTheme(mq.matches?"light":"dark");});}catch(y){}
+  window.dnSyncThemeToggleUi=function(){
+    var cur=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light",
+        tip=cur==="dark"?"Switch to light mode":"Switch to dark mode";
+    document.querySelectorAll("[data-theme-toggle]").forEach(function(b){
+      b.setAttribute("aria-label",tip);
+      b.setAttribute("title",tip);
+    });
+  };
+  window.dnSetTheme=function(t){
+    t=t==="light"?"light":"dark";
+    r.setAttribute("data-theme",t);
+    try{localStorage.setItem("dn-theme",t);}catch(e){}
+    try{window.dnSyncThemeToggleUi();}catch(z){}
+  };
+  document.addEventListener("click",function(e){
+    var x=e.target.closest("[data-theme-toggle]");
+    if(!x)return;
+    e.preventDefault();
+    var c=(r.getAttribute("data-theme")||"dark")==="dark"?"dark":"light";
+    window.dnSetTheme(c==="dark"?"light":"dark");
+  });
+  try{
+    var mq=window.matchMedia("(prefers-color-scheme: light)");
+    mq.addEventListener("change",function(){
+      try{if(localStorage.getItem("dn-theme"))return;}catch(z){}
+      window.dnSetTheme(mq.matches?"light":"dark");
+    });
+  }catch(y){}
+  try{window.dnSyncThemeToggleUi();}catch(z2){}
 })();
 </script>
 </body>
