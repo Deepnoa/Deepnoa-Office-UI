@@ -72,6 +72,9 @@
       right: 20px;
       z-index: 90;
       pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .public-theme-bar .theme-toggle {
@@ -79,6 +82,23 @@
       background: rgba(11, 18, 29, 0.72);
       border-color: rgba(255,255,255,0.08);
       backdrop-filter: blur(14px);
+    }
+
+    .public-theme-bar .hero-lang-row {
+      pointer-events: auto;
+      display: flex;
+      gap: 6px;
+    }
+
+    .public-theme-bar .lang-btn {
+      background: rgba(11, 18, 29, 0.72);
+      border-color: rgba(255,255,255,0.08);
+      backdrop-filter: blur(14px);
+    }
+
+    html[data-theme="light"] .public-theme-bar .lang-btn {
+      background: rgba(255,255,255,0.86);
+      border-color: rgba(15,23,42,0.1);
     }
 
     .shell {
@@ -434,6 +454,10 @@
       gap: 22px;
       margin-bottom: 22px;
       align-items: start;
+    }
+
+    .control-grid--scene {
+      grid-template-columns: 1fr;
     }
 
     .surface-card {
@@ -843,14 +867,13 @@
       border-radius: 22px;
       border: 1px solid rgba(255,255,255,0.08);
       background: rgba(255,255,255,0.028);
-      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+      transition: border-color 0.18s ease, background 0.18s ease;
     }
 
     .runtime-card:hover,
     .system-card:hover,
     .agent-card:hover,
     .activity-card:hover {
-      transform: translateY(-2px);
       border-color: rgba(126,226,194,0.2);
       background: rgba(255,255,255,0.038);
     }
@@ -989,31 +1012,9 @@
       gap: 12px;
     }
 
-    .timeline::before {
-      content: "";
-      position: absolute;
-      left: 10px;
-      top: 8px;
-      bottom: 8px;
-      width: 1px;
-      background: linear-gradient(180deg, rgba(126,226,194,0.3), rgba(255,255,255,0.06));
-    }
-
     .activity-card {
       position: relative;
-      padding-left: 24px;
-    }
-
-    .activity-card::before {
-      content: "";
-      position: absolute;
-      left: 4px;
-      top: 22px;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: rgba(126,226,194,0.92);
-      box-shadow: 0 0 0 5px rgba(126,226,194,0.1);
+      padding-left: 18px;
     }
 
     .timeline-time {
@@ -1258,6 +1259,11 @@
 </head>
 <body>
   <div class="public-theme-bar">
+    <div class="hero-lang-row">
+      <button class="lang-btn" type="button" data-lang-switch="ja">JA</button>
+      <button class="lang-btn" type="button" data-lang-switch="en">EN</button>
+      <button class="lang-btn" type="button" data-lang-switch="zh">ZH</button>
+    </div>
     <button type="button" class="theme-toggle" data-theme-toggle>
       <span class="theme-toggle__state" aria-hidden="true"></span>
     </button>
@@ -1344,15 +1350,20 @@
           </div>
         </article>
 
-        <div class="hero-lang-row">
-          <button class="lang-btn" type="button" data-lang-switch="ja">JA</button>
-          <button class="lang-btn" type="button" data-lang-switch="en">EN</button>
-          <button class="lang-btn" type="button" data-lang-switch="zh">ZH</button>
-        </div>
       </aside>
     </section>
 
-    <section class="control-grid">
+    <section class="surface surface-card section">
+      <div class="section-head">
+        <div>
+          <div class="section-kicker" data-i18n="public.runtime_title_kicker">Runtime queue</div>
+          <h2 data-i18n="public.runtime_title">What the office is doing</h2>
+        </div>
+      </div>
+      <div class="runtime-list" id="runtime-list"></div>
+    </section>
+
+    <section class="control-grid control-grid--scene">
       <article class="surface surface-card section">
         <div class="section-head">
           <div>
@@ -1396,16 +1407,6 @@
           </div>
         </div>
 
-      </article>
-
-      <article class="surface surface-card section">
-        <div class="section-head">
-          <div>
-            <div class="section-kicker" data-i18n="public.runtime_title_kicker">Runtime queue</div>
-            <h2 data-i18n="public.runtime_title">What the office is doing</h2>
-          </div>
-        </div>
-        <div class="runtime-list" id="runtime-list"></div>
       </article>
     </section>
 
