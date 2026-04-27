@@ -293,6 +293,10 @@
     }
     .status-line.warn { border-color: rgba(255,201,119,0.22); color: var(--warn); }
     .status-line.danger { border-color: rgba(255,126,143,0.22); color: var(--danger); }
+    .intake-reply-draft { margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px; }
+    .intake-draft-label { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; opacity: 0.6; margin-bottom: 4px; text-transform: uppercase; }
+    .intake-draft-content { font-size: 13px; line-height: 1.6; white-space: pre-wrap; opacity: 0.9; }
+    .intake-reply-draft.pending .intake-draft-label { opacity: 0.35; }
     .mini-item {
       padding: 12px 14px;
       border-radius: 14px;
@@ -2020,15 +2024,22 @@ manager カードの補足に使います。</div>
     function renderIntake(items) {
       const target = document.getElementById("intakeList");
       if (!items || !items.length) return renderEmpty(target, t("empty.no_intake", "No gateway intake has been captured yet."));
-      target.innerHTML = items.map((item) => `
+      target.innerHTML = items.map((item) => {
+        const draftSection = item.reply_draft_content
+          ? `<div class="intake-reply-draft"><div class="intake-draft-label">返信案 <span class="mono" style="font-size:11px;opacity:0.5">${escapeHtml(item.runtime_task_id || "")}</span></div><div class="intake-draft-content">${escapeHtml(item.reply_draft_content)}</div></div>`
+          : item.runtime_task_id
+            ? `<div class="intake-reply-draft pending"><div class="intake-draft-label">返信案生成中… <span class="mono" style="font-size:11px">${escapeHtml(item.runtime_task_id)}</span></div></div>`
+            : "";
+        return `
         <article class="agent-card">
           <div class="row-top">
             <div><div class="name">${escapeHtml(item.role || t("label.unassigned", "unassigned"))}</div><div class="sub">${escapeHtml(item.id || t("label.not_available", "n/a"))}</div></div>
             <div class="badge mono">${escapeHtml(fmt(item.updated_at))}</div>
           </div>
           <div class="copy">${escapeHtml(item.summary || "")}</div>
-        </article>
-      `).join("");
+          ${draftSection}
+        </article>`;
+      }).join("");
     }
 
     function renderPolicies(policies) {

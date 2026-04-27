@@ -1125,10 +1125,21 @@ def build_internal_view_state() -> dict:
         },
     }
 
+    drafts_by_task = {d["task_id"]: d["content"] for d in load_reply_drafts() if d.get("task_id") and d.get("content")}
+    enriched_intake = []
+    for item in list(manager.get("intake") or []):
+        entry = dict(item)
+        task_id = entry.get("runtime_task_id")
+        if task_id and task_id in drafts_by_task:
+            entry["reply_draft_content"] = drafts_by_task[task_id]
+        enriched_intake.append(entry)
+    enriched_manager = dict(manager)
+    enriched_manager["intake"] = enriched_intake
+
     return build_internal_state_payload(
         office_name=office_name,
         public_office_info=PUBLIC_OFFICE_INFO,
-        manager_state=manager,
+        manager_state=enriched_manager,
         role_definitions=ROLE_DEFINITIONS,
         universal_fallback=UNIVERSAL_FALLBACK,
         bridge=bridge,
@@ -2293,6 +2304,17 @@ def api_reply_drafts():
     return jsonify({"drafts": drafts})
 
 
+@app.route("/api/reply-draft/<task_id>", methods=["GET"])
+def api_reply_draft(task_id: str):
+    """Return the reply_draft content for a single runtime task_id. No PII exposed."""
+    if not re.match(r'^[a-zA-Z0-9_\-]{1,64}$', task_id):
+        return jsonify({"ok": False, "msg": "invalid task_id"}), 400
+    for draft in load_reply_drafts():
+        if draft.get("task_id") == task_id:
+            return jsonify({"ok": True, "task_id": task_id, "content": draft["content"]})
+    return jsonify({"ok": False, "msg": "not found"}), 404
+
+
 @app.route("/api/internal/runs", methods=["GET"])
 def api_internal_runs():
     """Return paginated list of run records from ~/.openclaw/runs/.
@@ -2456,6 +2478,9 @@ def gateway_intake():
         timestamp = datetime.now().isoformat()
         intake_id = f"intake-{int(datetime.now().timestamp() * 1000)}"
 
+        raw_task_id = str(payload.get("runtime_task_id") or "").strip()
+        runtime_task_id = raw_task_id if re.match(r'^[a-zA-Z0-9_\-]{1,64}$', raw_task_id) else None
+
         manager = load_manager_state()
         manager["updated_at"] = timestamp
         manager["gateway"] = {
@@ -2463,12 +2488,15 @@ def gateway_intake():
             "detail": "Routing a public-safe intake through the reception layer.",
             "updated_at": timestamp,
         }
-        manager["intake"] = [{
+        intake_record = {
             "id": intake_id,
             "role": role,
             "summary": f"{requester}: {message}",
             "updated_at": timestamp,
-        }] + list(manager.get("intake") or [])[:9]
+        }
+        if runtime_task_id:
+            intake_record["runtime_task_id"] = runtime_task_id
+        manager["intake"] = [intake_record] + list(manager.get("intake") or [])[:9]
         save_manager_state(manager)
 
         apply_manager_event({
