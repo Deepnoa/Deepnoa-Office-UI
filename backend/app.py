@@ -29,6 +29,7 @@ from services.schemas import (
     normalize_internal_state,
 )
 from services.source_adapters import RunsAdapter
+from services.runtime_events import build_runtime_task_summary, load_runtime_events
 from store_utils import (
     load_agents_state as _store_load_agents_state,
     save_agents_state as _store_save_agents_state,
@@ -2274,6 +2275,14 @@ def api_internal_events():
     since = (request.args.get("since") or "").strip()
     data = build_internal_view_state()
     return jsonify(build_events_contract(events=list(data.get("events") or []), since=since))
+
+
+@app.route("/api/runtime-events", methods=["GET"])
+def api_runtime_events():
+    """Return recent OpenClaw runtime JSONL events and latest task states."""
+    events = load_runtime_events(limit=100)
+    tasks = build_runtime_task_summary(events)
+    return jsonify({"events": events, "tasks": tasks})
 
 
 @app.route("/api/internal/runs", methods=["GET"])

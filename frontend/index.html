@@ -214,6 +214,33 @@
     .metric-value.danger { color: var(--danger); }
     .metric-sub { color: var(--muted); font-size: 11px; }
     .route-list, .policy-list, .mini-list { display: grid; gap: 10px; }
+    .runtime-table-wrap {
+      overflow-x: auto;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.02);
+    }
+    .runtime-table {
+      width: 100%;
+      min-width: 900px;
+      border-collapse: collapse;
+      font-size: 12px;
+      font-family: "IBM Plex Mono", monospace;
+    }
+    .runtime-table th, .runtime-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      text-align: left;
+      white-space: nowrap;
+    }
+    .runtime-table th {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: rgba(255,255,255,0.03);
+    }
+    .runtime-table tr:last-child td { border-bottom: 0; }
     .mini-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
     .mini-chip {
       display: inline-flex;
@@ -750,6 +777,35 @@ dev・ops・research・フォールバックワーカーを確認できます。
               <div class="label mono" data-i18n="section.alerts">アラート</div>
               <div class="mini-list" id="alertList"></div>
             </div>
+          </div>
+        </section>
+
+        <section class="panel section">
+          <div class="section-head">
+            <div>
+              <h2>Runtime Events</h2>
+              <div class="section-copy">OpenClaw runtime の task ごとの最新状態を表示します。</div>
+            </div>
+          </div>
+          <div class="runtime-table-wrap">
+            <table class="runtime-table">
+              <thead>
+                <tr>
+                  <th>task_id</th>
+                  <th>role</th>
+                  <th>status</th>
+                  <th>runtime_status</th>
+                  <th>exit_code</th>
+                  <th>last_event_type</th>
+                  <th>updated_at</th>
+                </tr>
+              </thead>
+              <tbody id="runtimeEventsRows">
+                <tr>
+                  <td colspan="7" class="sub">loading...</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </section>
 
@@ -1947,6 +2003,10 @@ manager カードの補足に使います。</div>
       `).join("");
     }
 
+    async function loadRuntimeEvents() {
+      return fetchJson("/api/runtime-events");
+    }
+
     function renderPolicies(policies) {
       const target = document.getElementById("policyList");
       const entries = Object.entries(policies || {});
@@ -2123,6 +2183,27 @@ manager カードの補足に使います。</div>
           `;
         }).join("")}
       `;
+    }
+
+    function renderRuntimeEventsCard(runtimeEvents) {
+      const rowsEl = document.getElementById("runtimeEventsRows");
+      if (!rowsEl) return;
+      const tasks = Array.isArray(runtimeEvents?.tasks) ? runtimeEvents.tasks : [];
+      if (!tasks.length) {
+        rowsEl.innerHTML = `<tr><td colspan="7" class="sub">runtime-events.jsonl がありません、またはイベントがありません。</td></tr>`;
+        return;
+      }
+      rowsEl.innerHTML = tasks.map((task) => `
+        <tr>
+          <td>${escapeHtml(task.task_id || "-")}</td>
+          <td>${escapeHtml(task.role || "-")}</td>
+          <td>${escapeHtml(task.status || "-")}</td>
+          <td>${escapeHtml(task.runtime_status || "-")}</td>
+          <td>${escapeHtml(task.exit_code == null ? "-" : String(task.exit_code))}</td>
+          <td>${escapeHtml(task.last_event_type || "-")}</td>
+          <td>${escapeHtml(task.updated_at || "-")}</td>
+        </tr>
+      `).join("");
     }
 
     async function refreshAssetAuthStatus() {
@@ -2322,16 +2403,18 @@ manager カードの補足に使います。</div>
       const snapshot = captureRenderState();
       try {
         // Fetch internal state, health, and recent failed runs in parallel; health and runs are best-effort
-        const [stateRes, healthRes, failedRunsRes] = await Promise.allSettled([
+        const [stateRes, healthRes, failedRunsRes, runtimeEventsRes] = await Promise.allSettled([
           loadInternalState(),
           loadHealthData(),
           loadRecentFailedRuns(),
+          loadRuntimeEvents(),
         ]);
         if (stateRes.status === "rejected") throw stateRes.reason;
         const data = stateRes.value;
         state.internal = data;
         if (healthRes.status === "fulfilled") state.health = healthRes.value;
         if (failedRunsRes.status === "fulfilled") state.failedRuns = failedRunsRes.value;
+        const runtimeEvents = runtimeEventsRes.status === "fulfilled" ? runtimeEventsRes.value : { tasks: [] };
         if (!state.selectedDetail) {
           const queryDetail = detailQueryState();
           if (queryDetail.kind && queryDetail.key) state.selectedDetail = queryDetail;
@@ -2362,6 +2445,7 @@ manager カードの補足に使います。</div>
         renderNeedsAttention(state.internal);
         renderRunsSummaryCard(state.health);
         renderRecentFailedRuns(state.failedRuns);
+        renderRuntimeEventsCard(runtimeEvents);
         await refreshAssetAuthStatus();
       } catch (error) {
         const targets = ["rolesList", "activityList", "routingList", "assetsList", "agentsList", "intakeList", "policyList", "blockedList", "approvalList", "failedList", "connectorList", "completedList", "alertList"];
@@ -2372,6 +2456,7 @@ manager カードの補足に使います。</div>
         renderNeedsAttention(null);
         renderRunsSummaryCard(state.health);
         renderRecentFailedRuns(state.failedRuns);
+        renderRuntimeEventsCard({ tasks: [] });
         document.getElementById("gatewayStatus").textContent = translateEnum("error");
         document.getElementById("gatewayDetail").textContent = error.message || t("error.failed_internal_state", "Failed to load internal state.");
       } finally {
