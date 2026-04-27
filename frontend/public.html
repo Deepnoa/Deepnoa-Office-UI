@@ -38,8 +38,8 @@
       color: var(--text);
       font-family: "Manrope", sans-serif;
       background:
-        radial-gradient(circle at 12% 0%, rgba(50, 102, 184, 0.24), transparent 26%),
-        radial-gradient(circle at 88% 2%, rgba(40, 210, 163, 0.14), transparent 24%),
+        radial-gradient(circle at 12% 0%, rgba(50, 102, 184, 0.12), transparent 26%),
+        radial-gradient(circle at 88% 2%, rgba(40, 210, 163, 0.07), transparent 24%),
         linear-gradient(180deg, var(--color-public-grad-top) 0%, #09111d 42%, var(--color-public-grad-bottom) 100%);
     }
 
@@ -139,18 +139,6 @@
         linear-gradient(180deg, rgba(12, 20, 33, 0.94), rgba(9, 15, 24, 0.9));
     }
 
-    .mission-main::after {
-      content: "";
-      position: absolute;
-      right: -80px;
-      bottom: -120px;
-      width: 380px;
-      height: 380px;
-      background: radial-gradient(circle, rgba(126,226,194,0.15), transparent 68%);
-      filter: blur(12px);
-      opacity: 0.9;
-    }
-
     .mission-topbar {
       display: flex;
       justify-content: space-between;
@@ -172,7 +160,7 @@
     .mission-title {
       margin: 0;
       max-width: 9ch;
-      font-size: clamp(44px, 5.6vw, 78px);
+      font-size: clamp(32px, 3.8vw, 52px);
       line-height: 0.94;
       font-weight: 800;
       letter-spacing: -0.05em;
@@ -280,25 +268,55 @@
       line-height: 1.6;
     }
 
-    .mission-ribbon {
+    .ops-band {
       position: relative;
       z-index: 1;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
+      display: flex;
+      gap: 0;
       margin-top: 26px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      overflow: hidden;
     }
 
-    .ribbon-card {
-      min-height: 116px;
-      padding: 18px;
-      border-radius: 22px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.035);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 10px;
+    .ops-band-item {
+      flex: 1;
+      padding: 16px 20px;
+      border-right: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .ops-band-item:last-child {
+      border-right: 0;
+    }
+
+    .ops-band-label {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .ops-band-value {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ops-band-item--attention.has-items .ops-band-value {
+      color: #ff92a0;
+    }
+
+    html[data-theme="light"] .ops-band {
+      border-color: rgba(15,23,42,0.1);
+    }
+
+    html[data-theme="light"] .ops-band-item {
+      border-right-color: rgba(15,23,42,0.08);
     }
 
     .section-kicker,
@@ -308,18 +326,6 @@
       text-transform: uppercase;
       letter-spacing: 0.1em;
       font-size: 11px;
-    }
-
-    .ribbon-value {
-      font-size: 30px;
-      font-weight: 800;
-      letter-spacing: -0.04em;
-    }
-
-    .ribbon-copy {
-      color: var(--color-public-copy-soft);
-      font-size: 13px;
-      line-height: 1.55;
     }
 
     .mission-side {
@@ -420,53 +426,6 @@
     .lang-btn:hover {
       transform: translateY(-1px);
       border-color: rgba(255,255,255,0.18);
-    }
-
-    .summary-strip {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 14px;
-      margin-bottom: 22px;
-    }
-
-    .metric-card {
-      padding: 18px 18px 16px;
-      border-radius: 22px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .metric-card::before {
-      content: "";
-      position: absolute;
-      inset: auto auto 0 0;
-      height: 3px;
-      width: 100%;
-      opacity: 0.7;
-      background: linear-gradient(90deg, rgba(126,226,194,0.18), rgba(126,226,194,0.65));
-    }
-
-    .metric-card.warn::before {
-      background: linear-gradient(90deg, rgba(255,196,107,0.16), rgba(255,196,107,0.7));
-    }
-
-    .metric-card.danger::before {
-      background: linear-gradient(90deg, rgba(255,126,143,0.16), rgba(255,126,143,0.72));
-    }
-
-    .metric-value {
-      margin-top: 10px;
-      font-size: clamp(30px, 3vw, 42px);
-      font-weight: 800;
-      line-height: 1;
-      letter-spacing: -0.05em;
-    }
-
-    .metric-sub {
-      margin-top: 10px;
-      color: var(--color-public-copy-soft);
-      font-size: 13px;
-      line-height: 1.56;
     }
 
     .control-grid {
@@ -868,28 +827,6 @@
       animation: none;
     }
 
-    .scene-support-grid {
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 14px;
-      margin-top: 16px;
-    }
-
-    .support-card {
-      min-height: 136px;
-      padding: 18px;
-      border-radius: 22px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.024);
-    }
-
-    .support-copy {
-      margin-top: 10px;
-      color: var(--color-public-copy-soft);
-      font-size: 14px;
-      line-height: 1.62;
-    }
-
     .runtime-list,
     .system-list,
     .agent-list,
@@ -1150,14 +1087,11 @@
     html[data-theme="light"] .scene-stat,
     html[data-theme="light"] .hero-status-card,
     html[data-theme="light"] .hero-ops-card,
-    html[data-theme="light"] .support-card,
-    html[data-theme="light"] .metric-card,
     html[data-theme="light"] .runtime-card,
     html[data-theme="light"] .system-card,
     html[data-theme="light"] .agent-card,
     html[data-theme="light"] .activity-card,
-    html[data-theme="light"] .hero-signal,
-    html[data-theme="light"] .ribbon-card {
+    html[data-theme="light"] .hero-signal {
       background: rgba(255,255,255,0.86);
       border-color: rgba(15,23,42,0.08);
       box-shadow: var(--shadow-surface);
@@ -1171,10 +1105,7 @@
     }
 
     html[data-theme="light"] .mission-copy,
-    html[data-theme="light"] .ribbon-copy,
-    html[data-theme="light"] .section-copy,
     html[data-theme="light"] .hero-status-card-copy,
-    html[data-theme="light"] .support-copy,
     html[data-theme="light"] .agent-role,
     html[data-theme="light"] .agent-desc,
     html[data-theme="light"] .activity-summary {
@@ -1231,14 +1162,17 @@
         grid-template-columns: 1fr;
       }
 
-      .summary-strip {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .mission-ribbon,
-      .scene-support-grid,
       .system-grid {
         grid-template-columns: 1fr;
+      }
+
+      .ops-band {
+        flex-wrap: wrap;
+      }
+
+      .ops-band-item {
+        flex: 1 1 33%;
+        min-width: 120px;
       }
     }
 
@@ -1274,7 +1208,6 @@
         width: 100%;
       }
 
-      .summary-strip,
       .system-grid {
         grid-template-columns: 1fr 1fr;
       }
@@ -1296,13 +1229,25 @@
     }
 
     @media (max-width: 560px) {
-      .summary-strip,
       .system-grid {
         grid-template-columns: 1fr;
       }
 
+      .ops-band {
+        flex-direction: column;
+      }
+
+      .ops-band-item {
+        border-right: 0;
+        border-bottom: 1px solid rgba(255,255,255,0.07);
+      }
+
+      .ops-band-item:last-child {
+        border-bottom: 0;
+      }
+
       .mission-title {
-        font-size: 42px;
+        font-size: 32px;
       }
 
       .scene-frame {
@@ -1348,22 +1293,19 @@
           <div class="state-pill"><strong data-i18n="public.control_mode">Mode</strong><span id="control-mode-label" data-i18n="public.control_mode_value">Observability layer</span></div>
         </div>
 
-        <div class="mission-ribbon">
-          <article class="ribbon-card">
-            <div class="section-kicker" data-i18n="public.ribbon_title_1">Agent operating model</div>
-            <div class="ribbon-value" data-i18n="public.ribbon_value_1">Observe</div>
-            <div class="ribbon-copy" data-i18n="public.ribbon_copy_1">Track agent posture, work routing, and customer-facing office confidence in one place.</div>
-          </article>
-          <article class="ribbon-card">
-            <div class="section-kicker" data-i18n="public.ribbon_title_2">Decision layer</div>
-            <div class="ribbon-value" data-i18n="public.ribbon_value_2">Control</div>
-            <div class="ribbon-copy" data-i18n="public.ribbon_copy_2">This surface explains what the AI company is doing without exposing internal-only operations or prompts.</div>
-          </article>
-          <article class="ribbon-card">
-            <div class="section-kicker" data-i18n="public.ribbon_title_3">Trust posture</div>
-            <div class="ribbon-value" id="trust-ribbon-value">Ready</div>
-            <div class="ribbon-copy" id="trust-ribbon-copy">Preparing current mission posture…</div>
-          </article>
+        <div class="ops-band">
+          <div class="ops-band-item">
+            <div class="ops-band-label" data-i18n="public.ops_active_agents">Active agents</div>
+            <div class="ops-band-value" id="ops-band-agents">0</div>
+          </div>
+          <div class="ops-band-item">
+            <div class="ops-band-label" data-i18n="public.ops_active_tasks">Active tasks</div>
+            <div class="ops-band-value" id="ops-band-tasks">0</div>
+          </div>
+          <div class="ops-band-item ops-band-item--attention" id="ops-band-attention-item">
+            <div class="ops-band-label" data-i18n="public.ops_needs_attention">Needs attention</div>
+            <div class="ops-band-value" id="ops-band-attention">0</div>
+          </div>
         </div>
       </article>
 
@@ -1410,46 +1352,12 @@
       </aside>
     </section>
 
-    <section class="summary-strip">
-      <article class="surface metric-card" id="metric-active-agents-card">
-        <div class="metric-label" data-i18n="summary.active_agents">Active Agents</div>
-        <div class="metric-value" id="summary-active-agents">0</div>
-        <div class="metric-sub" data-i18n="summary.active_agents_sub">Agents currently moving work</div>
-      </article>
-      <article class="surface metric-card" id="metric-active-tasks-card">
-        <div class="metric-label" data-i18n="summary.active_tasks">Active Tasks</div>
-        <div class="metric-value" id="summary-active-tasks">0</div>
-        <div class="metric-sub" data-i18n="summary.active_tasks_sub">Running or in-flight work items</div>
-      </article>
-      <article class="surface metric-card" id="metric-blocked-card">
-        <div class="metric-label" data-i18n="summary.blocked">Blocked</div>
-        <div class="metric-value" id="summary-blocked">0</div>
-        <div class="metric-sub" data-i18n="summary.blocked_sub">Needs intervention</div>
-      </article>
-      <article class="surface metric-card" id="metric-approval-card">
-        <div class="metric-label" data-i18n="summary.awaiting_approval">Awaiting Approval</div>
-        <div class="metric-value" id="summary-approval">0</div>
-        <div class="metric-sub" data-i18n="summary.awaiting_approval_sub">Waiting on human review</div>
-      </article>
-      <article class="surface metric-card" id="metric-done-card">
-        <div class="metric-label" data-i18n="summary.done_today">Done Today</div>
-        <div class="metric-value" id="summary-done-today">0</div>
-        <div class="metric-sub" data-i18n="summary.done_today_sub">Completed since local midnight</div>
-      </article>
-      <article class="surface metric-card" id="metric-alerts-card">
-        <div class="metric-label" data-i18n="summary.alerts">Alerts</div>
-        <div class="metric-value" id="summary-alerts">0</div>
-        <div class="metric-sub" data-i18n="summary.alerts_sub">Errors and runtime warnings</div>
-      </article>
-    </section>
-
     <section class="control-grid">
       <article class="surface surface-card section">
         <div class="section-head">
           <div>
             <div class="section-kicker" data-i18n="public.floor_title_kicker">Office floor telemetry</div>
             <h2 data-i18n="public.floor_title">AI office trust surface</h2>
-            <div class="section-copy" data-i18n="public.floor_copy">A live visual layer that translates current public state into a simple, buyable picture of team motion and operational posture.</div>
           </div>
           <div class="state-pill"><strong data-i18n="public.scene_label">Scene</strong><span id="scene-mode-label" data-i18n="public.scene_mode_value">Live public floor</span></div>
         </div>
@@ -1488,20 +1396,6 @@
           </div>
         </div>
 
-        <div class="scene-support-grid">
-          <article class="support-card">
-            <div class="section-kicker" data-i18n="public.policy_title">What this page proves</div>
-            <div class="support-copy" id="policy-copy" data-i18n="public.policy_copy">
-              Customers can see that agents, routing, and system health are active without exposing internal prompts, secrets, or operator-only controls.
-            </div>
-          </article>
-          <article class="support-card">
-            <div class="section-kicker" data-i18n="public.coverage_title">Observability coverage</div>
-            <div class="support-copy" id="coverage-copy" data-i18n="public.coverage_copy">
-              This trust layer summarizes runtime activity, team posture, and connected-system availability in a public-safe format.
-            </div>
-          </article>
-        </div>
       </article>
 
       <article class="surface surface-card section">
@@ -1509,7 +1403,6 @@
           <div>
             <div class="section-kicker" data-i18n="public.runtime_title_kicker">Runtime queue</div>
             <h2 data-i18n="public.runtime_title">What the office is doing</h2>
-            <div class="section-copy" data-i18n="public.runtime_copy">A concise queue of the most recent public-safe agent and workflow signals.</div>
           </div>
         </div>
         <div class="runtime-list" id="runtime-list"></div>
@@ -1522,7 +1415,6 @@
           <div>
             <div class="section-kicker" data-i18n="public.ai_teams_kicker">Agent roster</div>
             <h2 data-i18n="public.ai_teams_now">AI teams now</h2>
-            <div class="section-copy" data-i18n="public.ai_teams_now_sub">The public-facing teams currently visible in the Deepnoa AI Office.</div>
           </div>
         </div>
         <div class="agent-list" id="ai-teams-list"></div>
@@ -1533,7 +1425,6 @@
           <div>
             <div class="section-kicker" data-i18n="public.connected_systems_kicker">Systems posture</div>
             <h2 data-i18n="public.connected_systems">Connected systems</h2>
-            <div class="section-copy" data-i18n="public.connected_systems_sub">Only high-level connectivity and public-safe health are shown here.</div>
           </div>
         </div>
         <div class="system-grid" id="systems-list"></div>
@@ -1545,7 +1436,6 @@
         <div>
           <div class="section-kicker" data-i18n="public.recent_activity_kicker">Activity timeline</div>
           <h2 data-i18n="public.recent_activity_combined">Recent activity</h2>
-          <div class="section-copy" data-i18n="public.recent_activity_combined_sub">Recent public-safe activity and shareable work summaries from the office runtime.</div>
         </div>
       </div>
       <div class="timeline activity-list" id="recent-activity-list"></div>
@@ -1575,6 +1465,9 @@
         "public.system_health": "システム健全性",
         "public.health_detail": "接続システムと公開安全なテレメトリのみを表示します。",
         "public.runtime_overview": "ランタイム概要",
+        "public.ops_active_agents": "稼働中エージェント",
+        "public.ops_active_tasks": "進行中タスク",
+        "public.ops_needs_attention": "要注意",
         "public.runtime_visible_agents": "表示中エージェント",
         "public.runtime_attention": "要注意",
         "public.runtime_updated": "公開 state 更新",
@@ -1664,6 +1557,9 @@
         "public.system_health": "系统健康",
         "public.health_detail": "这里只显示连接系统与公开安全的遥测信息。",
         "public.runtime_overview": "运行时概览",
+        "public.ops_active_agents": "活跃代理",
+        "public.ops_active_tasks": "活跃任务",
+        "public.ops_needs_attention": "需关注",
         "public.runtime_visible_agents": "可见代理",
         "public.runtime_attention": "需关注",
         "public.runtime_updated": "公开状态更新时间",
@@ -2221,12 +2117,6 @@
         posture.key === "attention"
           ? `${Number(data.summary?.blocked || 0) + Number(data.summary?.alerts || 0)} attention signals are visible in the public runtime.`
           : `${Number(data.summary?.active_agents || 0)} public agents and ${Number(data.systems?.length || 0)} connected systems are visible right now.`;
-      document.getElementById("trust-ribbon-value").textContent = posture.label;
-      document.getElementById("trust-ribbon-copy").textContent =
-        posture.key === "attention"
-          ? "Public trust surface is showing open risks or items that may need operator review."
-          : "Public trust surface is reading as stable, active, and enterprise-ready.";
-
       document.getElementById("scene-stat-posture").textContent = posture.label;
       document.getElementById("scene-badge-posture").className = `scene-badge${posture.tone === "danger" ? " danger" : posture.tone === "warn" ? " warn" : ""}`;
       document.getElementById("scene-badge-posture").textContent = posture.label;
@@ -2263,16 +2153,11 @@
         document.getElementById("scene-stat-agents").textContent = String(visibleAgents.length);
         document.getElementById("scene-badge-updated").textContent = `${t("label.updated", "Updated")} ${safeDate(latestUpdate)}`;
 
-        document.getElementById("summary-active-agents").textContent = String(data.summary?.active_agents ?? 0);
-        document.getElementById("summary-active-tasks").textContent = String(data.summary?.active_tasks ?? 0);
-        document.getElementById("summary-blocked").textContent = String(data.summary?.blocked ?? 0);
-        document.getElementById("summary-approval").textContent = String(data.summary?.awaiting_approval ?? 0);
-        document.getElementById("summary-done-today").textContent = String(data.summary?.done_today ?? 0);
-        document.getElementById("summary-alerts").textContent = String(data.summary?.alerts ?? 0);
-
-        setMetricTone("metric-blocked-card", Number(data.summary?.blocked || 0) > 0 ? "danger" : "ok");
-        setMetricTone("metric-approval-card", Number(data.summary?.awaiting_approval || 0) > 0 ? "warn" : "ok");
-        setMetricTone("metric-alerts-card", Number(data.summary?.alerts || 0) > 0 ? "danger" : "ok");
+        const attentionCount = (data.summary?.blocked ?? 0) + (data.summary?.alerts ?? 0);
+        document.getElementById("ops-band-agents").textContent = String(data.summary?.active_agents ?? 0);
+        document.getElementById("ops-band-tasks").textContent = String(data.summary?.active_tasks ?? 0);
+        document.getElementById("ops-band-attention").textContent = String(attentionCount);
+        document.getElementById("ops-band-attention-item").classList.toggle("has-items", attentionCount > 0);
 
         updateHeroSignals(data);
         renderOfficeScene(data.agents || []);
@@ -2282,12 +2167,9 @@
         renderSystems(data.systems || []);
       } catch (error) {
         console.error(error);
-        document.getElementById("summary-active-agents").textContent = "0";
-        document.getElementById("summary-active-tasks").textContent = "0";
-        document.getElementById("summary-blocked").textContent = "0";
-        document.getElementById("summary-approval").textContent = "0";
-        document.getElementById("summary-done-today").textContent = "0";
-        document.getElementById("summary-alerts").textContent = "0";
+        document.getElementById("ops-band-agents").textContent = "0";
+        document.getElementById("ops-band-tasks").textContent = "0";
+        document.getElementById("ops-band-attention").textContent = "0";
         document.getElementById("hero-signal-status").textContent = "Offline";
         document.getElementById("hero-signal-copy").textContent = error.message || t("error.failed_public_state", "Failed to load public state");
         document.getElementById("gateway-detail").textContent = error.message || t("error.failed_public_state", "Failed to load public state");
