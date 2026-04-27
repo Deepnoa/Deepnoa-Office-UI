@@ -809,6 +809,34 @@ dev・ops・research・フォールバックワーカーを確認できます。
           </div>
         </section>
 
+        <section class="panel section">
+          <div class="section-head">
+            <div>
+              <h2>Reply Drafts</h2>
+              <div class="section-copy">Runtime が生成した返信案（reply_draft.content）のみを表示します。</div>
+            </div>
+          </div>
+          <div class="runtime-table-wrap">
+            <table class="runtime-table">
+              <thead>
+                <tr>
+                  <th>task_id</th>
+                  <th>role</th>
+                  <th>status</th>
+                  <th>exit_code</th>
+                  <th>created_at</th>
+                  <th>content</th>
+                </tr>
+              </thead>
+              <tbody id="replyDraftRows">
+                <tr>
+                  <td colspan="6" class="sub">loading...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <section class="panel section detail-panel-shell" id="detailPanelShell">
           <div class="section-head">
             <div>
@@ -2003,10 +2031,6 @@ manager カードの補足に使います。</div>
       `).join("");
     }
 
-    async function loadRuntimeEvents() {
-      return fetchJson("/api/runtime-events");
-    }
-
     function renderPolicies(policies) {
       const target = document.getElementById("policyList");
       const entries = Object.entries(policies || {});
@@ -2035,6 +2059,14 @@ manager カードの補足に使います。</div>
 
     async function loadRecentFailedRuns() {
       return fetchJson("/api/internal/runs?status=failed&limit=5");
+    }
+
+    async function loadRuntimeEvents() {
+      return fetchJson("/api/runtime-events");
+    }
+
+    async function loadReplyDrafts() {
+      return fetchJson("/api/reply-drafts");
     }
 
     function renderNeedsAttention(data) {
@@ -2202,6 +2234,26 @@ manager カードの補足に使います。</div>
           <td>${escapeHtml(task.exit_code == null ? "-" : String(task.exit_code))}</td>
           <td>${escapeHtml(task.last_event_type || "-")}</td>
           <td>${escapeHtml(task.updated_at || "-")}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderReplyDraftsCard(replyDrafts) {
+      const rowsEl = document.getElementById("replyDraftRows");
+      if (!rowsEl) return;
+      const drafts = Array.isArray(replyDrafts?.drafts) ? replyDrafts.drafts : [];
+      if (!drafts.length) {
+        rowsEl.innerHTML = `<tr><td colspan="6" class="sub">reply_draft はまだありません。</td></tr>`;
+        return;
+      }
+      rowsEl.innerHTML = drafts.map((draft) => `
+        <tr>
+          <td>${escapeHtml(draft.task_id || "-")}</td>
+          <td>${escapeHtml(draft.role || "-")}</td>
+          <td>${escapeHtml(draft.status || "-")}</td>
+          <td>${escapeHtml(draft.exit_code == null ? "-" : String(draft.exit_code))}</td>
+          <td>${escapeHtml(draft.created_at || "-")}</td>
+          <td style="white-space:normal; word-break:break-word; min-width:320px;">${escapeHtml(draft.content || "-")}</td>
         </tr>
       `).join("");
     }
@@ -2403,11 +2455,12 @@ manager カードの補足に使います。</div>
       const snapshot = captureRenderState();
       try {
         // Fetch internal state, health, and recent failed runs in parallel; health and runs are best-effort
-        const [stateRes, healthRes, failedRunsRes, runtimeEventsRes] = await Promise.allSettled([
+        const [stateRes, healthRes, failedRunsRes, runtimeEventsRes, replyDraftsRes] = await Promise.allSettled([
           loadInternalState(),
           loadHealthData(),
           loadRecentFailedRuns(),
           loadRuntimeEvents(),
+          loadReplyDrafts(),
         ]);
         if (stateRes.status === "rejected") throw stateRes.reason;
         const data = stateRes.value;
@@ -2415,6 +2468,7 @@ manager カードの補足に使います。</div>
         if (healthRes.status === "fulfilled") state.health = healthRes.value;
         if (failedRunsRes.status === "fulfilled") state.failedRuns = failedRunsRes.value;
         const runtimeEvents = runtimeEventsRes.status === "fulfilled" ? runtimeEventsRes.value : { tasks: [] };
+        const replyDrafts = replyDraftsRes.status === "fulfilled" ? replyDraftsRes.value : { drafts: [] };
         if (!state.selectedDetail) {
           const queryDetail = detailQueryState();
           if (queryDetail.kind && queryDetail.key) state.selectedDetail = queryDetail;
@@ -2446,6 +2500,7 @@ manager カードの補足に使います。</div>
         renderRunsSummaryCard(state.health);
         renderRecentFailedRuns(state.failedRuns);
         renderRuntimeEventsCard(runtimeEvents);
+        renderReplyDraftsCard(replyDrafts);
         await refreshAssetAuthStatus();
       } catch (error) {
         const targets = ["rolesList", "activityList", "routingList", "assetsList", "agentsList", "intakeList", "policyList", "blockedList", "approvalList", "failedList", "connectorList", "completedList", "alertList"];
@@ -2457,6 +2512,7 @@ manager カードの補足に使います。</div>
         renderRunsSummaryCard(state.health);
         renderRecentFailedRuns(state.failedRuns);
         renderRuntimeEventsCard({ tasks: [] });
+        renderReplyDraftsCard({ drafts: [] });
         document.getElementById("gatewayStatus").textContent = translateEnum("error");
         document.getElementById("gatewayDetail").textContent = error.message || t("error.failed_internal_state", "Failed to load internal state.");
       } finally {
