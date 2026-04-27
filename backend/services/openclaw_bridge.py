@@ -16,7 +16,10 @@ from .schemas import (
     normalize_event_payload,
     normalize_internal_state,
     normalize_provenance,
+    normalize_public_health_status,
     normalize_public_state,
+    normalize_public_status_label,
+    normalize_public_summary_text,
 )
 from .source_adapters import dedupe_events, derive_missing_lifecycle, intake_events, manager_activity_events, snapshot_events
 
@@ -437,8 +440,8 @@ def build_openclaw_bridge_snapshot(
     for event in sorted(public_candidates, key=lambda item: (EVENT_PRIORITY.get(item["event_type"], 99), item["timestamp"]))[:12]:
         public_feed.append({
             "agent": event.get("agent_id") or "office",
-            "status_label": normalize_public_state(event.get("state")),
-            "summary": sanitize_public_detail(event.get("display_summary") or ""),
+            "status_label": normalize_public_status_label(event.get("state")),
+            "summary": normalize_public_summary_text(sanitize_public_detail(event.get("display_summary") or "")),
             "updated_at": event.get("timestamp"),
             "event_type": event.get("event_type"),
         })
@@ -497,8 +500,8 @@ def build_public_state_payload(
         "role": "Gateway",
         "description": "Public AI Gateway that routes inbound work to dedicated internal roles.",
         "state": "idle",
-        "status_label": str(manager_state.get("gateway", {}).get("status", "Standby")),
-        "detail": sanitize_public_detail(manager_state.get("gateway", {}).get("detail", "")),
+        "status_label": normalize_public_status_label(manager_state.get("gateway", {}).get("status", "待機中"), context="gateway"),
+        "detail": normalize_public_summary_text(sanitize_public_detail(manager_state.get("gateway", {}).get("detail", ""))),
         "updated_at": str(manager_state.get("gateway", {}).get("updated_at", now_iso)),
     }]
     for role_key in ("dev", "research", "ops"):
@@ -510,19 +513,20 @@ def build_public_state_payload(
             "role": role_state.get("role", role_definitions.get(role_key, {}).get("role", role_key)),
             "description": role_state.get("profile", role_definitions.get(role_key, {}).get("profile", "")),
             "state": public_state,
-            "status_label": role_state.get("public_status_label") or public_state,
-            "detail": sanitize_public_detail(role_state.get("detail", "")),
+            "status_label": normalize_public_status_label(role_state.get("public_status_label") or public_state),
+            "detail": normalize_public_summary_text(sanitize_public_detail(role_state.get("detail", ""))),
             "updated_at": str(role_state.get("updated_at", now_iso)),
         })
 
     activity = []
     for item in list(bridge.get("public_feed") or [])[:6]:
         agent_key = item.get("agent")
+        status_label = normalize_public_status_label(item.get("status_label"))
         activity.append({
             "agent": role_definitions.get(agent_key, {}).get("name", item.get("agent") or "AI Office"),
             "state": normalize_public_state(item.get("status_label")),
-            "status_label": normalize_public_state(item.get("status_label")),
-            "summary": sanitize_public_detail(item.get("summary") or ""),
+            "status_label": status_label,
+            "summary": normalize_public_summary_text(sanitize_public_detail(item.get("summary") or "")),
             "updated_at": item.get("updated_at") or now_iso,
             "event_type": item.get("event_type") or "",
         })
@@ -544,7 +548,7 @@ def build_public_state_payload(
 
     latest_update = manager_state.get("updated_at") or now_iso
     health = {
-        "status": bridge.get("summary", {}).get("status", "normal"),
+        "status": normalize_public_health_status(bridge.get("summary", {}).get("status", "normal")),
         "agent_count": len([key for key in roles if key in role_definitions]),
         "latest_update": latest_update,
         "public_log_policy": "public-safe only",
@@ -553,7 +557,7 @@ def build_public_state_payload(
     intake = [{
         "id": item.get("id"),
         "role": item.get("role"),
-        "summary": sanitize_public_detail(item.get("summary") or ""),
+        "summary": normalize_public_summary_text(sanitize_public_detail(item.get("summary") or "")),
         "updated_at": item.get("updated_at"),
     } for item in list(manager_state.get("intake") or [])[:4]]
     return build_public_state_contract(
@@ -565,8 +569,8 @@ def build_public_state_payload(
         },
         gateway={
             "label": public_office_info["gateway_label"],
-            "status": manager_state.get("gateway", {}).get("status", "Standby"),
-            "detail": sanitize_public_detail(manager_state.get("gateway", {}).get("detail", "")),
+            "status": normalize_public_status_label(manager_state.get("gateway", {}).get("status", "待機中"), context="gateway"),
+            "detail": normalize_public_summary_text(sanitize_public_detail(manager_state.get("gateway", {}).get("detail", ""))),
             "updated_at": manager_state.get("gateway", {}).get("updated_at", now_iso),
         },
         agents=agents,

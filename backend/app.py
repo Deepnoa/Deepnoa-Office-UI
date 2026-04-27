@@ -128,9 +128,9 @@ ROLE_DEFINITIONS = {
         "profile": "Routes coding, GitHub review, implementation, and code-quality work.",
         "allowed_tools": ["github", "git", "workspace", "task-noa-tools"],
         "public_status_labels": {
-            "idle": "Standby",
-            "working": "Reviewing and building",
-            "attention": "Needs review",
+            "idle": "待機中",
+            "working": "処理中",
+            "attention": "要確認",
         },
     },
     "ops": {
@@ -139,9 +139,9 @@ ROLE_DEFINITIONS = {
         "profile": "Routes cron jobs, system checks, service health, and infrastructure coordination.",
         "allowed_tools": ["system", "logs", "nas", "workspace"],
         "public_status_labels": {
-            "idle": "Standing watch",
-            "working": "Monitoring and syncing",
-            "attention": "Investigating",
+            "idle": "待機中",
+            "working": "稼働中",
+            "attention": "要確認",
         },
     },
     "research": {
@@ -150,9 +150,9 @@ ROLE_DEFINITIONS = {
         "profile": "Routes public research, summaries, scanning, and briefing preparation.",
         "allowed_tools": ["web", "notes", "workspace"],
         "public_status_labels": {
-            "idle": "Ready to scan",
-            "working": "Researching",
-            "attention": "Reviewing source quality",
+            "idle": "待機中",
+            "working": "調査中",
+            "attention": "要確認",
         },
     },
 }
@@ -798,8 +798,8 @@ def _default_manager_state() -> dict:
         "version": 1,
         "updated_at": datetime.now().isoformat(),
         "gateway": {
-            "status": "Standby",
-            "detail": "Reception AI ready to route work.",
+            "status": "待機中",
+            "detail": "公開リクエストを受け付ける準備ができています。",
             "updated_at": datetime.now().isoformat(),
         },
         "routing": {
@@ -873,17 +873,17 @@ def _parse_iso8601(value):
 
 def _agent_status_badge(state: str) -> str:
     return {
-        "idle": "Standby",
-        "writing": "Building",
-        "researching": "Researching",
-        "executing": "Running",
-        "syncing": "Syncing",
-        "error": "Attention",
-        "blocked": "Blocked",
-        "awaiting_approval": "Awaiting approval",
-        "offline": "Offline",
-        "degraded": "Degraded",
-    }.get(state, "Standby")
+        "idle": "待機中",
+        "writing": "処理中",
+        "researching": "調査中",
+        "executing": "稼働中",
+        "syncing": "同期中",
+        "error": "要確認",
+        "blocked": "要確認",
+        "awaiting_approval": "要確認",
+        "offline": "停止中",
+        "degraded": "注意",
+    }.get(state, "待機中")
 
 
 def _classify_agent_role(name: str, detail: str, is_main: bool) -> str:
@@ -904,7 +904,7 @@ def _classify_agent_role(name: str, detail: str, is_main: bool) -> str:
 def _sanitize_public_detail(detail: str) -> str:
     text = (detail or "").strip()
     if not text:
-        return "No public-safe task detail available."
+        return "公開可能な作業内容はありません。"
     text = re.sub(r"/[\w./-]+", "[internal-path]", text)
     text = re.sub(r"[A-Za-z]:\\[^\s]+", "[internal-path]", text)
     text = re.sub(r"https?://\S+", "[internal-link]", text)
@@ -921,19 +921,34 @@ def _sanitize_intake_text(detail: str) -> str:
 
 
 def _sanitize_public_activity(source: str, event_type: str, role_key: str, detail: str) -> str:
-    role_name = ROLE_DEFINITIONS.get(role_key, {}).get("name", "Agent")
     safe_detail = _sanitize_public_detail(detail)
     if event_type == "github_webhook":
-        return f"{role_name} is reviewing repository activity and preparing implementation work."
+        return "実装や更新に向けて、リポジトリの動きを確認しています。"
     if event_type in {"cron_check", "system_check"}:
-        return f"{role_name} is monitoring scheduled checks and system health."
+        return "定期チェックとシステム状態を確認しています。"
     if event_type in {"research_task", "public_summary"}:
-        return f"{role_name} is collecting public information and drafting a summary."
+        return "公開可能な情報を整理し、要点をまとめています。"
     if source == "fallback":
-        return "Universal worker is handling a task that did not match a dedicated role."
-    if safe_detail == "No public-safe task detail available.":
-        return f"{role_name} is processing a routed task."
-    return safe_detail
+        return "専用ルートに当てはまらない作業を処理しています。"
+    if safe_detail == "公開可能な作業内容はありません。":
+        return "担当タスクを処理しています。"
+
+    rewrites = [
+        (r"GitHub webhook queue is being processed and deployment flow is active\.?", "GitHub連携の処理を進めています。"),
+        (r"Processing GitHub webhook queue\.?", "GitHub連携の処理を進めています。"),
+        (r"GitHub webhook queue\.?", "GitHub連携の処理を進めています。"),
+        (r"deployment flow is active\.?", "公開可能な更新処理を進めています。"),
+        (r"Dispatching .*? via manager-first router\.?", "公開リクエストを適切な担当へ振り分けています。"),
+        (r"Ready for work\.?", "新しい依頼に備えて待機しています。"),
+        (r"(\d+)\s+scheduled system checks are configured and standing by\.?", r"定期システムチェック\1件を待機監視しています。"),
+        (r"scheduled system checks are configured and standing by\.?", "定期システムチェックを待機監視しています。"),
+        (r"Routing a public-safe intake through the reception layer\.?", "公開リクエストを受付経由で処理しています。"),
+        (r"Public-safe request received by the gateway\.?", "公開リクエストを受け付けました。"),
+    ]
+    text = safe_detail
+    for pattern, replacement in rewrites:
+        text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+    return text
 
 
 def _dedupe_public_activity(items: list[dict], limit: int = 6) -> list[dict]:
@@ -992,8 +1007,8 @@ def apply_manager_event(payload: dict) -> dict:
 
     manager["updated_at"] = timestamp
     manager["gateway"] = {
-        "status": "Routing",
-        "detail": f"Dispatching {event_type.replace('_', ' ')} via manager-first router.",
+        "status": "受付中",
+        "detail": "公開リクエストを適切な担当へ振り分けています。",
         "updated_at": timestamp,
     }
 

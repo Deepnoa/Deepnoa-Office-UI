@@ -101,6 +101,84 @@ def normalize_public_state(value: str | None) -> str:
     return "idle"
 
 
+def normalize_public_status_label(value: str | None, *, context: str = "general") -> str:
+    raw = str(value or "").strip()
+    normalized = normalize_public_state(raw)
+    lowered = raw.lower()
+
+    if context == "gateway":
+        if "routing" in lowered or "dispatch" in lowered or "受付" in raw or "振り分" in raw:
+            return "受付中"
+        if "error" in lowered or "offline" in lowered or "停止" in raw:
+            return "要確認"
+        if "standby" in lowered or "ready" in lowered or normalized == "idle":
+            return "待機中"
+        return "受付中"
+
+    if "research" in lowered or "調査" in raw:
+        return "調査中"
+    if "review" in lowered or "build" in lowered or "processing" in lowered or "処理" in raw:
+        return "処理中"
+    if "monitor" in lowered or "watch" in lowered or "standby" in lowered or "ready" in lowered or "待機" in raw:
+        return "待機中"
+    if "need" in lowered or "investigat" in lowered or "attention" in lowered or "review" in lowered or "要確認" in raw:
+        return "要確認"
+    if "offline" in lowered or "停止" in raw:
+        return "停止中"
+    if "degraded" in lowered or "注意" in raw:
+        return "注意"
+
+    return {
+        "idle": "待機中",
+        "writing": "処理中",
+        "researching": "調査中",
+        "executing": "稼働中",
+        "syncing": "同期中",
+        "error": "要確認",
+    }.get(normalized, "待機中")
+
+
+def normalize_public_health_status(value: str | None) -> str:
+    lowered = str(value or "").strip().lower()
+    if lowered in {"watch", "attention", "degraded", "error"}:
+        return "attention"
+    if lowered == "offline":
+        return "offline"
+    return "normal"
+
+
+def normalize_public_summary_text(value: str | None) -> str:
+    import re
+
+    text = str(value or "").strip()
+    if not text:
+        return "公開可能な作業内容はありません。"
+
+    rewrites = [
+        (r"GitHub webhook queue is being processed and deployment flow is active\.?", "GitHub連携の処理を進めています。"),
+        (r"Processing GitHub webhook queue\.?", "GitHub連携の処理を進めています。"),
+        (r"GitHub webhook queue\.?", "GitHub連携の処理を進めています。"),
+        (r"deployment flow is active\.?", "公開可能な更新処理を進めています。"),
+        (r"Dispatching .*? via manager-first router\.?", "公開リクエストを適切な担当へ振り分けています。"),
+        (r"Ready for work\.?", "新しい依頼に備えて待機しています。"),
+        (r"Reception AI ready to route work\.?", "公開リクエストを受け付ける準備ができています。"),
+        (r"Routing a public-safe intake through the reception layer\.?", "公開リクエストを受付経由で処理しています。"),
+        (r"Public-safe request received by the gateway\.?", "公開リクエストを受け付けました。"),
+        (r"(\d+)\s+scheduled system checks are configured and standing by\.?", r"定期システムチェック\1件を待機監視しています。"),
+        (r"scheduled system checks are configured and standing by\.?", "定期システムチェックを待機監視しています。"),
+        (r"reviewing repository activity and preparing implementation work\.?", "実装や更新に向けて、リポジトリの動きを確認しています。"),
+        (r"monitoring scheduled checks and system health\.?", "定期チェックとシステム状態を確認しています。"),
+        (r"collecting public information and drafting a summary\.?", "公開可能な情報を整理し、要点をまとめています。"),
+        (r"Universal worker is handling a task that did not match a dedicated role\.?", "専用ルートに当てはまらない作業を処理しています。"),
+        (r"is processing a routed task\.?", "担当タスクを処理しています。"),
+    ]
+    for pattern, replacement in rewrites:
+        text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
 def normalize_internal_state(value: str | None) -> str:
     state = str(value or "idle").strip().lower() or "idle"
     if state in INTERNAL_AGENT_STATES:
