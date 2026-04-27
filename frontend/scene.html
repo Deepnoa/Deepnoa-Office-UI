@@ -691,6 +691,28 @@
       word-break: break-word;
     }
 
+    .capabilities-list {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: grid;
+      gap: 6px;
+    }
+
+    .capability-item {
+      font-size: 11px;
+      line-height: 1.4;
+      color: var(--color-public-copy-support);
+      display: flex;
+      gap: 6px;
+    }
+
+    .capability-item::before {
+      content: "•";
+      color: var(--accent);
+      flex: 0 0 auto;
+    }
+
     .is-hidden {
       display: none !important;
     }
@@ -843,6 +865,37 @@
       line-height: 1.45;
     }
 
+    .ops-router-task {
+      margin-top: 10px;
+      padding: 9px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(126, 226, 194, 0.22);
+      background: rgba(126, 226, 194, 0.08);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .ops-router-task-head {
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .ops-router-task-body {
+      color: var(--color-text);
+      word-break: break-word;
+    }
+
+    .ops-router-task-meta {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
     .ops-agent-grid {
       display: flex;
       flex-direction: column;
@@ -870,6 +923,11 @@
     .aom-node.is-selected {
       border-color: rgba(126, 226, 194, 0.45);
       box-shadow: 0 0 0 1px rgba(126, 226, 194, 0.12);
+    }
+
+    .aom-node.is-assigned {
+      border-color: rgba(126, 226, 194, 0.36);
+      box-shadow: inset 0 0 0 1px rgba(126, 226, 194, 0.1);
     }
 
     .aom-node-head {
@@ -905,6 +963,19 @@
       font-size: 10px;
       font-family: "IBM Plex Mono", monospace;
       color: rgba(158, 178, 206, 0.85);
+    }
+
+    .aom-node-route {
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(126, 226, 194, 0.26);
+      color: #9fe8d0;
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
     }
 
     .ops-review-panel {
@@ -1055,6 +1126,11 @@
             <div class="ops-router-node" id="ops-router-node">
               <div class="ops-router-status" id="ops-router-status">—</div>
               <div class="ops-router-sub" id="ops-router-sub">—</div>
+              <div class="ops-router-task" id="ops-router-task">
+                <div class="ops-router-task-head" data-i18n="map.router.recognized">Recognized task</div>
+                <div class="ops-router-task-body" id="ops-router-task-body">—</div>
+                <div class="ops-router-task-meta" id="ops-router-task-meta">—</div>
+              </div>
             </div>
           </section>
           <div class="ops-flow-arrows ops-flow-arrows--agents" aria-hidden="true">
@@ -1171,12 +1247,17 @@
         "map.router.standby": "受付待機中",
         "map.router.routing": "ルーティング中",
         "map.router.dispatch_ops": "ops へ振分け中",
+        "map.router.recognized": "認識タスク",
+        "map.router.inferred": "public signal から推定",
+        "map.router.assigned": "割当先",
+        "map.router.source": "ソース",
         "map.review.summary": "サマリー",
         "map.review.alerts": "アラート",
         "map.review.approvals": "承認",
         "map.review.blocked": "ブロック",
         "map.review.empty": "公開ペイロードに集約出力がありません。",
         "map.review.active_tasks": "アクティブタスク",
+        "detail.capabilities": "対応可能スキル",
         "role.main": "メイン",
         "role.runner": "ランナー",
         "role.worker": "ワーカー",
@@ -1235,12 +1316,17 @@
         "map.router.standby": "Standing by",
         "map.router.routing": "Routing inbound work",
         "map.router.dispatch_ops": "Dispatching toward ops",
+        "map.router.recognized": "Recognized task",
+        "map.router.inferred": "inferred from public signal",
+        "map.router.assigned": "Assigned",
+        "map.router.source": "Source",
         "map.review.summary": "Summary",
         "map.review.alerts": "Alerts",
         "map.review.approvals": "Approvals",
         "map.review.blocked": "Blocked",
         "map.review.empty": "No aggregate output in the public payload.",
         "map.review.active_tasks": "Active tasks",
+        "detail.capabilities": "Capabilities",
         "role.main": "Main",
         "role.runner": "Runner",
         "role.worker": "Worker",
@@ -1299,12 +1385,17 @@
         "map.router.standby": "待机",
         "map.router.routing": "路由中",
         "map.router.dispatch_ops": "分发至 ops",
+        "map.router.recognized": "识别任务",
+        "map.router.inferred": "由公开信号推断",
+        "map.router.assigned": "已分配",
+        "map.router.source": "来源",
         "map.review.summary": "摘要",
         "map.review.alerts": "告警",
         "map.review.approvals": "审批",
         "map.review.blocked": "阻塞",
         "map.review.empty": "公开负载中无汇总输出。",
         "map.review.active_tasks": "活跃任务",
+        "detail.capabilities": "能力",
         "role.main": "主代理",
         "role.runner": "运行器",
         "role.worker": "工作者",
@@ -1413,6 +1504,53 @@
 
     const VISITOR_DEMO_ENABLED = false;
 
+    const AGENT_CAPABILITIES = {
+      ops: [
+        "system health checks",
+        "queue monitoring",
+        "deployment watch",
+        "contact intake triage",
+        "operational alert review",
+      ],
+      dev: [
+        "code review",
+        "pull request inspection",
+        "frontend/backend implementation support",
+        "deployment log reading",
+      ],
+      research: [
+        "source investigation",
+        "market / technical research",
+        "summary generation",
+        "evidence collection",
+      ],
+      main: [
+        "general routing",
+        "fallback execution",
+        "cross-role coordination",
+      ],
+      runner: [
+        "task execution",
+        "pipeline run support",
+        "command orchestration",
+      ],
+      worker: [
+        "background execution",
+        "retry handling",
+        "job completion reporting",
+      ],
+      universal: [
+        "task intake",
+        "role routing",
+        "handoff coordination",
+        "priority assessment",
+      ],
+      default: [
+        "general task handling",
+        "status reporting",
+      ],
+    };
+
     const sceneState = {
       lang: DEFAULT_LANG,
       agents: [],
@@ -1422,6 +1560,7 @@
       pollHandle: null,
       hoveredKey: null,
       selectedKey: null,
+      assignedRoutingKey: "",
       lastVisitorSignature: "",
       walkmask: {
         ready: false,
@@ -1978,6 +2117,7 @@
             updated_at: agent.updated_at || agent.last_seen || agent.last_update || "",
             source: compactText(agent.source || ""),
             status_label: compactText(agent.status_label || ""),
+            capabilities: getAgentCapabilities(key),
           };
         });
     }
@@ -2034,12 +2174,43 @@
       return out.slice(0, 10);
     }
 
-    function deriveRouterLines(data, agents) {
+    function deriveRecognizedTask(data, agents) {
+      const rows = [...(data.intake || []), ...(data.activity || []), ...(data.recent_work || [])];
+      const first = rows[0] || null;
+      if (!first) {
+        return {
+          text: t("map.incoming.idle", "Waiting for public signals"),
+          source: "",
+          assignedKey: agents[0] ? agents[0].key : "",
+          inferred: true,
+        };
+      }
+
+      const text = compactText(first.title || first.summary || first.detail || first.message || first.type || textBlob(first) || "task");
+      const source = compactText(first.source || first.provenance_label || first.channel || first.origin || classifyIncoming(text, ""));
+      const lc = `${text} ${source}`.toLowerCase();
+      const agentKey =
+        /deploy|runtime|health|alert|formspree|slack|ops/.test(lc) ? "ops"
+        : /github|pr|pull request|code|implementation/.test(lc) ? "dev"
+        : /research|investigation|market|summary/.test(lc) ? "research"
+        : (agents[0] ? agents[0].key : "");
+
+      return {
+        text,
+        source,
+        assignedKey: agentKey,
+        inferred: true,
+      };
+    }
+
+    function deriveRouterLines(data, agents, recognizedTask) {
       const busy = agents.filter((a) => ["executing", "routing", "syncing", "writing", "researching"].includes(a.state));
       const gateway = data.gateway || {};
       const gLine = compactText(gateway.status_label || gateway.summary || gateway.detail || "");
       if (busy.length) {
-        const target = busy.map((a) => a.key).includes("ops") ? "ops" : busy[0].key;
+        const target = recognizedTask && recognizedTask.assignedKey
+          ? recognizedTask.assignedKey
+          : (busy.map((a) => a.key).includes("ops") ? "ops" : busy[0].key);
         const dispatch =
           sceneState.lang === "ja"
             ? `${target} へ振分け中`
@@ -2081,11 +2252,11 @@
       return lines.join("");
     }
 
-    function buildHandoffSteps(chips, agents) {
+    function buildHandoffSteps(chips, agents, assignedKey = "") {
       const steps = [];
       const first = chips[0];
       if (first) steps.push({ text: `${first.label} → Universal`, inferred: true });
-      steps.push({ text: "Universal → ops", inferred: true });
+      steps.push({ text: `Universal → ${assignedKey || "ops"}`, inferred: true });
       const hasGitHub = chips.some((c) => c.label === "GitHub");
       const devBusy = agents.find((a) => a.key === "dev" && ["executing", "writing", "syncing", "researching"].includes(a.state));
       if (hasGitHub && devBusy) steps.push({ text: "GitHub → dev", inferred: true });
@@ -2102,6 +2273,8 @@
       sceneState.agents = agents;
       sceneState.agentMap = new Map(agents.map((a) => [a.key, a]));
       sceneState.visitor = null;
+      const recognizedTask = deriveRecognizedTask(data, agents);
+      sceneState.assignedRoutingKey = recognizedTask.assignedKey || "";
 
       const chips = buildIncomingChips(data);
       const incomingEl = document.getElementById("ops-incoming-chips");
@@ -2115,13 +2288,20 @@
         )
         .join("");
 
-      const router = deriveRouterLines(data, agents);
+      const router = deriveRouterLines(data, agents, recognizedTask);
       document.getElementById("ops-router-status").textContent = router.status;
       document.getElementById("ops-router-sub").textContent = router.sub || "—";
+      document.getElementById("ops-router-task-body").textContent = recognizedTask.text || "—";
+      const routerMeta = [
+        recognizedTask.source ? `${t("map.router.source", "Source")}: ${recognizedTask.source}` : "",
+        recognizedTask.assignedKey ? `${t("map.router.assigned", "Assigned")}: ${recognizedTask.assignedKey}` : "",
+        recognizedTask.inferred ? t("map.router.inferred", "inferred from public signal") : "",
+      ].filter(Boolean).join(" · ");
+      document.getElementById("ops-router-task-meta").textContent = routerMeta || "—";
 
       document.getElementById("ops-review-panel").innerHTML = buildReviewHtml(data);
 
-      const steps = buildHandoffSteps(chips, agents);
+      const steps = buildHandoffSteps(chips, agents, sceneState.assignedRoutingKey);
       document.getElementById("ops-handoff-note").textContent = t("map.handoff.inferred", "Dashed steps are inferred from public signals.");
       document.getElementById("ops-handoff-timeline").innerHTML = steps
         .map(
@@ -2140,14 +2320,16 @@
             if (a.source) metaBits.push(a.source);
             if (a.updated_at) metaBits.push(safeDate(a.updated_at));
             const meta = metaBits.join(" · ");
+            const assignedClass = sceneState.assignedRoutingKey === a.key ? " is-assigned" : "";
             return `
-          <div class="aom-node" data-agent-key="${escapeHtml(a.key)}" role="button" tabindex="0">
+          <div class="aom-node${assignedClass}" data-agent-key="${escapeHtml(a.key)}" role="button" tabindex="0">
             <div class="aom-node-head">
               <span class="aom-node-name">${escapeHtml(a.name)}</span>
               <span class="aom-node-state">${escapeHtml(a.state)}</span>
             </div>
             <div class="aom-node-summary">${escapeHtml(a.displayDetail || a.detail)}</div>
             ${meta ? `<div class="aom-node-meta">${escapeHtml(meta)}</div>` : ""}
+            ${sceneState.assignedRoutingKey === a.key ? `<div class="aom-node-route">Universal → ${escapeHtml(a.key)}</div>` : ""}
           </div>`;
           })
           .join("");
@@ -2180,6 +2362,46 @@
 
     function summarizeAgent(agent) {
       return agent.detail || agent.status_label || agent.summary || agent.state || "idle";
+    }
+
+    function capabilityText(raw) {
+      if (sceneState.lang !== "ja") return raw;
+      const map = {
+        "system health checks": "システム健全性チェック",
+        "queue monitoring": "キューモニタリング",
+        "deployment watch": "デプロイ監視",
+        "contact intake triage": "問い合わせ一次振分け",
+        "operational alert review": "運用アラートレビュー",
+        "code review": "コードレビュー",
+        "pull request inspection": "PR確認",
+        "frontend/backend implementation support": "フロント/バック実装支援",
+        "deployment log reading": "デプロイログ確認",
+        "source investigation": "情報ソース調査",
+        "market / technical research": "市場/技術リサーチ",
+        "summary generation": "要約生成",
+        "evidence collection": "根拠収集",
+        "general routing": "汎用ルーティング",
+        "fallback execution": "フォールバック実行",
+        "cross-role coordination": "ロール横断連携",
+        "task execution": "タスク実行",
+        "pipeline run support": "パイプライン実行補助",
+        "command orchestration": "コマンドオーケストレーション",
+        "background execution": "バックグラウンド実行",
+        "retry handling": "リトライ処理",
+        "job completion reporting": "完了レポート",
+        "task intake": "タスク受付",
+        "role routing": "ロール振り分け",
+        "handoff coordination": "ハンドオフ調整",
+        "priority assessment": "優先度判定",
+        "general task handling": "汎用タスク対応",
+        "status reporting": "状態報告",
+      };
+      return map[raw] || raw;
+    }
+
+    function getAgentCapabilities(key) {
+      const list = AGENT_CAPABILITIES[String(key || "").toLowerCase()] || AGENT_CAPABILITIES.default;
+      return list.map(capabilityText);
     }
 
     function buildSceneAgents(agents) {
@@ -2250,6 +2472,10 @@
           <div class="detail-value">${safeDate(agent.updated_at)}</div>
           ${agent.status_label && agent.status_label !== getEntityStatus(agent) ? `<div class="detail-label">${t("detail.status_label", "Status label")}</div><div class="detail-value">${agent.status_label}</div>` : ""}
           ${agent.source ? `<div class="detail-label">${t("detail.source", "Source")}</div><div class="detail-value">${agent.source}</div>` : ""}
+        </div>
+        <div class="capabilities-list">
+          <div class="detail-label">${t("detail.capabilities", "Capabilities")}</div>
+          ${(agent.capabilities || []).map((item) => `<div class="capability-item">${escapeHtml(item)}</div>`).join("")}
         </div>
       `;
       const closeButton = detail.querySelector(".detail-close");
@@ -2350,6 +2576,7 @@
       sceneState.agentMap = new Map(sceneState.agents.map((a) => [a.key, a]));
       sceneState.visitor = null;
       sceneState.selectedKey = null;
+      sceneState.assignedRoutingKey = "";
       renderTooltip(null);
       renderDetailPanel(null);
       const grid = document.getElementById("ops-agent-grid");
