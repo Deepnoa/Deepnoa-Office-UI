@@ -4,6 +4,7 @@ from datetime import datetime
 import json
 import os
 
+from .runtime_events import LOG_PATH as RUNTIME_EVENTS_LOG_PATH, load_runtime_events
 from .schemas import (
     APPROVAL_LIFECYCLE_RULES,
     CONNECTOR_HEALTH_RULES,
@@ -208,7 +209,7 @@ def normalize_approval_snapshot(event: dict) -> dict:
 
 def normalize_connector_snapshot(*, name: str, status: str, last_sync: str, pending_actions: int, auth_status_summary: str) -> dict:
     normalized_status = str(status or "degraded").strip().lower()
-    if normalized_status not in {"connected", "degraded", "error", "offline"}:
+    if normalized_status not in {"connected", "degraded", "error", "offline", "pending"}:
         normalized_status = "degraded"
     return {
         "name": name,
@@ -231,6 +232,39 @@ def normalize_alert_snapshot(event: dict) -> dict:
         "provenance": event.get("provenance") or "actual",
         "provenance_label": event.get("provenance_label") or normalize_provenance(event.get("provenance") or "actual"),
     }
+
+
+def _latest_runtime_connector_health() -> tuple[str, str, str]:
+    events = load_runtime_events(limit=200)
+    if not events:
+        fallback_sync = _file_mtime(RUNTIME_EVENTS_LOG_PATH)
+        return "pending", fallback_sync, "runtime events unavailable"
+
+    latest_runtime_event = None
+    for event in reversed(events):
+        event_type = str(event.get("event_type") or "").strip().lower()
+        if event_type.startswith("runtime."):
+            latest_runtime_event = event
+            break
+    if latest_runtime_event is None:
+        latest_runtime_event = events[-1]
+
+    event_type = str(latest_runtime_event.get("event_type") or "").strip().lower()
+    runtime_status = str(latest_runtime_event.get("runtime_status") or "").strip().lower()
+    status = str(latest_runtime_event.get("status") or "").strip().lower()
+    exit_code = latest_runtime_event.get("exit_code")
+    last_sync = str(latest_runtime_event.get("timestamp") or "") or _file_mtime(RUNTIME_EVENTS_LOG_PATH)
+
+    if event_type == "runtime.completed" and runtime_status == "completed" and exit_code == 0:
+        return "connected", last_sync, "runtime events healthy"
+    if (
+        event_type in {"runtime.failed", "runtime.permission_denied"}
+        or runtime_status in {"failed", "permission_denied"}
+        or status in {"failed", "permission_denied", "error"}
+        or (exit_code is not None and exit_code != 0)
+    ):
+        return "error", last_sync, f"latest {event_type or 'runtime event'}"
+    return "pending", last_sync, f"latest {event_type or 'runtime event'}"
 
 
 def _sort_items(items: list[dict], key_name: str) -> list[dict]:
@@ -338,17 +372,14 @@ def build_openclaw_bridge_snapshot(
     runtime_rules = CONNECTOR_HEALTH_RULES["openclaw_runtime"]
     cron_rules = CONNECTOR_HEALTH_RULES["openclaw_cron"]
     github_rules = CONNECTOR_HEALTH_RULES["github_worker"]
+    runtime_status, runtime_last_sync, runtime_summary = _latest_runtime_connector_health()
     connectors = [
         normalize_connector_snapshot(
             name="OpenClaw runtime",
-            status=_status_from_age(
-                manager_age_seconds,
-                connected_max=runtime_rules["connected_max_age_seconds"],
-                degraded_max=runtime_rules["degraded_max_age_seconds"],
-            ),
-            last_sync=str(manager_state.get("updated_at") or ""),
+            status=runtime_status,
+            last_sync=runtime_last_sync or str(manager_state.get("updated_at") or ""),
             pending_actions=len([task for task in tasks.values() if task["state"] == "blocked"]) + len([item for item in approvals.values() if item["status"] == "pending"]),
-            auth_status_summary="manager-state events",
+            auth_status_summary=runtime_summary or runtime_rules["source"],
         )
     ]
     cron_jobs = source_catalog["openclaw_cron_jobs"]["jobs"]

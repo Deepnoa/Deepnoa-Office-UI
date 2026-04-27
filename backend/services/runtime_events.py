@@ -5,10 +5,7 @@ import os
 from collections import OrderedDict
 from typing import Any
 
-RUNTIME_EVENTS_PATH = os.environ.get(
-    "OPENCLAW_RUNTIME_EVENTS_PATH",
-    "/home/deepnoa/openclaw/runs/runtime-events.jsonl",
-)
+LOG_PATH = "/home/deepnoa/openclaw/runs/runtime-events.jsonl"
 MAX_RUNTIME_EVENTS = 100
 
 
@@ -27,12 +24,12 @@ def _normalize_event(raw: dict[str, Any]) -> dict[str, Any]:
 
 
 def load_runtime_events(limit: int = MAX_RUNTIME_EVENTS) -> list[dict[str, Any]]:
-    if not os.path.exists(RUNTIME_EVENTS_PATH):
+    if not os.path.exists(LOG_PATH):
         return []
 
     rows: list[dict[str, Any]] = []
     try:
-        with open(RUNTIME_EVENTS_PATH, "r", encoding="utf-8") as f:
+        with open(LOG_PATH, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
