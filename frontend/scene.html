@@ -115,10 +115,13 @@
     }
 
     .background-layer {
-      background:
-        linear-gradient(180deg, rgba(8, 14, 25, 0.08), rgba(8, 14, 25, 0.36)),
-        url('/static/office_bg_small.webp?v={{VERSION_TIMESTAMP}}') center 46% / 110% auto no-repeat,
-        linear-gradient(180deg, #17263b 0%, #0a121d 100%);
+      background-color: #0a1018;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(12, 22, 36, 0.92) 0%, rgba(6, 10, 16, 0.98) 100%);
+      background-size: 48px 48px, 48px 48px, auto;
+      background-position: center;
     }
 
     .background-layer::after {
@@ -439,7 +442,7 @@
     }
 
     .ui-layer {
-      z-index: 3;
+      z-index: 8;
       pointer-events: none;
     }
 
@@ -688,8 +691,367 @@
       word-break: break-word;
     }
 
+    .capabilities-list {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: grid;
+      gap: 6px;
+    }
+
+    .capability-item {
+      font-size: 11px;
+      line-height: 1.4;
+      color: var(--color-public-copy-support);
+      display: flex;
+      gap: 6px;
+    }
+
+    .capability-item::before {
+      content: "•";
+      color: var(--accent);
+      flex: 0 0 auto;
+    }
+
     .is-hidden {
       display: none !important;
+    }
+
+    .scene-shell.scene-ops-map .zone-layer,
+    .scene-shell.scene-ops-map .accent-layer,
+    .scene-shell.scene-ops-map .shadow-layer,
+    .scene-shell.scene-ops-map .sprite-layer,
+    .scene-shell.scene-ops-map .occluder-layer {
+      display: none !important;
+    }
+
+    .ops-map {
+      position: absolute;
+      z-index: 5;
+      left: 18px;
+      right: 18px;
+      top: 92px;
+      bottom: 88px;
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    body.embed-mode .ops-map {
+      top: 80px;
+      bottom: 80px;
+    }
+
+    .ops-map-inner {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .ops-map-flow {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) auto minmax(0, 0.9fr) auto minmax(0, 1.2fr) auto minmax(0, 0.88fr);
+      gap: 8px 6px;
+      align-items: stretch;
+    }
+
+    .ops-col {
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(8, 14, 24, 0.55);
+      backdrop-filter: blur(14px);
+      padding: 12px 14px;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    html[data-theme="light"] .ops-col {
+      background: rgba(255, 255, 255, 0.72);
+      border-color: var(--color-line);
+    }
+
+    .ops-col-title {
+      margin: 0;
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-public-copy-support);
+      font-weight: 600;
+    }
+
+    .ops-chip-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow: auto;
+      min-height: 0;
+      flex: 1;
+    }
+
+    .ops-chip {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    html[data-theme="light"] .ops-chip {
+      background: rgba(15, 23, 42, 0.04);
+      border-color: rgba(15, 23, 42, 0.08);
+    }
+
+    .ops-chip-label {
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+    }
+
+    .ops-chip-sub {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .ops-flow-arrows {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: rgba(255, 255, 255, 0.22);
+      font-size: 14px;
+      user-select: none;
+      padding: 0 2px;
+    }
+
+    .ops-flow-arrows--agents .ops-arrow {
+      margin-top: 18px;
+    }
+
+    .ops-router-node {
+      border-radius: 14px;
+      padding: 14px 16px;
+      border: 1px solid rgba(126, 226, 194, 0.22);
+      background: linear-gradient(145deg, rgba(126, 226, 194, 0.1), rgba(8, 14, 24, 0.5));
+      flex: 1;
+      min-height: 120px;
+    }
+
+    .ops-router-status {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+    }
+
+    .ops-router-sub {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .ops-router-task {
+      margin-top: 10px;
+      padding: 9px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(126, 226, 194, 0.22);
+      background: rgba(126, 226, 194, 0.08);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .ops-router-task-head {
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .ops-router-task-body {
+      color: var(--color-text);
+      word-break: break-word;
+    }
+
+    .ops-router-task-meta {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .ops-agent-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: auto;
+      min-height: 0;
+      flex: 1;
+    }
+
+    .aom-node {
+      text-align: left;
+      border-radius: 12px;
+      padding: 10px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .aom-node:hover {
+      border-color: rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .aom-node.is-selected {
+      border-color: rgba(126, 226, 194, 0.45);
+      box-shadow: 0 0 0 1px rgba(126, 226, 194, 0.12);
+    }
+
+    .aom-node.is-assigned {
+      border-color: rgba(126, 226, 194, 0.36);
+      box-shadow: inset 0 0 0 1px rgba(126, 226, 194, 0.1);
+    }
+
+    .aom-node-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .aom-node-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .aom-node-state {
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .aom-node-summary {
+      font-size: 11px;
+      color: var(--color-public-copy-support);
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .aom-node-meta {
+      margin-top: 6px;
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+      color: rgba(158, 178, 206, 0.85);
+    }
+
+    .aom-node-route {
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(126, 226, 194, 0.26);
+      color: #9fe8d0;
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .ops-review-panel {
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--muted);
+      flex: 1;
+      overflow: auto;
+      min-height: 0;
+    }
+
+    .ops-review-line + .ops-review-line {
+      margin-top: 8px;
+    }
+
+    .ops-timeline-wrap {
+      flex-shrink: 0;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(6, 10, 16, 0.55);
+      padding: 10px 12px;
+    }
+
+    .ops-timeline-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .ops-timeline-title {
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-public-copy-support);
+    }
+
+    .ops-timeline-note {
+      font-size: 10px;
+      color: rgba(158, 178, 206, 0.75);
+    }
+
+    .ops-timeline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .ops-step {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--color-text);
+    }
+
+    .ops-step.is-inferred {
+      border-style: dashed;
+      opacity: 0.88;
+    }
+
+    @media (max-width: 1100px) {
+      .ops-map-flow {
+        grid-template-columns: 1fr;
+      }
+      .ops-flow-arrows {
+        display: none;
+      }
     }
 
     @keyframes walk-bob {
@@ -743,9 +1105,58 @@
   <button type="button" class="theme-toggle scene-theme-fab" data-theme-toggle>
     <span class="theme-toggle__state" aria-hidden="true"></span>
   </button>
-  <main class="scene-shell">
+  <main class="scene-shell scene-ops-map">
     <div class="background-layer"></div>
     <img id="scene-walkmask" src="/static/scene-walkmask.png?v={{VERSION_TIMESTAMP}}" alt="" hidden>
+
+    <div class="ops-map" id="ops-map" aria-label="Agent operations map">
+      <div class="ops-map-inner">
+        <div class="ops-map-flow">
+          <section class="ops-col ops-incoming" aria-labelledby="ops-incoming-h">
+            <h2 class="ops-col-title" id="ops-incoming-h"><span data-i18n="map.incoming.title">Incoming</span></h2>
+            <div class="ops-chip-list" id="ops-incoming-chips"></div>
+          </section>
+          <div class="ops-flow-arrows" aria-hidden="true">
+            <span class="ops-arrow">→</span>
+            <span class="ops-arrow">→</span>
+            <span class="ops-arrow">→</span>
+          </div>
+          <section class="ops-col ops-router" aria-labelledby="ops-router-h">
+            <h2 class="ops-col-title" id="ops-router-h"><span data-i18n="map.router.title">Universal / Router</span></h2>
+            <div class="ops-router-node" id="ops-router-node">
+              <div class="ops-router-status" id="ops-router-status">—</div>
+              <div class="ops-router-sub" id="ops-router-sub">—</div>
+              <div class="ops-router-task" id="ops-router-task">
+                <div class="ops-router-task-head" data-i18n="map.router.recognized">Recognized task</div>
+                <div class="ops-router-task-body" id="ops-router-task-body">—</div>
+                <div class="ops-router-task-meta" id="ops-router-task-meta">—</div>
+              </div>
+            </div>
+          </section>
+          <div class="ops-flow-arrows ops-flow-arrows--agents" aria-hidden="true">
+            <span class="ops-arrow">→</span>
+          </div>
+          <section class="ops-col ops-agents" aria-labelledby="ops-agents-h">
+            <h2 class="ops-col-title" id="ops-agents-h"><span data-i18n="map.agents.title">Agents</span></h2>
+            <div class="ops-agent-grid" id="ops-agent-grid"></div>
+          </section>
+          <div class="ops-flow-arrows" aria-hidden="true">
+            <span class="ops-arrow">→</span>
+          </div>
+          <section class="ops-col ops-review" aria-labelledby="ops-review-h">
+            <h2 class="ops-col-title" id="ops-review-h"><span data-i18n="map.review.title">Review / Output</span></h2>
+            <div class="ops-review-panel" id="ops-review-panel"></div>
+          </section>
+        </div>
+        <div class="ops-timeline-wrap">
+          <div class="ops-timeline-head">
+            <span class="ops-timeline-title" data-i18n="map.timeline.title">Handoff timeline</span>
+            <span class="ops-timeline-note" id="ops-handoff-note"></span>
+          </div>
+          <div class="ops-timeline" id="ops-handoff-timeline" role="list"></div>
+        </div>
+      </div>
+    </div>
 
     <div class="zone-layer" aria-hidden="true">
       <div class="zone work-left"></div>
@@ -818,13 +1229,41 @@
         "status.writing": "作業中",
         "status.error": "異常",
         "detail.placeholder.name": "エージェントを選択",
-        "detail.placeholder.summary": "staff を押すと、いまの役割と作業内容を確認できます。",
+        "detail.placeholder.summary": "エージェントノードを選ぶと詳細を表示します。",
         "detail.role": "役割",
         "detail.status": "状態",
+        "detail.status_label": "ステータス表示",
         "detail.summary": "現在の作業",
         "detail.updated": "最終更新",
         "detail.source": "ソース",
         "detail.close": "閉じる",
+        "map.incoming.title": "入力（Incoming）",
+        "map.router.title": "Universal / Router",
+        "map.agents.title": "エージェント",
+        "map.review.title": "レビュー / 出力",
+        "map.timeline.title": "ハンドオフ",
+        "map.handoff.inferred": "破線ステップは公開シグナルからの推定です。",
+        "map.incoming.idle": "公開シグナル待ち",
+        "map.router.standby": "受付待機中",
+        "map.router.routing": "ルーティング中",
+        "map.router.dispatch_ops": "ops へ振分け中",
+        "map.router.recognized": "認識タスク",
+        "map.router.inferred": "public signal から推定",
+        "map.router.assigned": "割当先",
+        "map.router.source": "ソース",
+        "map.review.summary": "サマリー",
+        "map.review.alerts": "アラート",
+        "map.review.approvals": "承認",
+        "map.review.blocked": "ブロック",
+        "map.review.empty": "公開ペイロードに集約出力がありません。",
+        "map.review.active_tasks": "アクティブタスク",
+        "detail.capabilities": "対応可能スキル",
+        "role.main": "メイン",
+        "role.runner": "ランナー",
+        "role.worker": "ワーカー",
+        "agent.main": "メインエージェント",
+        "agent.runner": "ランナー",
+        "agent.worker": "ワーカー",
         "visitor.name": "来訪者",
         "visitor.role": "社外",
         "visitor.state": "来訪中",
@@ -859,13 +1298,41 @@
         "status.writing": "working",
         "status.error": "error",
         "detail.placeholder.name": "Select an agent",
-        "detail.placeholder.summary": "Click a staff member to see the current role and work summary.",
+        "detail.placeholder.summary": "Select an agent node to see details.",
         "detail.role": "Role",
         "detail.status": "Status",
+        "detail.status_label": "Status label",
         "detail.summary": "Current work",
         "detail.updated": "Updated",
         "detail.source": "Source",
         "detail.close": "Close",
+        "map.incoming.title": "Incoming",
+        "map.router.title": "Universal / Router",
+        "map.agents.title": "Agents",
+        "map.review.title": "Review / Output",
+        "map.timeline.title": "Handoffs",
+        "map.handoff.inferred": "Dashed steps are inferred from public signals.",
+        "map.incoming.idle": "Waiting for public signals",
+        "map.router.standby": "Standing by",
+        "map.router.routing": "Routing inbound work",
+        "map.router.dispatch_ops": "Dispatching toward ops",
+        "map.router.recognized": "Recognized task",
+        "map.router.inferred": "inferred from public signal",
+        "map.router.assigned": "Assigned",
+        "map.router.source": "Source",
+        "map.review.summary": "Summary",
+        "map.review.alerts": "Alerts",
+        "map.review.approvals": "Approvals",
+        "map.review.blocked": "Blocked",
+        "map.review.empty": "No aggregate output in the public payload.",
+        "map.review.active_tasks": "Active tasks",
+        "detail.capabilities": "Capabilities",
+        "role.main": "Main",
+        "role.runner": "Runner",
+        "role.worker": "Worker",
+        "agent.main": "Main agent",
+        "agent.runner": "Runner",
+        "agent.worker": "Worker",
         "visitor.name": "Visitor",
         "visitor.role": "External",
         "visitor.state": "visiting",
@@ -900,13 +1367,41 @@
         "status.writing": "处理中",
         "status.error": "异常",
         "detail.placeholder.name": "选择一个代理",
-        "detail.placeholder.summary": "点击 staff 可查看当前角色和工作摘要。",
+        "detail.placeholder.summary": "点击代理节点查看详情。",
         "detail.role": "角色",
         "detail.status": "状态",
+        "detail.status_label": "状态标签",
         "detail.summary": "当前工作",
         "detail.updated": "更新时间",
         "detail.source": "来源",
         "detail.close": "关闭",
+        "map.incoming.title": "输入",
+        "map.router.title": "Universal / Router",
+        "map.agents.title": "代理",
+        "map.review.title": "审查 / 输出",
+        "map.timeline.title": "交接",
+        "map.handoff.inferred": "虚线步骤由公开信号推断。",
+        "map.incoming.idle": "等待公开信号",
+        "map.router.standby": "待机",
+        "map.router.routing": "路由中",
+        "map.router.dispatch_ops": "分发至 ops",
+        "map.router.recognized": "识别任务",
+        "map.router.inferred": "由公开信号推断",
+        "map.router.assigned": "已分配",
+        "map.router.source": "来源",
+        "map.review.summary": "摘要",
+        "map.review.alerts": "告警",
+        "map.review.approvals": "审批",
+        "map.review.blocked": "阻塞",
+        "map.review.empty": "公开负载中无汇总输出。",
+        "map.review.active_tasks": "活跃任务",
+        "detail.capabilities": "能力",
+        "role.main": "主代理",
+        "role.runner": "运行器",
+        "role.worker": "工作者",
+        "agent.main": "主代理",
+        "agent.runner": "运行器",
+        "agent.worker": "工作者",
         "visitor.name": "来访者",
         "visitor.role": "外部",
         "visitor.state": "来访中",
@@ -1007,6 +1502,55 @@
       supportRoute: ["ops_ring_bottom", "center_south", "entry_inner", "entry_guest_ops", "entry_guest_ops", "entry_inner", "center_south"],
     };
 
+    const VISITOR_DEMO_ENABLED = false;
+
+    const AGENT_CAPABILITIES = {
+      ops: [
+        "system health checks",
+        "queue monitoring",
+        "deployment watch",
+        "contact intake triage",
+        "operational alert review",
+      ],
+      dev: [
+        "code review",
+        "pull request inspection",
+        "frontend/backend implementation support",
+        "deployment log reading",
+      ],
+      research: [
+        "source investigation",
+        "market / technical research",
+        "summary generation",
+        "evidence collection",
+      ],
+      main: [
+        "general routing",
+        "fallback execution",
+        "cross-role coordination",
+      ],
+      runner: [
+        "task execution",
+        "pipeline run support",
+        "command orchestration",
+      ],
+      worker: [
+        "background execution",
+        "retry handling",
+        "job completion reporting",
+      ],
+      universal: [
+        "task intake",
+        "role routing",
+        "handoff coordination",
+        "priority assessment",
+      ],
+      default: [
+        "general task handling",
+        "status reporting",
+      ],
+    };
+
     const sceneState = {
       lang: DEFAULT_LANG,
       agents: [],
@@ -1016,6 +1560,7 @@
       pollHandle: null,
       hoveredKey: null,
       selectedKey: null,
+      assignedRoutingKey: "",
       lastVisitorSignature: "",
       walkmask: {
         ready: false,
@@ -1536,12 +2081,327 @@
 
     function getSceneEntityByKey(key) {
       if (!key) return null;
-      if (key === "visitor") return sceneState.visitor;
       return sceneState.agentMap.get(key) || null;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function buildMapAgents(agents) {
+      const priority = ["ops", "dev", "research", "main", "runner", "worker"];
+      return (agents || [])
+        .filter((agent) => agent.key !== "reception")
+        .sort((a, b) => {
+          const ai = priority.indexOf(a.key);
+          const bi = priority.indexOf(b.key);
+          return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+        })
+        .slice(0, 8)
+        .map((agent, index) => {
+          const key = agent.key || `agent-${index}`;
+          const state = String(agent.state || "idle").toLowerCase();
+          const rawDetail = summarizeAgent(agent);
+          return {
+            key,
+            name: agentDisplayName(key, agent.name || key),
+            roleLabelText: roleLabel(key),
+            state,
+            stateLabelText: compactText(agent.status_label || stateLabel(state)),
+            detail: rawDetail,
+            displayDetail: translateSummary(rawDetail, key, state),
+            updated_at: agent.updated_at || agent.last_seen || agent.last_update || "",
+            source: compactText(agent.source || ""),
+            status_label: compactText(agent.status_label || ""),
+            capabilities: getAgentCapabilities(key),
+          };
+        });
+    }
+
+    function textBlob(row) {
+      if (!row || typeof row !== "object") return "";
+      const parts = [
+        row.type,
+        row.message,
+        row.title,
+        row.summary,
+        row.label,
+        row.name,
+        row.detail,
+        row.description,
+        row.text,
+      ].filter(Boolean);
+      return compactText(parts.join(" "));
+    }
+
+    function classifyIncoming(text, source) {
+      const s = `${text} ${source}`.toLowerCase();
+      if (/formspree|web form|form submission/.test(s)) return "Formspree";
+      if (/\bslack\b/.test(s)) return "Slack";
+      if (/github|pull request|\bpr\b|webhook/.test(s)) return "GitHub";
+      if (/cron|scheduled job|schedule/.test(s)) return "Scheduled";
+      return "Inbound";
+    }
+
+    function buildIncomingChips(data) {
+      const out = [];
+      const seen = new Set();
+      function pushChip(label, sub) {
+        const line = `${label}|${sub}`;
+        if (!sub || seen.has(line) || out.length >= 10) return;
+        seen.add(line);
+        out.push({ label, sub });
+      }
+      const rows = [...(data.intake || []), ...(data.activity || []), ...(data.recent_work || [])].slice(0, 48);
+      for (const row of rows) {
+        const txt = textBlob(row);
+        const src = compactText(row.source || row.provenance_label || row.channel || row.origin || "");
+        const label = classifyIncoming(txt, src);
+        const sub = compactText(row.title || row.summary || row.type || txt.slice(0, 72)) || label;
+        pushChip(label, sub);
+      }
+      for (const sys of (data.systems || []).slice(0, 4)) {
+        const n = compactText(sys.name || sys.id || sys.kind || sys.label || "System");
+        if (n) pushChip("System", n);
+      }
+      if (!out.length) {
+        pushChip("Inbound", t("map.incoming.idle", "Waiting for public signals"));
+      }
+      return out.slice(0, 10);
+    }
+
+    function deriveRecognizedTask(data, agents) {
+      const rows = [...(data.intake || []), ...(data.activity || []), ...(data.recent_work || [])];
+      const first = rows[0] || null;
+      if (!first) {
+        return {
+          text: t("map.incoming.idle", "Waiting for public signals"),
+          source: "",
+          assignedKey: agents[0] ? agents[0].key : "",
+          inferred: true,
+        };
+      }
+
+      const text = compactText(first.title || first.summary || first.detail || first.message || first.type || textBlob(first) || "task");
+      const source = compactText(first.source || first.provenance_label || first.channel || first.origin || classifyIncoming(text, ""));
+      const lc = `${text} ${source}`.toLowerCase();
+      const agentKey =
+        /deploy|runtime|health|alert|formspree|slack|ops/.test(lc) ? "ops"
+        : /github|pr|pull request|code|implementation/.test(lc) ? "dev"
+        : /research|investigation|market|summary/.test(lc) ? "research"
+        : (agents[0] ? agents[0].key : "");
+
+      return {
+        text,
+        source,
+        assignedKey: agentKey,
+        inferred: true,
+      };
+    }
+
+    function deriveRouterLines(data, agents, recognizedTask) {
+      const busy = agents.filter((a) => ["executing", "routing", "syncing", "writing", "researching"].includes(a.state));
+      const gateway = data.gateway || {};
+      const gLine = compactText(gateway.status_label || gateway.summary || gateway.detail || "");
+      if (busy.length) {
+        const target = recognizedTask && recognizedTask.assignedKey
+          ? recognizedTask.assignedKey
+          : (busy.map((a) => a.key).includes("ops") ? "ops" : busy[0].key);
+        const dispatch =
+          sceneState.lang === "ja"
+            ? `${target} へ振分け中`
+            : sceneState.lang === "zh"
+              ? `分发至 ${target}`
+              : `Dispatching toward ${target}`;
+        return {
+          status: t("map.router.routing", "Routing inbound work"),
+          sub: `${dispatch}${gLine ? ` · ${gLine}` : ""}`,
+        };
+      }
+      return {
+        status: t("map.router.standby", "Standing by for inbound work"),
+        sub: gLine || compactText((data.summary && data.summary.status) || ""),
+      };
+    }
+
+    function buildReviewHtml(data) {
+      const s = data.summary || {};
+      const lines = [];
+      if (s.status) {
+        lines.push(`<div class="ops-review-line"><strong>${escapeHtml(t("map.review.summary", "Summary"))}</strong> · ${escapeHtml(String(s.status))}</div>`);
+      }
+      if (s.active_tasks != null) {
+        lines.push(`<div class="ops-review-line">${escapeHtml(t("map.review.active_tasks", "Active tasks"))}: ${escapeHtml(String(s.active_tasks))}</div>`);
+      }
+      if (s.awaiting_approval) {
+        lines.push(`<div class="ops-review-line">${escapeHtml(t("map.review.approvals", "Approvals"))}: ${escapeHtml(String(s.awaiting_approval))}</div>`);
+      }
+      if (s.blocked) {
+        lines.push(`<div class="ops-review-line">${escapeHtml(t("map.review.blocked", "Blocked"))}: ${escapeHtml(String(s.blocked))}</div>`);
+      }
+      if (s.alerts) {
+        lines.push(`<div class="ops-review-line">${escapeHtml(t("map.review.alerts", "Alerts"))}: ${escapeHtml(String(s.alerts))}</div>`);
+      }
+      if (!lines.length) {
+        lines.push(`<div class="ops-review-line">${escapeHtml(t("map.review.empty", "No aggregate output in the public payload."))}</div>`);
+      }
+      return lines.join("");
+    }
+
+    function buildHandoffSteps(chips, agents, assignedKey = "") {
+      const steps = [];
+      const first = chips[0];
+      if (first) steps.push({ text: `${first.label} → Universal`, inferred: true });
+      steps.push({ text: `Universal → ${assignedKey || "ops"}`, inferred: true });
+      const hasGitHub = chips.some((c) => c.label === "GitHub");
+      const devBusy = agents.find((a) => a.key === "dev" && ["executing", "writing", "syncing", "researching"].includes(a.state));
+      if (hasGitHub && devBusy) steps.push({ text: "GitHub → dev", inferred: true });
+      const resBusy = agents.find((a) => a.key === "research" && ["executing", "researching", "writing", "syncing"].includes(a.state));
+      if (resBusy) steps.push({ text: "Universal → research", inferred: true });
+      const idleAgents = agents.filter((a) => a.state === "idle").length;
+      if (agents.length && idleAgents < agents.length) {
+        steps.push({ text: "ops → Review", inferred: true });
+      }
+      return steps.slice(0, 8);
+    }
+
+    function renderOperationsMap(data, agents) {
+      sceneState.agents = agents;
+      sceneState.agentMap = new Map(agents.map((a) => [a.key, a]));
+      sceneState.visitor = null;
+      const recognizedTask = deriveRecognizedTask(data, agents);
+      sceneState.assignedRoutingKey = recognizedTask.assignedKey || "";
+
+      const chips = buildIncomingChips(data);
+      const incomingEl = document.getElementById("ops-incoming-chips");
+      incomingEl.innerHTML = chips
+        .map(
+          (c) => `
+        <div class="ops-chip">
+          <div class="ops-chip-label">${escapeHtml(c.label)}</div>
+          <div class="ops-chip-sub">${escapeHtml(c.sub)}</div>
+        </div>`,
+        )
+        .join("");
+
+      const router = deriveRouterLines(data, agents, recognizedTask);
+      document.getElementById("ops-router-status").textContent = router.status;
+      document.getElementById("ops-router-sub").textContent = router.sub || "—";
+      document.getElementById("ops-router-task-body").textContent = recognizedTask.text || "—";
+      const routerMeta = [
+        recognizedTask.source ? `${t("map.router.source", "Source")}: ${recognizedTask.source}` : "",
+        recognizedTask.assignedKey ? `${t("map.router.assigned", "Assigned")}: ${recognizedTask.assignedKey}` : "",
+        recognizedTask.inferred ? t("map.router.inferred", "inferred from public signal") : "",
+      ].filter(Boolean).join(" · ");
+      document.getElementById("ops-router-task-meta").textContent = routerMeta || "—";
+
+      document.getElementById("ops-review-panel").innerHTML = buildReviewHtml(data);
+
+      const steps = buildHandoffSteps(chips, agents, sceneState.assignedRoutingKey);
+      document.getElementById("ops-handoff-note").textContent = t("map.handoff.inferred", "Dashed steps are inferred from public signals.");
+      document.getElementById("ops-handoff-timeline").innerHTML = steps
+        .map(
+          (s) => `
+        <span class="ops-step${s.inferred ? " is-inferred" : ""}" role="listitem">${escapeHtml(s.text)}</span>`,
+        )
+        .join("");
+
+      const grid = document.getElementById("ops-agent-grid");
+      if (!agents.length) {
+        grid.innerHTML = `<div class="ops-chip-sub">${escapeHtml(t("scene.no_agents", "No visible agents"))}</div>`;
+      } else {
+        grid.innerHTML = agents
+          .map((a) => {
+            const metaBits = [];
+            if (a.source) metaBits.push(a.source);
+            if (a.updated_at) metaBits.push(safeDate(a.updated_at));
+            const meta = metaBits.join(" · ");
+            const assignedClass = sceneState.assignedRoutingKey === a.key ? " is-assigned" : "";
+            return `
+          <div class="aom-node${assignedClass}" data-agent-key="${escapeHtml(a.key)}" role="button" tabindex="0">
+            <div class="aom-node-head">
+              <span class="aom-node-name">${escapeHtml(a.name)}</span>
+              <span class="aom-node-state">${escapeHtml(a.state)}</span>
+            </div>
+            <div class="aom-node-summary">${escapeHtml(a.displayDetail || a.detail)}</div>
+            ${meta ? `<div class="aom-node-meta">${escapeHtml(meta)}</div>` : ""}
+            ${sceneState.assignedRoutingKey === a.key ? `<div class="aom-node-route">Universal → ${escapeHtml(a.key)}</div>` : ""}
+          </div>`;
+          })
+          .join("");
+      }
+
+      const target = document.getElementById("sprite-layer");
+      const shadowTarget = document.getElementById("shadow-layer");
+      if (target) target.innerHTML = "";
+      if (shadowTarget) shadowTarget.innerHTML = "";
+
+      bindOpsMapInteractions();
+      applyI18n();
+      syncLegend();
+      syncSelection();
+    }
+
+    function bindOpsMapInteractions() {
+      const root = document.getElementById("ops-map");
+      if (!root || root.dataset.mapBound === "1") return;
+      root.addEventListener("click", (event) => {
+        const node = event.target.closest(".aom-node");
+        if (node) {
+          const key = node.getAttribute("data-agent-key");
+          sceneState.selectedKey = sceneState.selectedKey === key ? null : key;
+          syncSelection();
+        }
+      });
+      root.dataset.mapBound = "1";
     }
 
     function summarizeAgent(agent) {
       return agent.detail || agent.status_label || agent.summary || agent.state || "idle";
+    }
+
+    function capabilityText(raw) {
+      if (sceneState.lang !== "ja") return raw;
+      const map = {
+        "system health checks": "システム健全性チェック",
+        "queue monitoring": "キューモニタリング",
+        "deployment watch": "デプロイ監視",
+        "contact intake triage": "問い合わせ一次振分け",
+        "operational alert review": "運用アラートレビュー",
+        "code review": "コードレビュー",
+        "pull request inspection": "PR確認",
+        "frontend/backend implementation support": "フロント/バック実装支援",
+        "deployment log reading": "デプロイログ確認",
+        "source investigation": "情報ソース調査",
+        "market / technical research": "市場/技術リサーチ",
+        "summary generation": "要約生成",
+        "evidence collection": "根拠収集",
+        "general routing": "汎用ルーティング",
+        "fallback execution": "フォールバック実行",
+        "cross-role coordination": "ロール横断連携",
+        "task execution": "タスク実行",
+        "pipeline run support": "パイプライン実行補助",
+        "command orchestration": "コマンドオーケストレーション",
+        "background execution": "バックグラウンド実行",
+        "retry handling": "リトライ処理",
+        "job completion reporting": "完了レポート",
+        "task intake": "タスク受付",
+        "role routing": "ロール振り分け",
+        "handoff coordination": "ハンドオフ調整",
+        "priority assessment": "優先度判定",
+        "general task handling": "汎用タスク対応",
+        "status reporting": "状態報告",
+      };
+      return map[raw] || raw;
+    }
+
+    function getAgentCapabilities(key) {
+      const list = AGENT_CAPABILITIES[String(key || "").toLowerCase()] || AGENT_CAPABILITIES.default;
+      return list.map(capabilityText);
     }
 
     function buildSceneAgents(agents) {
@@ -1584,7 +2444,7 @@
         detail.classList.add("is-empty");
         detail.innerHTML = `
           <div class="detail-name">${t("detail.placeholder.name", "Select an agent")}</div>
-          <div class="detail-summary">${t("detail.placeholder.summary", "Click a staff member to see the current role and work summary.")}</div>
+          <div class="detail-summary">${t("detail.placeholder.summary", "Select an agent node to see details.")}</div>
         `;
         return;
       }
@@ -1610,7 +2470,12 @@
           <div class="detail-value">${agent.displayDetail || agent.detail}</div>
           <div class="detail-label">${t("detail.updated", "Updated")}</div>
           <div class="detail-value">${safeDate(agent.updated_at)}</div>
+          ${agent.status_label && agent.status_label !== getEntityStatus(agent) ? `<div class="detail-label">${t("detail.status_label", "Status label")}</div><div class="detail-value">${agent.status_label}</div>` : ""}
           ${agent.source ? `<div class="detail-label">${t("detail.source", "Source")}</div><div class="detail-value">${agent.source}</div>` : ""}
+        </div>
+        <div class="capabilities-list">
+          <div class="detail-label">${t("detail.capabilities", "Capabilities")}</div>
+          ${(agent.capabilities || []).map((item) => `<div class="capability-item">${escapeHtml(item)}</div>`).join("")}
         </div>
       `;
       const closeButton = detail.querySelector(".detail-close");
@@ -1654,9 +2519,9 @@
           agent.node.classList.toggle("is-selected", sceneState.selectedKey === agent.key);
         }
       }
-      if (sceneState.visitor && sceneState.visitor.node) {
-        sceneState.visitor.node.classList.toggle("is-selected", sceneState.selectedKey === "visitor");
-      }
+      document.querySelectorAll(".aom-node").forEach((el) => {
+        el.classList.toggle("is-selected", sceneState.selectedKey === el.getAttribute("data-agent-key"));
+      });
       const selected = getSceneEntityByKey(sceneState.selectedKey);
       renderDetailPanel(selected || null);
     }
@@ -1692,32 +2557,9 @@
           syncSelection();
         });
       }
-      if (sceneState.visitor && sceneState.visitor.node && !sceneState.visitor.node.dataset.bound) {
-        sceneState.visitor.node.addEventListener("pointerenter", () => {
-          if (!sceneState.visitor || !sceneState.visitor.active) return;
-          sceneState.hoveredKey = "visitor";
-          renderTooltip(sceneState.visitor, sceneState.visitor.lastScreenPoint || { x: 120, y: 120 });
-        });
-        sceneState.visitor.node.addEventListener("pointerleave", () => {
-          if (sceneState.hoveredKey === "visitor") {
-            sceneState.hoveredKey = null;
-            renderTooltip(null);
-          }
-        });
-        sceneState.visitor.node.addEventListener("click", () => {
-          if (!sceneState.visitor || !sceneState.visitor.active) return;
-          sceneState.selectedKey = sceneState.selectedKey === "visitor" ? null : "visitor";
-          if (sceneState.selectedKey) {
-            sceneState.hoveredKey = null;
-            renderTooltip(null);
-          }
-          syncSelection();
-        });
-        sceneState.visitor.node.dataset.bound = "1";
-      }
       if (shell && !shell.dataset.detailBound) {
         shell.addEventListener("click", (event) => {
-          if (event.target.closest(".agent") || event.target.closest(".scene-detail")) return;
+          if (event.target.closest(".agent") || event.target.closest(".scene-detail") || event.target.closest(".aom-node")) return;
           sceneState.selectedKey = null;
           syncSelection();
         });
@@ -1728,74 +2570,25 @@
     function renderAgents(agents) {
       const target = document.getElementById("sprite-layer");
       const shadowTarget = document.getElementById("shadow-layer");
-      if (!agents.length) {
-        target.innerHTML = `<div class="scene-brand" style="top:auto; bottom:76px; left:16px; max-width:280px;">${t("scene.no_agents", "No visible agents")}</div>`;
-        shadowTarget.innerHTML = "";
-        sceneState.agents = [];
-        sceneState.agentMap = new Map();
-        renderTooltip(null);
-        renderDetailPanel(null);
-        return;
+      if (target) target.innerHTML = "";
+      if (shadowTarget) shadowTarget.innerHTML = "";
+      sceneState.agents = Array.isArray(agents) ? agents : [];
+      sceneState.agentMap = new Map(sceneState.agents.map((a) => [a.key, a]));
+      sceneState.visitor = null;
+      sceneState.selectedKey = null;
+      sceneState.assignedRoutingKey = "";
+      renderTooltip(null);
+      renderDetailPanel(null);
+      const grid = document.getElementById("ops-agent-grid");
+      if (grid) {
+        grid.innerHTML = `<div class="ops-chip-sub">${escapeHtml(t("scene.no_agents", "No visible agents"))}</div>`;
       }
-      shadowTarget.innerHTML = agents.map((agent) => `
-        <div class="agent-shadow" data-shadow-key="${agent.key}"></div>
-      `).join("") + `
-        <div class="agent-shadow is-hidden" data-shadow-key="visitor"></div>
-      `;
-      target.innerHTML = agents.map((agent) => `
-        <div class="agent ${roleClass(agent.key)} ${stateClass(agent.state)}" data-agent-key="${agent.key}" title="${agent.name} · ${stateLabel(agent.state)}" style="--state-color:${stateColor(agent.state)}">
-          <span class="state-glow"></span>
-          <span class="agent-badge"></span>
-          <span class="staff">
-            <span class="staff-part staff-head"></span>
-            <span class="staff-part staff-hair"></span>
-            <span class="staff-part staff-body"></span>
-            <span class="staff-part staff-accent"></span>
-            <span class="staff-part staff-feet"></span>
-          </span>
-        </div>
-      `).join("") + `
-        <div class="agent role-visitor is-hidden" data-agent-key="visitor" title="${t("visitor.name", "Visitor")}">
-          <span class="agent-badge"></span>
-          <span class="staff">
-            <span class="staff-part staff-head"></span>
-            <span class="staff-part staff-hair"></span>
-            <span class="staff-part staff-body"></span>
-            <span class="staff-part staff-accent"></span>
-            <span class="staff-part staff-feet"></span>
-          </span>
-        </div>
-      `;
-      sceneState.agents = agents.map((agent) => ({
-        ...agent,
-        node: target.querySelector(`[data-agent-key="${agent.key}"]`),
-        shadowNode: shadowTarget.querySelector(`[data-shadow-key="${agent.key}"]`),
-      }));
-      sceneState.agentMap = new Map(sceneState.agents.map((agent) => [agent.key, agent]));
-      sceneState.visitor = {
-        key: "visitor",
-        kind: "visitor",
-        active: false,
-        name: t("visitor.name", "Visitor"),
-        roleLabelText: t("visitor.role", "External"),
-        stateLabelText: t("visitor.state", "visiting"),
-        displayDetail: t("visitor.summary.inquiry", "making an inquiry"),
-        node: target.querySelector('[data-agent-key="visitor"]'),
-        shadowNode: shadowTarget.querySelector('[data-shadow-key="visitor"]'),
-        stateColorValue: "#9eb4d4",
-        updated_at: "",
-      };
-      if (sceneState.selectedKey && !sceneState.agentMap.has(sceneState.selectedKey)) {
-        if (sceneState.selectedKey !== "visitor") {
-          sceneState.selectedKey = null;
-        }
-      }
-      bindAgentInteractions();
       syncLegend();
       syncSelection();
     }
 
     function applyVisitorEvent(nowSeconds) {
+      if (!VISITOR_DEMO_ENABLED) return;
       const visitor = sceneState.visitor;
       const scenario = getVisitorScenario(nowSeconds);
       const ops = sceneState.agentMap.get("ops");
@@ -1850,50 +2643,10 @@
     }
 
     function ensureAnimation() {
-      if (sceneState.frameHandle) return;
-      const tick = (ts) => {
-        const shell = document.querySelector(".scene-shell");
-        const width = shell ? shell.clientWidth : 0;
-        const height = shell ? shell.clientHeight : 0;
-        const time = ts / 1000;
-        applyVisitorEvent(Date.now() / 1000);
-        for (const agent of sceneState.agents) {
-          if (!agent.node || !width || !height) continue;
-          const next = motion(agent, time);
-          const x = width * next.x;
-          const y = height * next.y;
-          agent.node.style.transform = `translate(${x}px, ${y}px)`;
-          agent.node.style.zIndex = String(Math.round(y));
-          agent.lastScreenPoint = { x, y };
-          if (agent.shadowNode) {
-            agent.shadowNode.style.transform = `translate(${x}px, ${y + 13}px)`;
-            agent.shadowNode.style.opacity = next.paused ? "0.85" : "0.7";
-          }
-          agent.node.classList.toggle("is-paused", !!next.paused);
-          if (sceneState.hoveredKey === agent.key) {
-            renderTooltip(agent, agent.lastScreenPoint);
-          }
-        }
-        if (sceneState.visitor && sceneState.visitor.node && width && height) {
-          if (sceneState.visitor.active && sceneState.visitor.point) {
-            const x = width * sceneState.visitor.point.x;
-            const y = height * sceneState.visitor.point.y;
-            sceneState.visitor.node.style.transform = `translate(${x}px, ${y}px)`;
-            sceneState.visitor.node.style.zIndex = String(Math.round(y));
-            sceneState.visitor.lastScreenPoint = { x, y };
-            sceneState.visitor.shadowNode.style.transform = `translate(${x}px, ${y + 12}px)`;
-            sceneState.visitor.shadowNode.style.opacity = "0.56";
-            if (sceneState.hoveredKey === "visitor") {
-              renderTooltip(sceneState.visitor, sceneState.visitor.lastScreenPoint);
-            }
-          } else {
-            sceneState.visitor.node.classList.add("is-hidden");
-            sceneState.visitor.shadowNode.classList.add("is-hidden");
-          }
-        }
-        sceneState.frameHandle = window.requestAnimationFrame(tick);
-      };
-      sceneState.frameHandle = window.requestAnimationFrame(tick);
+      if (sceneState.frameHandle) {
+        window.cancelAnimationFrame(sceneState.frameHandle);
+        sceneState.frameHandle = null;
+      }
     }
 
     async function loadPublicState() {
@@ -1906,9 +2659,9 @@
 
     async function refreshScene() {
       try {
-        await ensureWalkmaskLoaded();
         const data = await loadPublicState();
-        renderAgents(buildSceneAgents(data.agents || []));
+        const agents = buildMapAgents(data.agents || []);
+        renderOperationsMap(data, agents);
         document.getElementById("live-sub").textContent = `${t("scene.updated", "Updated")} ${safeDate(data.health && data.health.latest_update)}`;
       } catch (error) {
         document.getElementById("live-sub").textContent = t("scene.loading", "Loading office scene…");
