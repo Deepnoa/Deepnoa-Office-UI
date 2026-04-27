@@ -8,22 +8,29 @@
   <title>Deepnoa AI Office Scene</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles/tokens.css">
   <style>
     :root {
       --bg: var(--color-scene-embed-bg);
-      --surface: rgba(10, 18, 30, 0.42);
+      --surface: rgba(9, 16, 28, 0.5);
       --surface-line: rgba(255, 255, 255, 0.1);
       --text: var(--color-text);
       --muted: var(--color-muted);
       --accent: var(--color-public-accent);
       --danger: var(--color-danger);
-      --scene-shadow: 0 34px 90px rgba(0, 0, 0, 0.35);
+      --scene-shadow: 0 38px 110px rgba(0, 0, 0, 0.4);
+      --scene-shell-line: rgba(255,255,255,0.08);
+      --scene-copy: rgba(225, 236, 249, 0.84);
+      --scene-copy-soft: rgba(213, 228, 251, 0.68);
+      --scene-chip: rgba(255,255,255,0.05);
     }
 
     html[data-theme="light"] {
-      --scene-shadow: 0 24px 56px rgba(15, 23, 42, 0.12);
+      --scene-shadow: 0 26px 64px rgba(15, 23, 42, 0.12);
+      --scene-copy: #334155;
+      --scene-copy-soft: #64748b;
+      --scene-chip: rgba(15, 23, 42, 0.05);
     }
 
     * { box-sizing: border-box; }
@@ -42,9 +49,10 @@
       min-height: 100%;
       background:
         radial-gradient(circle at top left, var(--color-scene-radial), transparent 30%),
+        radial-gradient(circle at 82% 12%, rgba(126, 226, 194, 0.09), transparent 24%),
         linear-gradient(180deg, var(--color-scene-grad-top) 0%, var(--color-scene-grad-bottom) 100%);
       color: var(--text);
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Manrope", sans-serif;
     }
 
     body {
@@ -63,11 +71,12 @@
       width: min(100%, 1440px);
       aspect-ratio: 16 / 9;
       min-height: min(100vh - calc(var(--space-public-shell-x) * 2), 420px);
-      border-radius: 28px;
+      border-radius: 32px;
       overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.09);
+      border: 1px solid var(--scene-shell-line);
       box-shadow: var(--scene-shadow);
       background: var(--color-scene-canvas);
+      isolation: isolate;
     }
 
     body.embed-mode .scene-shell {
@@ -83,7 +92,8 @@
     }
     html[data-theme="light"] .scene-brand,
     html[data-theme="light"] .scene-live,
-    html[data-theme="light"] .scene-legend {
+    html[data-theme="light"] .scene-legend,
+    html[data-theme="light"] .live-metric {
       background: var(--color-panel);
       border-color: var(--color-line);
       box-shadow: var(--shadow-surface-sm);
@@ -102,8 +112,23 @@
       background: var(--color-panel-2);
       box-shadow: 0 0 0 1px var(--color-line) inset;
     }
+    html[data-theme="light"] .scene-zone::after,
+    html[data-theme="light"] .live-label,
+    html[data-theme="light"] .scene-kicker,
+    html[data-theme="light"] .scene-copy,
+    html[data-theme="light"] .live-note,
+    html[data-theme="light"] .live-detail,
+    html[data-theme="light"] .scene-subtitle {
+      color: var(--scene-copy-soft);
+    }
+    html[data-theme="light"] .live-pill,
+    html[data-theme="light"] .live-value,
+    html[data-theme="light"] .scene-title {
+      color: var(--color-text);
+    }
 
     .background-layer,
+    .atmosphere-layer,
     .zone-layer,
     .accent-layer,
     .shadow-layer,
@@ -116,9 +141,10 @@
 
     .background-layer {
       background:
-        linear-gradient(180deg, rgba(8, 14, 25, 0.08), rgba(8, 14, 25, 0.36)),
-        url('/static/office_bg_small.webp?v={{VERSION_TIMESTAMP}}') center 46% / 110% auto no-repeat,
+        linear-gradient(180deg, rgba(7, 12, 22, 0.04), rgba(7, 12, 22, 0.42)),
+        url('/static/office_bg_small.webp?v={{VERSION_TIMESTAMP}}') center 46% / 112% auto no-repeat,
         linear-gradient(180deg, #17263b 0%, #0a121d 100%);
+      transform: scale(1.01);
     }
 
     .background-layer::after {
@@ -128,21 +154,63 @@
       background:
         radial-gradient(circle at 18% 18%, rgba(126, 226, 194, 0.14), transparent 21%),
         radial-gradient(circle at 84% 20%, rgba(94, 145, 255, 0.16), transparent 18%),
-        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02) 35%, rgba(3,7,12,0.18));
+        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015) 32%, rgba(3,7,12,0.24));
       pointer-events: none;
+    }
+
+    .atmosphere-layer {
+      pointer-events: none;
+      z-index: 1;
+      background:
+        radial-gradient(circle at 50% 100%, rgba(10, 17, 27, 0.42), transparent 46%),
+        linear-gradient(180deg, rgba(255,255,255,0.045), transparent 20%, transparent 82%, rgba(255,255,255,0.03)),
+        linear-gradient(90deg, rgba(255,255,255,0.035), transparent 28%, transparent 72%, rgba(255,255,255,0.035));
+      mix-blend-mode: screen;
+      opacity: 0.78;
+    }
+
+    .atmosphere-layer::before,
+    .atmosphere-layer::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .atmosphere-layer::before {
+      background:
+        radial-gradient(circle at 18% 78%, rgba(255, 211, 120, 0.08), transparent 16%),
+        radial-gradient(circle at 52% 24%, rgba(126, 226, 194, 0.07), transparent 15%),
+        radial-gradient(circle at 78% 68%, rgba(94, 145, 255, 0.08), transparent 16%);
+      animation: ambientDrift 18s ease-in-out infinite alternate;
+    }
+
+    .atmosphere-layer::after {
+      background: linear-gradient(180deg, rgba(7, 12, 20, 0), rgba(7, 12, 20, 0.08) 76%, rgba(7, 12, 20, 0.24));
     }
 
     .zone-layer {
       pointer-events: none;
-      opacity: 0.018;
+      opacity: 0.045;
     }
 
     .zone {
       position: absolute;
       border-radius: 28px;
-      border: 1px solid rgba(116, 150, 196, 0.1);
-      background: rgba(255, 255, 255, 0.03);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+      border: 1px solid rgba(116, 150, 196, 0.08);
+      background: rgba(255, 255, 255, 0.02);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.025);
+    }
+
+    .zone::after {
+      content: attr(data-zone);
+      position: absolute;
+      top: 11px;
+      left: 13px;
+      color: rgba(220, 232, 248, 0.52);
+      font: 500 10px "IBM Plex Mono", monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
 
     .zone.walkway {
@@ -191,16 +259,18 @@
 
     .accent-layer {
       pointer-events: none;
+      z-index: 2;
       background:
         radial-gradient(circle at 22% 72%, rgba(255, 221, 139, 0.07), transparent 14%),
         radial-gradient(circle at 49% 28%, rgba(126, 226, 194, 0.08), transparent 14%),
         radial-gradient(circle at 74% 70%, rgba(110, 160, 255, 0.08), transparent 14%);
       mix-blend-mode: screen;
+      animation: glowShift 16s ease-in-out infinite alternate;
     }
 
     .shadow-layer {
       overflow: hidden;
-      z-index: 2;
+      z-index: 3;
       pointer-events: none;
     }
 
@@ -210,19 +280,19 @@
       height: 8px;
       transform: translate(-50%, -50%);
       border-radius: 999px;
-      background: rgba(72, 96, 133, 0.16);
-      filter: blur(1.6px);
+      background: rgba(72, 96, 133, 0.18);
+      filter: blur(2px);
       will-change: transform;
     }
 
     .sprite-layer {
       overflow: hidden;
-      z-index: 3;
+      z-index: 4;
       pointer-events: auto;
     }
 
     .occluder-layer {
-      z-index: 4;
+      z-index: 5;
       pointer-events: none;
     }
 
@@ -278,7 +348,7 @@
 
     .agent {
       position: absolute;
-      width: 72px;
+      width: 74px;
       transform: translate(-50%, -50%);
       text-align: center;
       will-change: transform;
@@ -286,12 +356,12 @@
       z-index: 1;
       pointer-events: auto;
       cursor: pointer;
-      transition: filter 140ms ease, opacity 140ms ease;
+      transition: filter 160ms ease, opacity 160ms ease;
     }
 
     .agent:hover,
     .agent.is-selected {
-      filter: brightness(1.03);
+      filter: brightness(1.05) saturate(1.04);
     }
 
     .staff {
@@ -299,13 +369,13 @@
       width: 32px;
       height: 42px;
       margin: 0 auto;
-      filter: drop-shadow(0 6px 10px rgba(34, 50, 78, 0.16));
-      animation: walk-bob 1s ease-in-out infinite;
+      filter: drop-shadow(0 8px 12px rgba(34, 50, 78, 0.18));
+      animation: walk-bob 1.28s ease-in-out infinite;
     }
 
     .agent.is-paused .staff,
     .agent.is-error .staff {
-      animation: paused-breathe 2.8s ease-in-out infinite;
+      animation: paused-breathe 3.8s ease-in-out infinite;
     }
 
     .agent.is-error .staff {
@@ -405,13 +475,14 @@
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 58px;
-      height: 58px;
+      width: 66px;
+      height: 66px;
       transform: translate(-50%, -50%);
       border-radius: 999px;
-      background: radial-gradient(circle, rgba(255,255,255,0.16), transparent 65%);
+      background: radial-gradient(circle, rgba(255,255,255,0.18), transparent 68%);
       opacity: 0;
       pointer-events: none;
+      transition: opacity 180ms ease;
     }
 
     .agent-badge {
@@ -429,17 +500,17 @@
 
     .agent.is-researching .state-glow,
     .agent.is-syncing .state-glow {
-      opacity: 0.6;
+      opacity: 0.54;
     }
 
     .agent.is-error .state-glow {
-      opacity: 0.8;
+      opacity: 0.74;
       background: radial-gradient(circle, rgba(255, 107, 125, 0.28), transparent 68%);
       animation: error-pulse 1.1s ease-in-out infinite;
     }
 
     .ui-layer {
-      z-index: 3;
+      z-index: 6;
       pointer-events: none;
     }
 
@@ -447,60 +518,70 @@
     .scene-live,
     .scene-legend {
       position: absolute;
-      border-radius: 16px;
+      border-radius: 20px;
       border: 1px solid var(--surface-line);
       background: var(--surface);
-      backdrop-filter: blur(16px);
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
     }
 
     .scene-brand {
-      top: 16px;
-      left: 16px;
-      padding: 9px 11px;
-      max-width: min(34vw, 260px);
+      top: 20px;
+      left: 20px;
+      padding: 16px 18px;
+      max-width: min(38vw, 390px);
     }
 
     .scene-kicker {
       color: var(--accent);
       font-size: 10px;
       font-family: "IBM Plex Mono", monospace;
-      letter-spacing: var(--font-public-eyebrow-spacing);
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      margin-bottom: 4px;
+      margin-bottom: 8px;
     }
 
     .scene-title {
-      font-size: clamp(15px, 1.7vw, 20px);
-      font-weight: var(--font-public-title-weight);
-      line-height: 1.05;
+      font-size: clamp(20px, 2.2vw, 32px);
+      font-weight: 800;
+      line-height: 1.04;
+      letter-spacing: -0.04em;
       margin: 0;
     }
 
     .scene-subtitle {
-      color: var(--color-public-copy-soft);
-      font-size: 11px;
-      line-height: 1.35;
-      margin-top: 3px;
+      color: var(--scene-copy);
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 8px;
+      max-width: 34ch;
+    }
+
+    .scene-copy {
+      margin-top: 10px;
+      color: var(--scene-copy-soft);
+      font-size: 12px;
+      line-height: 1.6;
+      max-width: 42ch;
     }
 
     .scene-legend {
-      left: 16px;
-      bottom: 16px;
-      padding: 7px 9px;
+      left: 20px;
+      bottom: 20px;
+      padding: 10px 12px;
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      max-width: min(72vw, 560px);
+      max-width: min(72vw, 620px);
     }
 
     .legend-chip {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 7px;
+      padding: 5px 8px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.04);
+      background: var(--scene-chip);
       color: var(--muted);
       font-size: 10px;
       font-family: "IBM Plex Mono", monospace;
@@ -526,11 +607,11 @@
     }
 
     .scene-live {
-      right: 16px;
-      bottom: 16px;
-      padding: 8px 10px;
-      text-align: right;
-      min-width: 118px;
+      right: 20px;
+      top: 20px;
+      padding: 16px 18px;
+      width: min(340px, calc(100% - 40px));
+      text-align: left;
     }
 
     .live-pill {
@@ -555,35 +636,94 @@
     }
 
     .live-sub {
-      margin-top: 6px;
+      margin-top: 8px;
       color: var(--muted);
       font-size: 10px;
       font-family: "IBM Plex Mono", monospace;
     }
 
+    .live-label {
+      margin-top: 14px;
+      color: var(--scene-copy-soft);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .live-value {
+      margin-top: 6px;
+      font-size: 28px;
+      line-height: 1;
+      letter-spacing: -0.05em;
+      font-weight: 800;
+    }
+
+    .live-grid {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .live-metric {
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.035);
+      padding: 10px 11px;
+    }
+
+    .metric-mini-label {
+      color: var(--muted);
+      font: 500 10px "IBM Plex Mono", monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .metric-mini-value {
+      margin-top: 6px;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .live-detail {
+      margin-top: 5px;
+      color: var(--scene-copy-soft);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .live-note {
+      margin-top: 12px;
+      color: var(--scene-copy-soft);
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
     .scene-tooltip,
     .scene-detail {
       position: absolute;
-      border-radius: 16px;
+      border-radius: 18px;
       border: 1px solid var(--surface-line);
-      background: rgba(8, 14, 24, 0.76);
-      backdrop-filter: blur(16px);
+      background: rgba(8, 14, 24, 0.8);
+      backdrop-filter: blur(18px);
       box-shadow: 0 20px 45px rgba(0, 0, 0, 0.26);
       pointer-events: none;
     }
 
     .scene-tooltip {
       z-index: 6;
-      min-width: 170px;
-      max-width: 240px;
-      padding: 9px 11px;
+      min-width: 180px;
+      max-width: 250px;
+      padding: 10px 12px;
       opacity: 0;
-      transform: translate(-50%, -120%);
-      transition: opacity 120ms ease;
+      transform: translate(-50%, -118%);
+      transition: opacity 120ms ease, transform 120ms ease;
     }
 
     .scene-tooltip.is-visible {
       opacity: 1;
+      transform: translate(-50%, -122%);
     }
 
     .tooltip-name,
@@ -633,15 +773,15 @@
 
     .scene-detail {
       z-index: 5;
-      right: 16px;
-      top: 16px;
-      width: min(290px, calc(100% - 32px));
-      padding: 12px 13px;
+      right: 20px;
+      bottom: 20px;
+      width: min(330px, calc(100% - 40px));
+      padding: 14px 15px;
       pointer-events: auto;
     }
 
     .scene-detail.is-empty {
-      opacity: 0.84;
+      opacity: 0.9;
     }
 
     .detail-head {
@@ -667,8 +807,8 @@
     .detail-grid {
       display: grid;
       grid-template-columns: 78px 1fr;
-      gap: 6px 10px;
-      margin-top: 10px;
+      gap: 7px 10px;
+      margin-top: 12px;
       font-size: 11px;
       line-height: 1.45;
       color: var(--muted);
@@ -688,18 +828,25 @@
       word-break: break-word;
     }
 
+    .scene-divider {
+      width: 100%;
+      height: 1px;
+      margin: 10px 0;
+      background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0));
+    }
+
     .is-hidden {
       display: none !important;
     }
 
     @keyframes walk-bob {
       0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-1px); }
+      50% { transform: translateY(-1.5px); }
     }
 
     @keyframes paused-breathe {
       0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-0.5px); }
+      50% { transform: translateY(-0.6px); }
     }
 
     @keyframes live-blink {
@@ -710,6 +857,16 @@
     @keyframes error-pulse {
       0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.82; }
       50% { transform: translate(-50%, -50%) scale(1.06); opacity: 0.56; }
+    }
+
+    @keyframes ambientDrift {
+      0% { transform: translate3d(-0.6%, 0, 0) scale(1); opacity: 0.72; }
+      100% { transform: translate3d(0.8%, -0.4%, 0) scale(1.02); opacity: 0.92; }
+    }
+
+    @keyframes glowShift {
+      0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.86; }
+      100% { transform: translate3d(0.7%, -0.5%, 0) scale(1.04); opacity: 1; }
     }
 
     @media (max-width: 900px) {
@@ -723,18 +880,64 @@
       }
 
       .scene-brand {
-        max-width: 72vw;
+        max-width: min(80vw, 400px);
       }
 
       .scene-legend {
-        max-width: calc(100% - 32px);
+        max-width: calc(100% - 24px);
+        left: 12px;
+        bottom: 12px;
       }
 
       .scene-detail {
-        top: auto;
         right: 12px;
-        bottom: 62px;
-        width: min(280px, calc(100% - 24px));
+        bottom: 68px;
+        width: min(300px, calc(100% - 24px));
+      }
+
+      .scene-live {
+        right: 12px;
+        top: 12px;
+        width: min(300px, calc(100% - 24px));
+      }
+
+      .live-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .scene-theme-fab {
+        top: 12px;
+        right: 12px;
+      }
+
+      .scene-brand,
+      .scene-live {
+        left: 12px;
+        right: 12px;
+        width: auto;
+      }
+
+      .scene-brand {
+        top: 12px;
+        padding: 14px 14px 12px;
+      }
+
+      .scene-live {
+        top: auto;
+        bottom: 12px;
+      }
+
+      .scene-detail {
+        left: 12px;
+        right: 12px;
+        bottom: 128px;
+        width: auto;
+      }
+
+      .scene-legend {
+        display: none;
       }
     }
   </style>
@@ -745,14 +948,15 @@
   </button>
   <main class="scene-shell">
     <div class="background-layer"></div>
+    <div class="atmosphere-layer" aria-hidden="true"></div>
     <img id="scene-walkmask" src="/static/scene-walkmask.png?v={{VERSION_TIMESTAMP}}" alt="" hidden>
 
     <div class="zone-layer" aria-hidden="true">
-      <div class="zone work-left"></div>
-      <div class="zone meeting"></div>
-      <div class="zone work-right"></div>
-      <div class="zone corridor"></div>
-      <div class="zone walkway"></div>
+      <div class="zone work-left" data-zone="Systems"></div>
+      <div class="zone meeting" data-zone="Intelligence"></div>
+      <div class="zone work-right" data-zone="Workflow"></div>
+      <div class="zone corridor" data-zone="Bus"></div>
+      <div class="zone walkway" data-zone="Flow"></div>
     </div>
 
     <div class="accent-layer" aria-hidden="true"></div>
@@ -770,6 +974,8 @@
       <div class="scene-brand" id="scene-brand">
         <div class="scene-kicker" data-i18n="scene.kicker">Deepnoa AI Office</div>
         <div class="scene-title" data-i18n="scene.title">Live Office Scene</div>
+        <div class="scene-subtitle" data-i18n="scene.subtitle">A public-facing view of Deepnoa's living agent floor, where work moves between systems, intelligence, and operations.</div>
+        <div class="scene-copy" id="scene-copy" data-i18n="scene.copy">This is the cinematic layer of the office: less dashboard, more ambient proof that the company is alive and in motion.</div>
       </div>
 
       <div class="scene-legend" id="scene-legend" aria-label="legend">
@@ -778,11 +984,27 @@
         <div class="legend-chip researching" data-i18n="legend.researching">researching</div>
         <div class="legend-chip syncing" data-i18n="legend.syncing">syncing</div>
         <div class="legend-chip error" data-i18n="legend.error">error</div>
+        <div class="legend-chip" data-i18n="legend.publicsafe">public-safe signals</div>
       </div>
 
       <div class="scene-live" id="scene-live">
         <div class="live-pill" data-i18n="scene.live">Live</div>
+        <div class="live-value" id="scene-posture" data-i18n="scene.posture.loading">Calibrating</div>
         <div class="live-sub" id="live-sub" data-i18n="scene.loading">Loading office scene…</div>
+        <div class="live-label" id="scene-story" data-i18n="scene.story.loading">Collecting current public motion and agent posture.</div>
+        <div class="live-grid">
+          <div class="live-metric">
+            <div class="metric-mini-label" data-i18n="scene.metric_agents">Visible agents</div>
+            <div class="metric-mini-value" id="scene-agent-count">0</div>
+            <div class="live-detail" data-i18n="scene.metric_agents_sub">public staff on floor</div>
+          </div>
+          <div class="live-metric">
+            <div class="metric-mini-label" data-i18n="scene.metric_active">Active motion</div>
+            <div class="metric-mini-value" id="scene-active-count">0</div>
+            <div class="live-detail" data-i18n="scene.metric_active_sub">agents currently in motion</div>
+          </div>
+        </div>
+        <div class="live-note" id="scene-note" data-i18n="scene.note">Built for embeds, demos, and sales walkthroughs without exposing private operations.</div>
       </div>
 
       <div class="scene-tooltip is-hidden" id="scene-tooltip" aria-hidden="true"></div>
@@ -795,15 +1017,33 @@
       ja: {
         "scene.kicker": "Deepnoa AI Office",
         "scene.title": "AI Office Scene",
+        "scene.subtitle": "Deepnoa の AI オフィスが、いまどのように動いているかを見せる公開向けライブフロアです。",
+        "scene.copy": "ダッシュボードではなく、エージェント会社が実際に動いていることを伝えるためのシネマティックな体験レイヤーです。",
         "scene.live": "Live",
         "scene.loading": "オフィスシーンを読み込み中…",
         "scene.updated": "更新",
         "scene.no_agents": "表示できるエージェントがいません",
+        "scene.metric_agents": "表示中エージェント",
+        "scene.metric_agents_sub": "公開中の staff",
+        "scene.metric_active": "動作中シグナル",
+        "scene.metric_active_sub": "現在動いている担当",
+        "scene.note": "埋め込みやデモに使えるよう、内部運用を見せすぎない構成にしています。",
+        "scene.note.attention": "注意が必要な信号があるため、公開ビューでもフロアの緊張感が少し上がっています。",
+        "scene.story.loading": "現在の public motion を収集中です。",
+        "scene.posture.loading": "調整中",
+        "scene.posture.nominal": "Nominal",
+        "scene.posture.active": "In motion",
+        "scene.posture.attention": "Needs attention",
+        "scene.story.nominal": "静かな状態ですが、オフィスは待機ではなく監視と受付を続けています。",
+        "scene.story.active": "エージェントが各ゾーンで作業を進め、オフィスが生きて動いていることを示しています。",
+        "scene.story.attention": "一部の作業やシステム信号に注意が必要な状態です。",
+        "scene.copy.active": "システム・情報・業務の各ゾーンをまたいで staff が動くことで、演出ではなく実際の運用感として伝わるようにしています。",
         "legend.idle": "待機",
         "legend.executing": "実行中",
         "legend.researching": "調査中",
         "legend.syncing": "同期中",
         "legend.error": "異常",
+        "legend.publicsafe": "public-safe signals",
         "role.dev": "情報システム",
         "role.ops": "業務管理",
         "role.research": "経営企画",
@@ -818,7 +1058,7 @@
         "status.writing": "作業中",
         "status.error": "異常",
         "detail.placeholder.name": "エージェントを選択",
-        "detail.placeholder.summary": "staff を押すと、いまの役割と作業内容を確認できます。",
+        "detail.placeholder.summary": "staff を押すと、その担当が今どのゾーンで何をしているかを確認できます。",
         "detail.role": "役割",
         "detail.status": "状態",
         "detail.summary": "現在の作業",
@@ -836,15 +1076,33 @@
       en: {
         "scene.kicker": "Deepnoa AI Office",
         "scene.title": "AI Office Scene",
+        "scene.subtitle": "A public-facing live floor showing how Deepnoa's AI office is operating right now.",
+        "scene.copy": "This is the cinematic layer of the office: ambient, readable, and designed to prove the company is alive behind the product.",
         "scene.live": "Live",
         "scene.loading": "Loading office scene…",
         "scene.updated": "Updated",
         "scene.no_agents": "No visible agents",
+        "scene.metric_agents": "Visible agents",
+        "scene.metric_agents_sub": "public staff on floor",
+        "scene.metric_active": "Active motion",
+        "scene.metric_active_sub": "agents currently in motion",
+        "scene.note": "Built for embeds, demos, and sales walkthroughs without exposing private operations.",
+        "scene.note.attention": "The floor is deliberately reading a little more tense because one or more public-safe signals need attention.",
+        "scene.story.loading": "Collecting current public motion and agent posture.",
+        "scene.posture.loading": "Calibrating",
+        "scene.posture.nominal": "Nominal",
+        "scene.posture.active": "In motion",
+        "scene.posture.attention": "Needs attention",
+        "scene.story.nominal": "The floor is calm, but the office is still standing watch and routing inbound work.",
+        "scene.story.active": "Agents are moving through their zones, making the office feel visibly alive rather than staged.",
+        "scene.story.attention": "Some work or system signals need attention, which changes the floor posture.",
+        "scene.copy.active": "Staff move across systems, intelligence, and operations zones so the office reads as a living operational layer rather than decorative animation.",
         "legend.idle": "idle",
         "legend.executing": "executing",
         "legend.researching": "researching",
         "legend.syncing": "syncing",
         "legend.error": "error",
+        "legend.publicsafe": "public-safe signals",
         "role.dev": "Information Systems",
         "role.ops": "Operations",
         "role.research": "Strategy",
@@ -859,7 +1117,7 @@
         "status.writing": "working",
         "status.error": "error",
         "detail.placeholder.name": "Select an agent",
-        "detail.placeholder.summary": "Click a staff member to see the current role and work summary.",
+        "detail.placeholder.summary": "Select a staff member to see which zone they occupy and what public-safe work signal they represent.",
         "detail.role": "Role",
         "detail.status": "Status",
         "detail.summary": "Current work",
@@ -877,15 +1135,33 @@
       zh: {
         "scene.kicker": "Deepnoa AI Office",
         "scene.title": "AI Office Scene",
+        "scene.subtitle": "这是一个公开可见的 AI 办公室实时楼层，用来展示 Deepnoa 当前如何运转。",
+        "scene.copy": "它不是仪表盘，而是一个更具氛围感的体验层，用来证明产品背后有真实运作的代理系统。",
         "scene.live": "Live",
         "scene.loading": "正在加载办公室场景…",
         "scene.updated": "更新",
         "scene.no_agents": "当前没有可显示的代理",
+        "scene.metric_agents": "可见代理",
+        "scene.metric_agents_sub": "公开 staff 数量",
+        "scene.metric_active": "动态信号",
+        "scene.metric_active_sub": "当前处于动作中的代理",
+        "scene.note": "适合嵌入、演示和销售讲解，同时避免暴露私有运维细节。",
+        "scene.note.attention": "因为有需要关注的公开信号，所以当前楼层姿态会显得稍微更紧张一些。",
+        "scene.story.loading": "正在收集当前公开动作与代理姿态。",
+        "scene.posture.loading": "校准中",
+        "scene.posture.nominal": "Nominal",
+        "scene.posture.active": "In motion",
+        "scene.posture.attention": "Needs attention",
+        "scene.story.nominal": "楼层很安静，但办公室仍在持续值守和接收任务。",
+        "scene.story.active": "代理在各自区域中移动工作，让办公室看起来真实而不是静态摆设。",
+        "scene.story.attention": "部分工作或系统信号需要注意，因此楼层姿态发生变化。",
+        "scene.copy.active": "代理在系统、情报和运营区域之间移动，让整个办公室更像真实运作层，而不是装饰性动画。",
         "legend.idle": "idle",
         "legend.executing": "executing",
         "legend.researching": "researching",
         "legend.syncing": "syncing",
         "legend.error": "error",
+        "legend.publicsafe": "public-safe signals",
         "role.dev": "信息系统",
         "role.ops": "业务管理",
         "role.research": "经营企划",
@@ -900,7 +1176,7 @@
         "status.writing": "处理中",
         "status.error": "异常",
         "detail.placeholder.name": "选择一个代理",
-        "detail.placeholder.summary": "点击 staff 可查看当前角色和工作摘要。",
+        "detail.placeholder.summary": "点击 staff 可查看它当前所在区域以及代表的公开工作信号。",
         "detail.role": "角色",
         "detail.status": "状态",
         "detail.summary": "当前工作",
@@ -1578,6 +1854,43 @@
         });
     }
 
+    function deriveScenePosture(agents) {
+      const states = (agents || []).map((agent) => String(agent.state || "idle").toLowerCase());
+      if (states.some((state) => state === "error")) {
+        return "attention";
+      }
+      if (states.some((state) => ["executing", "researching", "syncing", "routing", "writing"].includes(state))) {
+        return "active";
+      }
+      return "nominal";
+    }
+
+    function countActiveAgents(agents) {
+      return (agents || []).filter((agent) => ["executing", "researching", "syncing", "routing", "writing"].includes(String(agent.state || "idle").toLowerCase())).length;
+    }
+
+    function updateSceneHud(agents, latestUpdate) {
+      const posture = deriveScenePosture(agents);
+      const visibleCount = agents.length;
+      const activeCount = countActiveAgents(agents);
+      const postureText = t(`scene.posture.${posture}`, posture);
+      const storyText = t(`scene.story.${posture}`, "");
+
+      document.getElementById("scene-posture").textContent = postureText;
+      document.getElementById("scene-agent-count").textContent = String(visibleCount);
+      document.getElementById("scene-active-count").textContent = String(activeCount);
+      document.getElementById("scene-story").textContent = storyText || t("scene.story.loading", "Collecting current public motion and agent posture.");
+      document.getElementById("scene-note").textContent =
+        posture === "attention"
+          ? t("scene.note.attention", "The floor is deliberately reading a little more tense because one or more public-safe signals need attention.")
+          : t("scene.note", "Built for embeds, demos, and sales walkthroughs without exposing private operations.");
+      document.getElementById("live-sub").textContent = `${t("scene.updated", "Updated")} ${safeDate(latestUpdate)}`;
+      document.getElementById("scene-copy").textContent =
+        activeCount > 0
+          ? t("scene.copy.active", "Staff move across systems, intelligence, and operations zones so the office reads as a living operational layer rather than decorative animation.")
+          : t("scene.copy", "This is the cinematic layer of the office: less dashboard, more ambient proof that the company is alive and in motion.");
+    }
+
     function renderDetailPanel(agent) {
       const detail = document.getElementById("scene-detail");
       if (!agent) {
@@ -1908,10 +2221,15 @@
       try {
         await ensureWalkmaskLoaded();
         const data = await loadPublicState();
-        renderAgents(buildSceneAgents(data.agents || []));
-        document.getElementById("live-sub").textContent = `${t("scene.updated", "Updated")} ${safeDate(data.health && data.health.latest_update)}`;
+        const agents = buildSceneAgents(data.agents || []);
+        renderAgents(agents);
+        updateSceneHud(agents, data.health && data.health.latest_update);
       } catch (error) {
         document.getElementById("live-sub").textContent = t("scene.loading", "Loading office scene…");
+        document.getElementById("scene-posture").textContent = t("scene.posture.loading", "Calibrating");
+        document.getElementById("scene-story").textContent = t("scene.story.loading", "Collecting current public motion and agent posture.");
+        document.getElementById("scene-agent-count").textContent = "0";
+        document.getElementById("scene-active-count").textContent = "0";
         renderAgents([]);
         console.error(error);
       }
