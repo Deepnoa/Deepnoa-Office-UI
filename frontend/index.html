@@ -109,7 +109,7 @@
       border-color: rgba(255,255,255,0.08);
     }
     .button:disabled { opacity: 0.45; cursor: not-allowed; }
-    .status-card, .summary-card, .card, .role-card, .activity-card, .agent-card, .route-card, .asset-card {
+    .status-card, .summary-card, .card, .role-card, .activity-card, .agent-card, .route-card {
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 18px;
       background: rgba(255,255,255,0.03);
@@ -447,11 +447,6 @@
     html[data-theme="light"] .activity-card,
     html[data-theme="light"] .agent-card,
     html[data-theme="light"] .route-card,
-    html[data-theme="light"] .asset-card {
-      border-color: var(--color-line);
-      background: var(--color-panel);
-      box-shadow: var(--shadow-surface-sm);
-    }
     html[data-theme="light"] .metric-card {
       border-color: var(--color-line);
       background: var(--color-panel-alt);
@@ -767,18 +762,6 @@ dev・ops・research・フォールバックワーカーを確認できます。
           <div class="footer-note mono" data-i18n="section.routing_table_note">main はフォールバック専用です。</div>
         </section>
 
-        <section class="panel section">
-          <div class="section-head">
-            <div>
-              <h2 data-i18n="section.asset_lab_readiness">Asset Lab 状態</h2>
-              <div class="section-copy" data-i18n="section.asset_lab_readiness_sub">準備状態だけを表示します。
-キーや保護データは表示しません。</div>
-            </div>
-          </div>
-          <div class="list" id="assetsList"></div>
-        </section>
-
-        <section class="panel section">
           <div class="section-head">
             <div>
               <h2 data-i18n="section.openclaw_support_data">Openclaw 補助データ</h2>
@@ -856,11 +839,8 @@ manager カードの補足に使います。</div>
         "section.policies_sub": "public と internal の境界です。\n表示ルールを確認できます。",
         "section.detail_pane": "詳細ペイン",
         "section.detail_pane_sub": "ブロック中・承認待ち・失敗タスクを選ぶと\n直近の経過と影響を確認できます。",
-        "section.asset_lab_readiness": "Asset Lab 状態",
-        "section.asset_lab_readiness_sub": "準備状態だけを表示します。\nキーや保護データは表示しません。",
         "section.openclaw_support_data": "Openclaw 補助データ",
         "section.openclaw_support_data_sub": "`agents-state.json` の補助データです。\nmanager カードの補足に使います。",
-        "empty.asset_readiness_unavailable": "アセット準備状況はまだ取得できていません。",
         "empty.no_role_state": "ロール状態はまだありません。",
         "empty.no_internal_activity": "内部アクティビティはまだありません。",
         "empty.no_routing_map": "ルーティング定義はありません。",
@@ -935,39 +915,6 @@ manager カードの補足に使います。</div>
         "type.failed_task": "失敗タスク",
         "action.copy_detail_link": "リンクをコピー",
         "action.close_detail": "閉じる",
-        "asset.positions": "配置",
-        "asset.defaults": "デフォルト",
-        "asset.favorites": "お気に入り",
-        "asset.block.gemini_title": "Gemini / Nanobanana",
-        "asset.block.gemini_subtitle_prefix": "モデル",
-        "asset.block.background_title": "背景",
-        "asset.block.background_subtitle": "生成済みシーンと復元履歴",
-        "asset.block.layout_title": "Layout",
-        "asset.block.layout_subtitle": "配置 / デフォルト / 認証",
-        "asset.block.legacy_title": "Legacy Surfaces",
-        "asset.block.legacy_subtitle": "Desktop Pet と Electron Shell",
-        "asset.detail.script": "スクリプト",
-        "asset.detail.python": "Python",
-        "asset.detail.api": "API",
-        "asset.detail.reference": "参照背景",
-        "asset.detail.history": "履歴",
-        "asset.detail.template": "テンプレート",
-        "asset.detail.default_pass": "既定 password",
-        "asset.detail.desktop_pet": "Desktop Pet",
-        "asset.detail.electron_shell": "Electron Shell",
-        "asset.state.ready": "準備完了",
-        "asset.state.missing": "未設定",
-        "asset.state.configured": "設定済み",
-        "asset.state.not_configured": "未設定",
-        "asset.state.missing_key": "キー未設定",
-        "asset.state.active_background_ready": "背景準備完了",
-        "asset.state.no_active_background": "背景なし",
-        "asset.state.present": "あり",
-        "asset.state.authenticated": "認証済み",
-        "asset.state.auth_required": "認証が必要です",
-        "asset.state.unsafe_default": "既定値のままです",
-        "asset.state.customized": "変更済み",
-        "asset.state.available_for_rebuild": "再構築可能",
         "connector.policy_fallback": "コネクタ設定",
         "task.untitled": "無題",
         "task.approval_default": "承認",
@@ -1015,7 +962,6 @@ manager カードの補足に使います。</div>
       en: {
         "page.title": "Deepnoa Internal View",
         "page.subtitle": "Deepnoa internal operations view",
-        "empty.asset_readiness_unavailable": "Asset readiness is unavailable.",
         "status.gateway_standby": "Standby",
         "label.mode": "mode",
         "label.public": "public",
@@ -1040,38 +986,6 @@ manager カードの補足に使います。</div>
         "label.available": "available",
         "label.no_tools_listed": "no tools listed",
         "label.bytes": "bytes",
-        "asset.positions": "Positions",
-        "asset.defaults": "Defaults",
-        "asset.block.gemini_title": "Gemini / Nanobanana",
-        "asset.block.gemini_subtitle_prefix": "model",
-        "asset.block.background_title": "Background Scene",
-        "asset.block.background_subtitle": "generated scene + restore history",
-        "asset.block.layout_title": "Layout Editor",
-        "asset.block.layout_subtitle": "positions / defaults / auth gate",
-        "asset.block.legacy_title": "Legacy Surfaces",
-        "asset.block.legacy_subtitle": "desktop and electron shells",
-        "asset.detail.script": "script",
-        "asset.detail.python": "python",
-        "asset.detail.api": "api",
-        "asset.detail.reference": "reference",
-        "asset.detail.history": "history",
-        "asset.detail.template": "template",
-        "asset.detail.default_pass": "default pass",
-        "asset.detail.desktop_pet": "desktop pet",
-        "asset.detail.electron_shell": "electron shell",
-        "asset.state.ready": "ready",
-        "asset.state.missing": "missing",
-        "asset.state.configured": "configured",
-        "asset.state.not_configured": "not configured",
-        "asset.state.missing_key": "missing key",
-        "asset.state.active_background_ready": "active background ready",
-        "asset.state.no_active_background": "no active background",
-        "asset.state.present": "present",
-        "asset.state.authenticated": "authenticated",
-        "asset.state.auth_required": "auth required",
-        "asset.state.unsafe_default": "unsafe default",
-        "asset.state.customized": "customized",
-        "asset.state.available_for_rebuild": "available for rebuild",
         "connector.policy_fallback": "connector policy",
         "task.untitled": "Untitled",
         "task.approval_default": "Approval",
@@ -1133,11 +1047,8 @@ manager カードの補足に使います。</div>
         "section.policies_sub": "公开面与内部面的运作边界。",
         "section.detail_pane": "详情面板",
         "section.detail_pane_sub": "选择阻塞任务、等待审批或失败任务后，可查看最新 lifecycle 与影响。",
-        "section.asset_lab_readiness": "资产实验室就绪状态",
-        "section.asset_lab_readiness_sub": "这里只显示就绪状态，不显示密钥或受保护 payload。",
         "section.openclaw_support_data": "Openclaw 辅助数据",
         "section.openclaw_support_data_sub": "来自 `agents-state.json` 的辅助数据。manager 角色卡仍然是主要视图。",
-        "empty.asset_readiness_unavailable": "当前无法获取资产准备状态。",
         "empty.no_pending_approvals": "当前没有等待审批。",
         "empty.no_blocked_tasks": "当前没有阻塞任务。",
         "empty.no_failed_tasks": "当前没有失败任务。",
@@ -1203,39 +1114,6 @@ manager カードの補足に使います。</div>
         "type.failed_task": "失败任务",
         "action.copy_detail_link": "复制链接",
         "action.close_detail": "关闭",
-        "asset.positions": "位置",
-        "asset.defaults": "默认值",
-        "asset.favorites": "收藏",
-        "asset.block.gemini_title": "Gemini / Nanobanana",
-        "asset.block.gemini_subtitle_prefix": "模型",
-        "asset.block.background_title": "背景场景",
-        "asset.block.background_subtitle": "已生成场景与恢复历史",
-        "asset.block.layout_title": "布局编辑器",
-        "asset.block.layout_subtitle": "positions / defaults / auth gate",
-        "asset.block.legacy_title": "旧界面",
-        "asset.block.legacy_subtitle": "desktop 与 electron shell",
-        "asset.detail.script": "脚本",
-        "asset.detail.python": "Python",
-        "asset.detail.api": "API",
-        "asset.detail.reference": "参考背景",
-        "asset.detail.history": "历史",
-        "asset.detail.template": "模板",
-        "asset.detail.default_pass": "默认密码",
-        "asset.detail.desktop_pet": "desktop pet",
-        "asset.detail.electron_shell": "electron shell",
-        "asset.state.ready": "就绪",
-        "asset.state.missing": "缺失",
-        "asset.state.configured": "已配置",
-        "asset.state.not_configured": "未配置",
-        "asset.state.missing_key": "缺少密钥",
-        "asset.state.active_background_ready": "背景已就绪",
-        "asset.state.no_active_background": "没有当前背景",
-        "asset.state.present": "存在",
-        "asset.state.authenticated": "已认证",
-        "asset.state.auth_required": "需要认证",
-        "asset.state.unsafe_default": "危险默认值",
-        "asset.state.customized": "已自定义",
-        "asset.state.available_for_rebuild": "可重新构建",
         "connector.policy_fallback": "连接器策略",
         "task.untitled": "未命名",
         "task.approval_default": "审批",
@@ -1721,49 +1599,6 @@ manager カードの補足に使います。</div>
       `).join("");
     }
 
-    function renderAssets(assets) {
-      const target = document.getElementById("assetsList");
-      if (!assets) return renderEmpty(target, t("empty.asset_readiness_unavailable", "Asset readiness is unavailable."));
-      const blocks = [
-        {
-          title: t("asset.block.gemini_title", "Gemini / Nanobanana"),
-          subtitle: `${t("asset.block.gemini_subtitle_prefix", "model")} / ${assets.gemini.model}`,
-          status: t(assets.gemini.api_key_configured ? "asset.state.configured" : "asset.state.missing_key", assets.gemini.api_key_configured ? "configured" : "missing key"),
-          details: [[t("asset.detail.script", "script"), t(assets.gemini.script_ready ? "asset.state.ready" : "asset.state.missing", assets.gemini.script_ready ? "ready" : "missing")], [t("asset.detail.python", "python"), t(assets.gemini.python_ready ? "asset.state.ready" : "asset.state.missing", assets.gemini.python_ready ? "ready" : "missing")], [t("asset.detail.api", "api"), t(assets.gemini.api_key_configured ? "asset.state.configured" : "asset.state.not_configured", assets.gemini.api_key_configured ? "configured" : "not configured")]],
-        },
-        {
-          title: t("asset.block.background_title", "Background Scene"),
-          subtitle: t("asset.block.background_subtitle", "generated scene + restore history"),
-          status: t(assets.background.active_file_present ? "asset.state.active_background_ready" : "asset.state.no_active_background", assets.background.active_file_present ? "active background ready" : "no active background"),
-          details: [[t("asset.detail.reference", "reference"), t(assets.background.reference_present ? "asset.state.present" : "asset.state.missing", assets.background.reference_present ? "present" : "missing")], [t("asset.detail.history", "history"), assets.background.history_count], [t("asset.favorites", "Favorites"), assets.background.favorites_count]],
-        },
-        {
-          title: t("asset.block.layout_title", "Layout Editor"),
-          subtitle: t("asset.block.layout_subtitle", "positions / defaults / auth gate"),
-          status: t(assets.auth_status.authed ? "asset.state.authenticated" : "asset.state.auth_required", assets.auth_status.authed ? "authenticated" : "auth required"),
-          details: [[t("asset.positions", "Positions"), assets.layout.positions_count], [t("asset.defaults", "Defaults"), assets.layout.defaults_count], [t("asset.detail.template", "template"), t(assets.layout.template_zip_present ? "asset.state.present" : "asset.state.missing", assets.layout.template_zip_present ? "present" : "missing")], [t("asset.detail.default_pass", "default pass"), t(assets.auth_status.drawer_default_pass ? "asset.state.unsafe_default" : "asset.state.customized", assets.auth_status.drawer_default_pass ? "unsafe default" : "customized")]],
-        },
-        {
-          title: t("asset.block.legacy_title", "Legacy Surfaces"),
-          subtitle: t("asset.block.legacy_subtitle", "desktop and electron shells"),
-          status: t("asset.state.available_for_rebuild", "available for rebuild"),
-          details: [[t("asset.detail.desktop_pet", "desktop pet"), t(assets.legacy_surfaces.desktop_pet_present ? "asset.state.present" : "asset.state.missing", assets.legacy_surfaces.desktop_pet_present ? "present" : "missing")], [t("asset.detail.electron_shell", "electron shell"), t(assets.legacy_surfaces.electron_shell_present ? "asset.state.present" : "asset.state.missing", assets.legacy_surfaces.electron_shell_present ? "present" : "missing")]],
-        },
-      ];
-      target.innerHTML = blocks.map((block) => `
-        <article class="asset-card">
-          <div class="row-top">
-            <div><div class="name">${escapeHtml(block.title)}</div><div class="sub">${escapeHtml(block.subtitle)}</div></div>
-            <div class="${badgeClass(block.status)} mono">${escapeHtml(block.status)}</div>
-          </div>
-          <div class="meta-grid">
-            ${block.details.map(([k, v]) => `<div class="meta-item"><div class="k mono">${escapeHtml(k)}</div><div class="v">${escapeHtml(v)}</div></div>`).join("")}
-          </div>
-        </article>
-      `).join("");
-    }
-
-    function renderAgents(items) {
       const target = document.getElementById("agentsList");
       if (!items || !items.length) return renderEmpty(target, t("empty.no_agent_records", "No Openclaw agent records available."));
       target.innerHTML = items.map((item) => `
@@ -2107,7 +1942,6 @@ manager カードの補足に使います。</div>
         renderRoles(data.roles);
         renderActivity(data.activity);
         renderRouting(data.manager?.routing);
-        renderAssets(data.assets);
         rerenderSelectableLists();
         renderConnectors(data.connectors);
         renderTaskItems(data.completed, "completedList", "empty.no_completed_tasks");
@@ -2122,7 +1956,7 @@ manager カードの補足に使います。</div>
         renderRuntimeEventsCard(runtimeEvents);
         renderReplyDraftsCard(replyDrafts);
       } catch (error) {
-        const targets = ["rolesList", "activityList", "routingList", "assetsList", "agentsList", "intakeList", "policyList", "blockedList", "approvalList", "failedList", "connectorList", "completedList", "alertList"];
+        const targets = ["rolesList", "activityList", "routingList", "agentsList", "intakeList", "policyList", "blockedList", "approvalList", "failedList", "connectorList", "completedList", "alertList"];
         for (const id of targets) renderEmpty(document.getElementById(id), error.message || t("error.failed_internal_state", "Failed to load internal state."));
         renderSummary({});
         state.selectedDetail = null;
