@@ -241,6 +241,50 @@
       background: rgba(255,255,255,0.03);
     }
     .runtime-table tr:last-child td { border-bottom: 0; }
+    .draft-card-list { display: grid; gap: 14px; }
+    .draft-card {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.03);
+      padding: 20px;
+      display: grid;
+      gap: 14px;
+    }
+    .draft-card.is-approved { border-color: rgba(136,240,207,0.22); }
+    .draft-card.is-rejected { border-color: rgba(255,126,143,0.18); }
+    .draft-intake-link {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 0;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .draft-intake-arrow { color: var(--accent); opacity: 0.7; }
+    .draft-content {
+      font-size: 14px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--color-copy-soft);
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .draft-meta {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .draft-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+    .badge.ok { border-color: rgba(136,240,207,0.24); background: rgba(136,240,207,0.12); color: var(--accent); }
+    .button.reject {
+      background: rgba(255,126,143,0.06);
+      border-color: rgba(255,126,143,0.2);
+      color: var(--danger);
+    }
     .mini-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
     .mini-chip {
       display: inline-flex;
@@ -272,17 +316,6 @@
       text-align: center;
     }
     .footer-note { color: var(--muted); font-size: 13px; margin-top: 8px; }
-    .input, .textarea {
-      width: 100%;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.03);
-      color: var(--text);
-      padding: 12px 14px;
-      font: inherit;
-    }
-    .textarea { min-height: 88px; resize: vertical; }
-    .control-grid { display: grid; gap: 12px; }
     .status-line {
       padding: 12px 14px;
       border-radius: 14px;
@@ -397,18 +430,6 @@
       background: rgba(4, 10, 18, 0.68);
       backdrop-filter: blur(8px);
       z-index: 40;
-    }
-    .thumb {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      object-fit: cover;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.03);
-      display: block;
-    }
-    .thumb.small {
-      max-width: 220px;
     }
     .mini-item .title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
     .mini-item .meta { color: var(--muted); font-size: 12px; }
@@ -557,10 +578,6 @@
           <div class="label mono" data-i18n="internal.fallback_worker">フォールバックワーカー</div>
           <div class="copy" id="fallbackSummary" data-i18n="status.fallback_loading">フォールバック状態を読込中です。</div>
         </div>
-        <div class="summary-card">
-          <div class="label mono" data-i18n="internal.asset_auth">アセット認証</div>
-          <div class="copy" id="assetAuthSummary" data-i18n="status.asset_auth_loading">アセット認証を読込中です。</div>
-        </div>
         <div class="summary-card" id="runsSummaryCard">
           <div class="label mono" data-i18n="internal.today_runs">本日の実行</div>
           <div class="copy" id="runsSummaryStatus" data-i18n="status.runs_loading">読込中</div>
@@ -640,108 +657,6 @@ dev・ops・research・フォールバックワーカーを確認できます。
           <div class="list" id="activityList"></div>
         </section>
 
-        <section class="panel section">
-          <div class="section-head">
-            <div>
-              <h2 data-i18n="section.asset_editor_controls">Asset Editor 操作</h2>
-              <div class="section-copy" data-i18n="section.asset_editor_controls_sub">認証、背景生成、復元、レイアウト確認の
-保護された操作です。</div>
-            </div>
-          </div>
-          <div class="control-grid">
-            <div class="card">
-              <div class="row-top">
-                <div>
-                  <div class="name" data-i18n="asset.auth_title">Asset Editor 認証</div>
-                  <div class="sub" data-i18n="asset.auth_sub">`assets/auth/status` と認証状態を表示します。
-既定 password の警告も確認できます。</div>
-                </div>
-                <div id="authBadge" class="badge mono">loading</div>
-              </div>
-              <div class="status-line" id="authStatusLine" data-i18n="status.asset_auth_checking">アセット認証を確認中です。</div>
-              <div class="action-row" style="margin-top:12px">
-                <input id="assetPassword" class="input mono" type="password" placeholder="Asset Editor password" data-i18n-placeholder="asset.password_placeholder">
-                <button id="authButton" class="button mono" type="button" data-i18n="action.authenticate">認証する</button>
-                <button id="refreshAuthButton" class="button secondary mono" type="button" data-i18n="action.refresh_status">状態を更新</button>
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="row-top">
-                <div>
-                  <div class="name" data-i18n="asset.background_generation">背景生成</div>
-                  <div class="sub" data-i18n="asset.background_generation_sub">背景生成と復元の操作です。
-保護された操作として扱います。</div>
-                </div>
-              </div>
-              <textarea id="bgPrompt" class="textarea" placeholder="背景生成の指示を入力" data-i18n-placeholder="asset.background_prompt_placeholder"></textarea>
-              <div class="action-row" style="margin-top:12px">
-                <button id="generateBgButton" class="button mono" type="button" data-i18n="action.generate_background">背景を生成</button>
-                <button id="restoreReferenceButton" class="button secondary mono" type="button" data-i18n="action.restore_reference">参照背景に戻す</button>
-                <button id="restoreLatestButton" class="button secondary mono" type="button" data-i18n="action.restore_latest">最新生成に戻す</button>
-              </div>
-              <div class="status-line" id="bgActionStatus" style="margin-top:12px">--</div>
-            </div>
-
-            <div class="card">
-              <div class="row-top">
-                <div>
-                  <div class="name" data-i18n="asset.current_background">現在の背景</div>
-                  <div class="sub" data-i18n="asset.current_background_sub">現在のオフィス背景を確認できます。
-必要ならお気に入りへ保存できます。</div>
-                </div>
-              </div>
-              <img id="currentBgPreview" class="thumb" alt="現在の内部背景プレビュー" data-i18n-alt="asset.current_background_alt">
-              <div class="action-row" style="margin-top:12px">
-                <button id="saveFavoriteButton" class="button mono" type="button" data-i18n="action.save_current_favorite">現在の背景を保存</button>
-                <button id="refreshPreviewButton" class="button secondary mono" type="button" data-i18n="action.refresh_preview">プレビュー更新</button>
-              </div>
-              <div class="status-line" id="favoriteActionStatus" style="margin-top:12px">--</div>
-            </div>
-
-            <div class="card">
-              <div class="row-top">
-                <div>
-                  <div class="name" data-i18n="asset.layout_history">レイアウトと履歴</div>
-                  <div class="sub" data-i18n="asset.layout_history_sub">配置、デフォルト、お気に入り、履歴を確認できます。
-保護された情報として扱います。</div>
-                </div>
-              </div>
-              <div class="action-row" style="margin-bottom:12px">
-                <button id="refreshLayoutButton" class="button mono" type="button" data-i18n="action.refresh_layout_data">レイアウト情報を更新</button>
-              </div>
-              <div class="meta-grid">
-                <div class="meta-item">
-                  <div class="k mono" data-i18n="asset.positions">配置</div>
-                  <div class="v" id="positionsCount">n/a</div>
-                </div>
-                <div class="meta-item">
-                  <div class="k mono" data-i18n="asset.defaults">デフォルト</div>
-                  <div class="v" id="defaultsCount">n/a</div>
-                </div>
-                <div class="meta-item">
-                  <div class="k mono" data-i18n="asset.favorites">お気に入り</div>
-                  <div class="v" id="favoritesCount">n/a</div>
-                </div>
-                <div class="meta-item">
-                  <div class="k mono" data-i18n="asset.history">履歴</div>
-                  <div class="v" id="historyCount">n/a</div>
-                </div>
-              </div>
-              <div class="status-line" id="layoutStatusLine" style="margin-top:12px" data-i18n="status.layout_not_loaded">レイアウト情報はまだ読み込まれていません。</div>
-              <div class="grid-secondary" style="margin-top:12px">
-                <div class="card">
-                  <div class="label mono" data-i18n="asset.favorites">お気に入り</div>
-                  <div class="mini-list" id="favoritesList"></div>
-                </div>
-                <div class="card">
-                  <div class="label mono" data-i18n="asset.background_history">背景履歴</div>
-                  <div class="mini-list" id="historyList"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
 
       <div class="stack">
@@ -817,27 +732,11 @@ dev・ops・research・フォールバックワーカーを確認できます。
           <div class="section-head">
             <div>
               <h2>Reply Drafts</h2>
-              <div class="section-copy">Runtime が生成した返信案（reply_draft.content）のみを表示します。</div>
+              <div class="section-copy">Runtime が生成した返信案です。承認・却下・再生成を操作できます。</div>
             </div>
           </div>
-          <div class="runtime-table-wrap">
-            <table class="runtime-table">
-              <thead>
-                <tr>
-                  <th>task_id</th>
-                  <th>role</th>
-                  <th>status</th>
-                  <th>exit_code</th>
-                  <th>created_at</th>
-                  <th>content</th>
-                </tr>
-              </thead>
-              <tbody id="replyDraftRows">
-                <tr>
-                  <td colspan="6" class="sub">loading...</td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="draft-card-list" id="replyDraftList">
+            <div class="empty-state">loading...</div>
           </div>
         </section>
 
@@ -936,7 +835,6 @@ manager カードの補足に使います。</div>
         "internal.hero_copy": "AI オフィスの運用状況を確認します。\nルーティング、intake、フォールバック、保護された操作を見られます。",
         "internal.gateway": "ゲートウェイ",
         "internal.fallback_worker": "フォールバックワーカー",
-        "internal.asset_auth": "アセット認証",
         "section.flow_watch": "運用優先ビュー",
         "section.flow_watch_sub": "承認待ち、ブロック、失敗、コネクタ異常を上から優先表示します。",
         "section.role_control": "運用エージェント",
@@ -958,8 +856,6 @@ manager カードの補足に使います。</div>
         "section.policies_sub": "public と internal の境界です。\n表示ルールを確認できます。",
         "section.detail_pane": "詳細ペイン",
         "section.detail_pane_sub": "ブロック中・承認待ち・失敗タスクを選ぶと\n直近の経過と影響を確認できます。",
-        "section.asset_editor_controls": "Asset Editor 操作",
-        "section.asset_editor_controls_sub": "認証、背景生成、復元、レイアウト確認の\n保護された操作です。",
         "section.asset_lab_readiness": "Asset Lab 状態",
         "section.asset_lab_readiness_sub": "準備状態だけを表示します。\nキーや保護データは表示しません。",
         "section.openclaw_support_data": "Openclaw 補助データ",
@@ -977,8 +873,6 @@ manager カードの補足に使います。</div>
         "empty.no_agent_records": "Openclaw エージェント記録はありません。",
         "empty.no_intake": "インテイクはありません。",
         "empty.no_policy_snapshot": "ポリシースナップショットはありません。",
-        "empty.no_favorites": "お気に入りはまだありません。",
-        "empty.no_history": "背景履歴はまだありません。",
         "empty.detail_unselected": "左の一覧から対象を選択してください。\n詳細はここに表示されます。",
         "empty.detail_missing": "選択中の項目は現在の状態にありません。\n更新を待つか別の項目を選択してください。",
         "empty.detail_lifecycle": "関連する経過情報はありません。",
@@ -988,39 +882,10 @@ manager カードの補足に使います。</div>
         "status.loading": "読込中",
         "status.copied_detail_link": "詳細リンクをコピーしました。",
         "status.copy_detail_link_failed": "詳細リンクをコピーできませんでした。",
-        "status.asset_auth_checking": "アセット認証を確認中です。",
         "status.gateway_loading": "ゲートウェイ状態を読込中です。",
         "status.fallback_loading": "フォールバック状態を読込中です。",
-        "status.asset_auth_loading": "アセット認証を読込中です。",
         "status.gateway_detail_empty": "ゲートウェイ詳細はまだありません。",
-        "status.layout_not_loaded": "レイアウト情報はまだ読み込まれていません。",
         "status.gateway_standby": "待機中",
-        "status.asset_auth_ok": "このブラウザでは Asset Editor を利用できます。",
-        "status.asset_auth_locked": "保護された操作のため、Asset Editor はロックされています。",
-        "status.asset_auth_default_warning": "警告: 既定の password が有効です。",
-        "status.asset_auth_summary_ok": "保護された Asset 操作を利用できます。",
-        "status.asset_auth_summary_locked": "保護された操作には認証が必要です。",
-        "status.auth_required_assets": "認証すると配置、デフォルト、お気に入り、履歴を確認できます。",
-        "status.auth_required_favorites": "認証するとお気に入り操作を利用できます。",
-        "status.auth_required_load_favorites": "認証するとお気に入りを読み込めます。",
-        "status.auth_required_load_history": "認証すると背景履歴を読み込めます。",
-        "status.guard_assets_loaded": "保護されたレイアウト情報と背景一覧を読み込みました。",
-        "status.background_generating": "背景生成を実行中です...",
-        "status.background_completed": "背景生成が完了しました。",
-        "status.background_started": "背景生成を開始しました。",
-        "status.background_failed": "背景生成に失敗しました。",
-        "status.background_action_completed": "背景操作が完了しました。",
-        "status.background_action_failed": "背景操作に失敗しました。",
-        "status.auth_required_background": "背景操作の前に認証してください。",
-        "status.auth_required_save_favorite": "お気に入り保存の前に認証してください。",
-        "status.favorite_saved": "現在の背景をお気に入りに保存しました。",
-        "status.favorite_save_failed": "現在の背景をお気に入りに保存できませんでした。",
-        "status.favorite_applied": "お気に入りを適用しました。",
-        "status.favorite_apply_failed": "お気に入りの適用に失敗しました。",
-        "status.favorite_deleted": "お気に入りを削除しました。",
-        "status.favorite_delete_failed": "お気に入りの削除に失敗しました。",
-        "status.guard_assets_failed": "保護されたアセット情報を取得できませんでした。",
-        "status.auth_failed": "認証に失敗しました。",
         "label.route_reason": "ルーティング理由",
         "label.mode": "モード",
         "label.public": "public",
@@ -1070,36 +935,9 @@ manager カードの補足に使います。</div>
         "type.failed_task": "失敗タスク",
         "action.copy_detail_link": "リンクをコピー",
         "action.close_detail": "閉じる",
-        "action.authenticate": "認証する",
-        "action.refresh_status": "状態を更新",
-        "action.generate_background": "背景を生成",
-        "action.restore_reference": "参照背景に戻す",
-        "action.restore_latest": "最新生成に戻す",
-        "action.save_current_favorite": "現在の背景を保存",
-        "action.refresh_preview": "プレビュー更新",
-        "action.refresh_layout_data": "レイアウト情報を更新",
-        "action.apply": "適用",
-        "action.delete": "削除",
-        "asset.auth_title": "Asset Editor 認証",
-        "asset.auth_sub": "`assets/auth/status` と認証状態を表示します。\n既定 password の警告も確認できます。",
-        "asset.password_placeholder": "Asset Editor password",
-        "asset.background_generation": "背景生成",
-        "asset.background_generation_sub": "背景生成と復元の操作です。\n保護された操作として扱います。",
-        "asset.background_prompt_placeholder": "背景生成の指示を入力",
-        "asset.current_background": "現在の背景",
-        "asset.current_background_sub": "現在のオフィス背景を確認できます。\n必要ならお気に入りへ保存できます。",
-        "asset.current_background_alt": "現在の内部背景プレビュー",
-        "asset.layout_history": "レイアウトと履歴",
-        "asset.layout_history_sub": "配置、デフォルト、お気に入り、履歴を確認できます。\n保護された情報として扱います。",
         "asset.positions": "配置",
         "asset.defaults": "デフォルト",
         "asset.favorites": "お気に入り",
-        "asset.history": "履歴",
-        "asset.background_history": "背景履歴",
-        "asset.favorite_alt": "お気に入り背景",
-        "asset.history_alt": "背景履歴プレビュー",
-        "asset.favorite_default_name": "お気に入り背景",
-        "asset.history_default_name": "履歴アイテム",
         "asset.block.gemini_title": "Gemini / Nanobanana",
         "asset.block.gemini_subtitle_prefix": "モデル",
         "asset.block.background_title": "背景",
@@ -1178,13 +1016,7 @@ manager カードの補足に使います。</div>
         "page.title": "Deepnoa Internal View",
         "page.subtitle": "Deepnoa internal operations view",
         "empty.asset_readiness_unavailable": "Asset readiness is unavailable.",
-        "status.layout_not_loaded": "Layout data not loaded.",
         "status.gateway_standby": "Standby",
-        "status.asset_auth_ok": "Asset editor is authenticated in this browser session.",
-        "status.asset_auth_locked": "Asset editor is locked for guarded actions.",
-        "status.asset_auth_default_warning": "Warning: default drawer password is still active.",
-        "status.asset_auth_summary_ok": "Authenticated for guarded asset actions.",
-        "status.asset_auth_summary_locked": "Guarded controls require asset editor authentication.",
         "label.mode": "mode",
         "label.public": "public",
         "label.gateway_host": "gateway",
@@ -1208,18 +1040,8 @@ manager カードの補足に使います。</div>
         "label.available": "available",
         "label.no_tools_listed": "no tools listed",
         "label.bytes": "bytes",
-        "action.apply": "Apply",
-        "action.delete": "Delete",
-        "asset.password_placeholder": "Asset editor password",
-        "asset.background_prompt_placeholder": "Optional prompt for internal background generation.",
-        "asset.current_background_alt": "Current internal background preview",
         "asset.positions": "Positions",
         "asset.defaults": "Defaults",
-        "asset.history": "History",
-        "asset.favorite_alt": "Favorite background",
-        "asset.history_alt": "Background history preview",
-        "asset.favorite_default_name": "favorite",
-        "asset.history_default_name": "history item",
         "asset.block.gemini_title": "Gemini / Nanobanana",
         "asset.block.gemini_subtitle_prefix": "model",
         "asset.block.background_title": "Background Scene",
@@ -1290,7 +1112,6 @@ manager カードの補足に使います。</div>
         "internal.hero_copy": "AI 办公室的运维控制界面。这里展示 manager routing、role worker、gateway intake、fallback 使用情况与受保护的 asset lab 控制，同时不暴露敏感值。",
         "internal.gateway": "网关",
         "internal.fallback_worker": "回退工作器",
-        "internal.asset_auth": "资产认证",
         "section.flow_watch": "运维优先视图",
         "section.flow_watch_sub": "按审批、阻塞、失败、连接器异常的顺序优先显示。",
         "section.role_control": "角色控制",
@@ -1312,8 +1133,6 @@ manager カードの補足に使います。</div>
         "section.policies_sub": "公开面与内部面的运作边界。",
         "section.detail_pane": "详情面板",
         "section.detail_pane_sub": "选择阻塞任务、等待审批或失败任务后，可查看最新 lifecycle 与影响。",
-        "section.asset_editor_controls": "资产编辑控制",
-        "section.asset_editor_controls_sub": "用于认证、背景生成、恢复操作与布局检查的内部受保护控制。",
         "section.asset_lab_readiness": "资产实验室就绪状态",
         "section.asset_lab_readiness_sub": "这里只显示就绪状态，不显示密钥或受保护 payload。",
         "section.openclaw_support_data": "Openclaw 辅助数据",
@@ -1325,8 +1144,6 @@ manager カードの補足に使います。</div>
         "empty.no_connector_state": "当前没有连接器状态。",
         "empty.no_completed_tasks": "当前还没有完成任务。",
         "empty.no_alerts": "当前没有活动告警。",
-        "empty.no_favorites": "当前还没有收藏。",
-        "empty.no_history": "当前还没有背景历史。",
         "empty.detail_unselected": "请从左侧列表选择 blocked task / pending approval / failed task。",
         "empty.detail_missing": "当前 internal state 中暂时找不到所选 item。请等待刷新或改选其他 item。",
         "empty.detail_lifecycle": "当前没有相关 lifecycle。",
@@ -1336,39 +1153,10 @@ manager カードの補足に使います。</div>
         "status.loading": "加载中",
         "status.copied_detail_link": "详情链接已复制。",
         "status.copy_detail_link_failed": "无法复制详情链接。",
-        "status.asset_auth_checking": "正在检查资产认证状态。",
         "status.gateway_loading": "正在加载网关状态。",
         "status.fallback_loading": "正在加载回退状态。",
-        "status.asset_auth_loading": "正在加载资产认证状态。",
         "status.gateway_detail_empty": "当前没有网关详情。",
-        "status.layout_not_loaded": "布局数据尚未加载。",
         "status.gateway_standby": "待命",
-        "status.asset_auth_ok": "当前浏览器会话中的资产编辑认证已生效。",
-        "status.asset_auth_locked": "受保护操作下资产编辑仍处于锁定状态。",
-        "status.asset_auth_default_warning": "警告: 默认 drawer password 仍然有效。",
-        "status.asset_auth_summary_ok": "已通过受保护资产操作认证。",
-        "status.asset_auth_summary_locked": "受保护控制需要资产编辑认证。",
-        "status.auth_required_assets": "认证后可查看位置、默认值、收藏和历史。",
-        "status.auth_required_favorites": "认证后可使用收藏控制。",
-        "status.auth_required_load_favorites": "认证后可加载收藏。",
-        "status.auth_required_load_history": "认证后可加载背景历史。",
-        "status.guard_assets_loaded": "已加载受保护的布局和背景列表。",
-        "status.background_generating": "背景生成进行中...",
-        "status.background_completed": "背景生成已完成。",
-        "status.background_started": "已开始背景生成。",
-        "status.background_failed": "背景生成失败。",
-        "status.background_action_completed": "背景操作已完成。",
-        "status.background_action_failed": "背景操作失败。",
-        "status.auth_required_background": "运行背景操作前请先认证。",
-        "status.auth_required_save_favorite": "保存收藏前请先认证。",
-        "status.favorite_saved": "已将当前背景保存到收藏。",
-        "status.favorite_save_failed": "保存当前背景到收藏失败。",
-        "status.favorite_applied": "已应用收藏背景。",
-        "status.favorite_apply_failed": "应用收藏背景失败。",
-        "status.favorite_deleted": "已删除收藏背景。",
-        "status.favorite_delete_failed": "删除收藏背景失败。",
-        "status.guard_assets_failed": "加载受保护的资产数据失败。",
-        "status.auth_failed": "认证失败。",
         "label.mode": "模式",
         "label.public": "公开",
         "label.gateway_host": "网关",
@@ -1415,36 +1203,9 @@ manager カードの補足に使います。</div>
         "type.failed_task": "失败任务",
         "action.copy_detail_link": "复制链接",
         "action.close_detail": "关闭",
-        "action.authenticate": "认证",
-        "action.refresh_status": "刷新状态",
-        "action.generate_background": "生成背景",
-        "action.restore_reference": "恢复参考背景",
-        "action.restore_latest": "恢复最新生成",
-        "action.save_current_favorite": "保存当前背景到收藏",
-        "action.refresh_preview": "刷新预览",
-        "action.refresh_layout_data": "刷新布局数据",
-        "action.apply": "应用",
-        "action.delete": "删除",
-        "asset.auth_title": "资产编辑认证",
-        "asset.auth_sub": "显示 `assets/auth/status`、登录状态与默认密码警告。",
-        "asset.password_placeholder": "资产编辑密码",
-        "asset.background_generation": "背景生成",
-        "asset.background_generation_sub": "用于生成、恢复参考背景、恢复最新生成背景的受保护控制。",
-        "asset.background_prompt_placeholder": "内部背景生成的可选提示词",
-        "asset.current_background": "当前背景",
-        "asset.current_background_sub": "当前办公室背景的内部预览与收藏保存操作。",
-        "asset.current_background_alt": "当前内部背景预览",
-        "asset.layout_history": "布局与历史",
-        "asset.layout_history_sub": "positions/defaults 与 favorites/history 列表的受保护状态。",
         "asset.positions": "位置",
         "asset.defaults": "默认值",
         "asset.favorites": "收藏",
-        "asset.history": "历史",
-        "asset.background_history": "背景历史",
-        "asset.favorite_alt": "收藏背景",
-        "asset.history_alt": "背景历史预览",
-        "asset.favorite_default_name": "favorite",
-        "asset.history_default_name": "history item",
         "asset.block.gemini_title": "Gemini / Nanobanana",
         "asset.block.gemini_subtitle_prefix": "模型",
         "asset.block.background_title": "背景场景",
@@ -1606,7 +1367,7 @@ manager カードの補足に使います。</div>
     };
     const ACTIVE_POLL_MS = 15000;
     const HIDDEN_POLL_MS = 60000;
-    const state = { internal: null, health: null, failedRuns: null, assetAuth: null, bgPollTimer: null, selectedDetail: null, renderTimer: null, renderInFlight: null, toastTimer: null };
+    const state = { internal: null, health: null, failedRuns: null, selectedDetail: null, renderTimer: null, renderInFlight: null, toastTimer: null };
 
     function detailItemKey(kind, item) {
       if (!item) return "";
@@ -2249,216 +2010,65 @@ manager カードの補足に使います。</div>
       `).join("");
     }
 
+    async function handleDraftAction(taskId, action) {
+      try {
+        const res = await fetchJson(
+          `/api/reply-drafts/${encodeURIComponent(taskId)}/${action}`,
+          { method: "POST" }
+        );
+        showToast(res.message || `${action} しました`, "info");
+        await render();
+      } catch (err) {
+        showToast(err.message || `${action} に失敗しました`, "error");
+      }
+    }
+
     function renderReplyDraftsCard(replyDrafts) {
-      const rowsEl = document.getElementById("replyDraftRows");
-      if (!rowsEl) return;
+      const list = document.getElementById("replyDraftList");
+      if (!list) return;
       const drafts = Array.isArray(replyDrafts?.drafts) ? replyDrafts.drafts : [];
       if (!drafts.length) {
-        rowsEl.innerHTML = `<tr><td colspan="6" class="sub">reply_draft はまだありません。</td></tr>`;
+        renderEmpty(list, "reply_draft はまだありません。");
         return;
       }
-      rowsEl.innerHTML = drafts.map((draft) => `
-        <tr>
-          <td>${escapeHtml(draft.task_id || "-")}</td>
-          <td>${escapeHtml(draft.role || "-")}</td>
-          <td>${escapeHtml(draft.status || "-")}</td>
-          <td>${escapeHtml(draft.exit_code == null ? "-" : String(draft.exit_code))}</td>
-          <td>${escapeHtml(draft.created_at || "-")}</td>
-          <td style="white-space:normal; word-break:break-word; min-width:320px;">${escapeHtml(draft.content || "-")}</td>
-        </tr>
-      `).join("");
-    }
-
-    async function refreshAssetAuthStatus() {
-      try {
-        const data = await fetchJson("/assets/auth/status");
-        state.assetAuth = data;
-        document.getElementById("authBadge").className = `${badgeClass(data.authed ? "authenticated" : (data.drawer_default_pass ? "unsafe default" : "auth required"))} mono`;
-        document.getElementById("authBadge").textContent = t(data.authed ? "asset.state.authenticated" : "asset.state.auth_required", data.authed ? "authenticated" : "auth required");
-        const line = document.getElementById("authStatusLine");
-        let msg = data.authed ? t("status.asset_auth_ok", "Asset editor is authenticated in this browser session.") : t("status.asset_auth_locked", "Asset editor is locked for guarded actions.");
-        line.className = `status-line${data.drawer_default_pass ? " warn" : ""}`;
-        if (data.drawer_default_pass) msg += ` ${t("status.asset_auth_default_warning", "Warning: default drawer password is still active.")}`;
-        line.textContent = msg;
-        document.getElementById("assetAuthSummary").textContent = data.authed ? t("status.asset_auth_summary_ok", "Authenticated for guarded asset actions.") : t("status.asset_auth_summary_locked", "Guarded controls require asset editor authentication.");
-        return data;
-      } catch (error) {
-        document.getElementById("authStatusLine").className = "status-line danger";
-        document.getElementById("authStatusLine").textContent = error.message || t("status.auth_failed", "Authentication failed.");
-        throw error;
-      }
-    }
-
-    async function authenticateAssets() {
-      const password = document.getElementById("assetPassword").value;
-      try {
-        await fetchJson("/assets/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password }) });
-        document.getElementById("assetPassword").value = "";
-        await refreshAssetAuthStatus();
-        await refreshGuardedAssetData();
-      } catch (error) {
-        document.getElementById("authStatusLine").className = "status-line danger";
-        document.getElementById("authStatusLine").textContent = error.message || t("status.auth_failed", "Authentication failed.");
-      }
-    }
-
-    async function refreshGuardedAssetData() {
-      const auth = state.assetAuth || await refreshAssetAuthStatus();
-      if (!auth.authed) {
-        document.getElementById("layoutStatusLine").className = "status-line warn";
-        document.getElementById("layoutStatusLine").textContent = t("status.auth_required_assets", "Authenticate to inspect positions, defaults, favorites, and history.");
-        document.getElementById("favoriteActionStatus").className = "status-line warn";
-        document.getElementById("favoriteActionStatus").textContent = t("status.auth_required_favorites", "Authenticate to use favorites controls.");
-        renderEmpty(document.getElementById("favoritesList"), t("status.auth_required_load_favorites", "Authenticate to load favorites."));
-        renderEmpty(document.getElementById("historyList"), t("status.auth_required_load_history", "Authenticate to load background history."));
-        return;
-      }
-      try {
-        const [positions, defaults, favorites, history] = await Promise.all([
-          fetchJson("/assets/positions"),
-          fetchJson("/assets/defaults"),
-          fetchJson("/assets/home-favorites/list"),
-          fetchJson("/assets/background-history/list"),
-        ]);
-        document.getElementById("positionsCount").textContent = String(Object.keys(positions.items || {}).length);
-        document.getElementById("defaultsCount").textContent = String(Object.keys(defaults.items || {}).length);
-        document.getElementById("favoritesCount").textContent = String((favorites.items || []).length);
-        document.getElementById("historyCount").textContent = String((history.items || []).length);
-        document.getElementById("layoutStatusLine").className = "status-line";
-        document.getElementById("layoutStatusLine").textContent = t("status.guard_assets_loaded", "Guarded layout and background listings loaded.");
-        renderMiniList("favoritesList", (favorites.items || []).slice(0, 6), t("empty.no_favorites", "No favorites saved."), (item) => `
-          <div class="mini-item">
-            <img class="thumb small" src="${escapeHtml(item.thumb_url)}?t=${Date.now()}" alt="${escapeHtml(t("asset.favorite_alt", "Favorite background"))}">
-            <div class="title">${escapeHtml(item.id || item.name || t("asset.favorite_default_name", "favorite"))}</div>
-            <div class="meta">${escapeHtml(fmt(item.created_at))}</div>
-            <div class="actions">
-              <button class="button mono" type="button" onclick="applyFavorite('${escapeHtml(item.id)}')">${escapeHtml(t("action.apply", "Apply"))}</button>
-              <button class="button secondary mono" type="button" onclick="deleteFavorite('${escapeHtml(item.id)}')">${escapeHtml(t("action.delete", "Delete"))}</button>
+      const statusLabel = (s) =>
+        ({ pending: "pending", approved: "承認済み", rejected: "却下済み" }[s] || s || "pending");
+      const draftBadgeClass = (s) => {
+        if (s === "approved") return "badge ok";
+        return badgeClass(s);
+      };
+      list.innerHTML = drafts.map((draft) => {
+        const st = (draft.status || "pending").toLowerCase();
+        const taskId = escapeHtml(draft.task_id || "");
+        const isApproved = st === "approved";
+        const isRejected = st === "rejected";
+        return `
+        <article class="draft-card is-${escapeHtml(st)}" data-task-id="${taskId}">
+          <div class="row-top">
+            <div>
+              <div class="name">${escapeHtml(draft.role || "—")}</div>
+              <div class="sub mono" style="margin-top:4px">${taskId}</div>
             </div>
+            <div class="${draftBadgeClass(st)} mono">${escapeHtml(statusLabel(st))}</div>
           </div>
-        `);
-        renderMiniList("historyList", (history.items || []).slice(0, 6), t("empty.no_history", "No background history available."), (item) => `
-          <div class="mini-item">
-            <img class="thumb small" src="${escapeHtml(item.thumb_url)}?t=${Date.now()}" alt="${escapeHtml(t("asset.history_alt", "Background history preview"))}">
-            <div class="title">${escapeHtml(item.name || t("asset.history_default_name", "history item"))}</div>
-            <div class="meta">${escapeHtml(fmt(item.mtime))} / ${escapeHtml(String(item.size || 0))} ${escapeHtml(t("label.bytes", "bytes"))}</div>
+          ${taskId ? `<div class="draft-intake-link"><span class="draft-intake-arrow">↑ Intake</span><span class="mono" style="font-size:11px;opacity:0.7">${taskId}</span></div>` : ""}
+          <div class="draft-content">${escapeHtml(draft.content || "（本文なし）")}</div>
+          <div class="draft-meta mono">${escapeHtml(draft.created_at || "")
+            }${draft.exit_code != null ? ` · exit ${escapeHtml(String(draft.exit_code))}` : ""}</div>
+          <div class="draft-actions">
+            <button class="button mono" type="button"
+              ${isApproved ? "disabled" : ""}
+              onclick="handleDraftAction('${taskId}', 'approve')">承認</button>
+            <button class="button secondary mono" type="button"
+              onclick="handleDraftAction('${taskId}', 'regenerate')">再生成</button>
+            <button class="button reject mono" type="button"
+              ${isRejected ? "disabled" : ""}
+              onclick="handleDraftAction('${taskId}', 'reject')">却下</button>
           </div>
-        `);
-      } catch (error) {
-        document.getElementById("layoutStatusLine").className = "status-line danger";
-        document.getElementById("layoutStatusLine").textContent = error.message || t("status.guard_assets_failed", "Failed to load guarded asset data.");
-      }
+        </article>`;
+      }).join("");
     }
 
-    async function pollBackgroundTask(taskId) {
-      clearInterval(state.bgPollTimer);
-      state.bgPollTimer = setInterval(async () => {
-        try {
-          const data = await fetchJson(`/assets/generate-rpg-background/poll?task_id=${encodeURIComponent(taskId)}`);
-          if (data.status === "pending") {
-            document.getElementById("bgActionStatus").className = "status-line warn";
-            document.getElementById("bgActionStatus").textContent = data.msg || t("status.background_generating", "Background generation in progress...");
-            return;
-          }
-          clearInterval(state.bgPollTimer);
-          document.getElementById("bgActionStatus").className = "status-line";
-          document.getElementById("bgActionStatus").textContent = data.msg || t("status.background_completed", "Background generation completed.");
-          document.getElementById("currentBgPreview").src = `/static/office_bg_small.webp?t=${Date.now()}`;
-          await refreshGuardedAssetData();
-          await render();
-        } catch (error) {
-          clearInterval(state.bgPollTimer);
-          document.getElementById("bgActionStatus").className = "status-line danger";
-          document.getElementById("bgActionStatus").textContent = error.message || t("status.background_failed", "Background generation failed.");
-        }
-      }, 2500);
-    }
-
-    async function runBackgroundAction(kind) {
-      const auth = state.assetAuth || await refreshAssetAuthStatus();
-      if (!auth.authed) {
-        document.getElementById("bgActionStatus").className = "status-line warn";
-        document.getElementById("bgActionStatus").textContent = t("status.auth_required_background", "Authenticate before running background actions.");
-        return;
-      }
-      try {
-        if (kind === "generate") {
-          const prompt = document.getElementById("bgPrompt").value;
-          const data = await fetchJson("/assets/generate-rpg-background", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt, speed_mode: "fast" }),
-          });
-          document.getElementById("bgActionStatus").className = "status-line warn";
-          document.getElementById("bgActionStatus").textContent = data.msg || t("status.background_started", "Background generation started.");
-          if (data.task_id) pollBackgroundTask(data.task_id);
-          return;
-        }
-        const path = kind === "restore-reference"
-          ? "/assets/restore-reference-background"
-          : "/assets/restore-last-generated-background";
-        const data = await fetchJson(path, { method: "POST" });
-        document.getElementById("bgActionStatus").className = "status-line";
-        document.getElementById("bgActionStatus").textContent = data.msg || t("status.background_action_completed", "Background action completed.");
-        document.getElementById("currentBgPreview").src = `/static/office_bg_small.webp?t=${Date.now()}`;
-        await refreshGuardedAssetData();
-        await render();
-      } catch (error) {
-        document.getElementById("bgActionStatus").className = "status-line danger";
-        document.getElementById("bgActionStatus").textContent = error.message || t("status.background_action_failed", "Background action failed.");
-      }
-    }
-
-    async function saveCurrentFavorite() {
-      const auth = state.assetAuth || await refreshAssetAuthStatus();
-      if (!auth.authed) {
-        document.getElementById("favoriteActionStatus").className = "status-line warn";
-        document.getElementById("favoriteActionStatus").textContent = t("status.auth_required_save_favorite", "Authenticate before saving favorites.");
-        return;
-      }
-      try {
-        const data = await fetchJson("/assets/home-favorites/save-current", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-        document.getElementById("favoriteActionStatus").className = "status-line";
-        document.getElementById("favoriteActionStatus").textContent = data.msg || t("status.favorite_saved", "Saved current background to favorites.");
-        await refreshGuardedAssetData();
-      } catch (error) {
-        document.getElementById("favoriteActionStatus").className = "status-line danger";
-        document.getElementById("favoriteActionStatus").textContent = error.message || t("status.favorite_save_failed", "Failed to save current background.");
-      }
-    }
-
-    async function applyFavorite(id) {
-      try {
-        const data = await fetchJson("/assets/home-favorites/apply", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id }),
-        });
-        document.getElementById("favoriteActionStatus").className = "status-line";
-        document.getElementById("favoriteActionStatus").textContent = data.msg || t("status.favorite_applied", "Favorite applied.");
-        document.getElementById("currentBgPreview").src = `/static/office_bg_small.webp?t=${Date.now()}`;
-        await refreshGuardedAssetData();
-      } catch (error) {
-        document.getElementById("favoriteActionStatus").className = "status-line danger";
-        document.getElementById("favoriteActionStatus").textContent = error.message || t("status.favorite_apply_failed", "Failed to apply favorite.");
-      }
-    }
-
-    async function deleteFavorite(id) {
-      try {
-        const data = await fetchJson("/assets/home-favorites/delete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id }),
-        });
-        document.getElementById("favoriteActionStatus").className = "status-line";
-        document.getElementById("favoriteActionStatus").textContent = data.msg || t("status.favorite_deleted", "Favorite deleted.");
-        await refreshGuardedAssetData();
-      } catch (error) {
-        document.getElementById("favoriteActionStatus").className = "status-line danger";
-        document.getElementById("favoriteActionStatus").textContent = error.message || t("status.favorite_delete_failed", "Failed to delete favorite.");
-      }
-    }
 
     async function render() {
       if (state.renderInFlight) return state.renderInFlight;
@@ -2491,7 +2101,6 @@ manager カードの補足に使います。</div>
         document.getElementById("gatewayStatus").textContent = data.manager?.gateway?.status || t("status.gateway_standby", "Standby");
         document.getElementById("gatewayDetail").textContent = data.manager?.gateway?.detail || t("status.gateway_detail_empty", "No gateway detail available.");
         document.getElementById("updatedAtPill").textContent = formatPill("label.updated_short", fmt(data.manager?.updated_at), "updated");
-        document.getElementById("currentBgPreview").src = `/static/office_bg_small.webp?t=${Date.now()}`;
         const fallback = data.manager?.fallback_worker || {};
         document.getElementById("fallbackSummary").textContent = `${fallback.name || t("label.fallback", "Fallback")} / ${fallback.status || t("label.available", "available")} / ${(fallback.allowed_tools || []).join(", ") || t("label.no_tools_listed", "no tools listed")}`;
         renderSummary(data.summary || {});
@@ -2512,7 +2121,6 @@ manager カードの補足に使います。</div>
         renderRecentFailedRuns(state.failedRuns);
         renderRuntimeEventsCard(runtimeEvents);
         renderReplyDraftsCard(replyDrafts);
-        await refreshAssetAuthStatus();
       } catch (error) {
         const targets = ["rolesList", "activityList", "routingList", "assetsList", "agentsList", "intakeList", "policyList", "blockedList", "approvalList", "failedList", "connectorList", "completedList", "alertList"];
         for (const id of targets) renderEmpty(document.getElementById(id), error.message || t("error.failed_internal_state", "Failed to load internal state."));
@@ -2600,17 +2208,6 @@ manager カードの補足に使います。</div>
       scheduleRender();
     });
     applyI18n();
-
-    document.getElementById("authButton").addEventListener("click", authenticateAssets);
-    document.getElementById("refreshAuthButton").addEventListener("click", refreshAssetAuthStatus);
-    document.getElementById("generateBgButton").addEventListener("click", () => runBackgroundAction("generate"));
-    document.getElementById("restoreReferenceButton").addEventListener("click", () => runBackgroundAction("restore-reference"));
-    document.getElementById("restoreLatestButton").addEventListener("click", () => runBackgroundAction("restore-latest"));
-    document.getElementById("refreshLayoutButton").addEventListener("click", refreshGuardedAssetData);
-    document.getElementById("saveFavoriteButton").addEventListener("click", saveCurrentFavorite);
-    document.getElementById("refreshPreviewButton").addEventListener("click", () => {
-      document.getElementById("currentBgPreview").src = `/static/office_bg_small.webp?t=${Date.now()}`;
-    });
 
     render().then(() => scheduleRender());
   </script>
