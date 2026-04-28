@@ -2117,6 +2117,12 @@ def api_health():
     })
 
 
+@app.route("/api/healthz", methods=["GET"])
+def api_healthz():
+    """Minimal liveness probe for systemd / watchdog / OpenClaw health checks."""
+    return jsonify({"ok": True, "service": "office-ui"})
+
+
 # ---------------------------------------------------------------------------
 # Run scan helpers (shared with /api/internal/health)
 # ---------------------------------------------------------------------------
@@ -3449,4 +3455,7 @@ if __name__ == "__main__":
             print("Security hardening: OK")
     print("=" * 50)
 
-    app.run(host="0.0.0.0", port=backend_port, debug=False)
+    dev_reload = os.environ.get("STAR_DEV_RELOAD", "").strip() == "1"
+    if dev_reload:
+        print("Auto-reload: ENABLED (STAR_DEV_RELOAD=1) — file changes restart the server")
+    app.run(host="0.0.0.0", port=backend_port, debug=False, use_reloader=dev_reload)

@@ -47,7 +47,46 @@ Examples:
 
 ## 4. Local Server (Port 19000)
 
-### Start
+### 管理方法（推奨）: systemd ユーザーサービス
+
+コード変更後は **必ず restart** すること。再起動しないと新しいルートや変更が反映されない。
+
+```bash
+# 起動
+systemctl --user start deepnoa-office-ui
+
+# 停止
+systemctl --user stop deepnoa-office-ui
+
+# コード変更後の再起動（API追加・変更時は必須）
+systemctl --user restart deepnoa-office-ui
+
+# 状態確認
+systemctl --user status deepnoa-office-ui
+
+# ログ確認
+journalctl --user -u deepnoa-office-ui -f
+```
+
+サービスは OS 再起動後も自動起動する（`WantedBy=default.target`）。
+
+---
+
+### 開発時: ファイル変更検知リロード
+
+`STAR_DEV_RELOAD=1` を付けて起動すると、`backend/` 以下のファイル変更を検知して自動リロードする。
+
+```bash
+cd /home/deepnoa/Deepnoa-Office-UI-light-polish
+STAR_DEV_RELOAD=1 python3 backend/app.py
+```
+
+> **注意**: 本番運用では `STAR_DEV_RELOAD` は付けないこと。
+
+---
+
+### 手動起動（デバッグ用）
+
 ```bash
 cd /home/deepnoa/Deepnoa-Office-UI-light-polish
 python3 backend/app.py
