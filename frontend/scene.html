@@ -530,10 +530,279 @@
 
     .scene-live {
       right: 16px;
-      bottom: 16px;
+      bottom: 14px;
       padding: 8px 10px;
       text-align: right;
       min-width: 118px;
+      z-index: 12;
+    }
+
+    .scene-workflow-panel {
+      position: absolute;
+      left: 32px;
+      right: 420px;
+      bottom: 20px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(7, 13, 22, 0.78);
+      backdrop-filter: blur(14px);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 11;
+      max-height: 24vh;
+      overflow: hidden;
+    }
+
+    .scene-agent-panel {
+      position: absolute;
+      top: 96px;
+      right: 24px;
+      width: min(360px, 32vw);
+      bottom: 170px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(7, 12, 20, 0.76);
+      backdrop-filter: blur(16px);
+      padding: 10px 11px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 12;
+    }
+
+    .ops-panel-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 8px;
+    }
+
+    .ops-panel-title {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #cfe1ff;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .ops-panel-sub {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .workflow-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .workflow-title {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #cfddf7;
+    }
+
+    .workflow-meta {
+      font-size: 11px;
+      color: var(--muted);
+      opacity: 0.9;
+    }
+
+    .workflow-pipeline {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 7px;
+      align-items: stretch;
+      min-width: 0;
+    }
+
+    .wf-stage {
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 7px 8px;
+      background: rgba(255,255,255,0.02);
+      min-height: 68px;
+      position: relative;
+    }
+
+    .wf-stage::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -7px;
+      width: 7px;
+      height: 1px;
+      background: rgba(255,255,255,0.22);
+    }
+
+    .wf-stage:last-child::after {
+      display: none;
+    }
+
+    .wf-stage.is-active {
+      border-color: rgba(94,145,255,0.42);
+      box-shadow: 0 0 0 1px rgba(94,145,255,0.18) inset;
+    }
+
+    .wf-stage.is-active .wf-dot {
+      animation: rt-pulse 1.1s ease-in-out infinite;
+    }
+
+    .wf-stage.is-queued {
+      border-color: rgba(255,196,107,0.42);
+      box-shadow: 0 0 0 1px rgba(255,196,107,0.12) inset;
+    }
+
+    .wf-stage.is-completed {
+      border-color: rgba(126,226,194,0.38);
+      box-shadow: 0 0 16px rgba(126,226,194,0.12);
+    }
+
+    .wf-stage.is-failed {
+      border-color: rgba(255,107,125,0.44);
+    }
+
+    .wf-head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .wf-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--wf-color, #9eb4d4);
+      flex-shrink: 0;
+    }
+
+    .wf-stage.is-active { --wf-color: #5e91ff; }
+    .wf-stage.is-queued { --wf-color: #ffc46b; }
+    .wf-stage.is-completed { --wf-color: #7ee2c2; }
+    .wf-stage.is-failed { --wf-color: #ff6b7d; }
+
+    .wf-status {
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .wf-detail {
+      font-size: 10px;
+      line-height: 1.35;
+      color: var(--color-text);
+      opacity: 0.94;
+      word-break: break-word;
+    }
+
+    .workflow-agent-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+    }
+
+    .agent-flow-card {
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 6px 7px;
+      background: rgba(255,255,255,0.02);
+      min-height: 64px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .agent-flow-card.is-active {
+      border-color: rgba(94,145,255,0.4);
+      box-shadow: 0 0 0 1px rgba(94,145,255,0.16) inset;
+    }
+
+    .agent-flow-card.is-failed {
+      border-color: rgba(255,107,125,0.42);
+    }
+
+    .af-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .af-status {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .af-badge {
+      font-size: 9px;
+      font-family: "IBM Plex Mono", monospace;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.16);
+      color: var(--color-text);
+      background: rgba(255,255,255,0.05);
+      text-transform: lowercase;
+    }
+
+    .af-badge.is-active {
+      border-color: rgba(94,145,255,0.42);
+      color: #a8c7ff;
+    }
+
+    .af-badge.is-queued {
+      border-color: rgba(255,196,107,0.42);
+      color: #ffd998;
+      animation: queued-blink 1.8s ease-in-out infinite;
+    }
+
+    .af-badge.is-completed {
+      border-color: rgba(126,226,194,0.4);
+      color: #9fe8d0;
+    }
+
+    .af-badge.is-failed {
+      border-color: rgba(255,107,125,0.44);
+      color: #ff9ba8;
+    }
+
+    .af-task,
+    .af-last {
+      font-size: 10px;
+      line-height: 1.3;
+      color: var(--color-text);
+      opacity: 0.92;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .af-cap {
+      font-size: 9px;
+      line-height: 1.25;
+      color: var(--muted);
+      opacity: 0.9;
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .af-tag {
+      padding: 1px 5px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.04);
     }
 
     .live-pill {
@@ -1133,20 +1402,21 @@
 
     /* ── activity feed (right side) ── */
     .scene-activity-feed {
-      position: absolute;
-      right: 16px;
-      bottom: 80px;
-      width: 200px;
-      padding: 8px 10px;
-      border-radius: 12px;
+      position: relative;
+      right: auto;
+      bottom: auto;
+      width: 100%;
+      max-height: 230px;
+      overflow-y: auto;
+      padding: 5px 7px;
+      border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(8,14,24,0.68);
-      backdrop-filter: blur(10px);
-      pointer-events: none;
+      background: rgba(255,255,255,0.02);
+      pointer-events: auto;
       display: flex;
       flex-direction: column;
       gap: 0;
-      z-index: 10;
+      z-index: 0;
     }
 
     html[data-theme="light"] .scene-activity-feed {
@@ -1159,7 +1429,7 @@
       display: flex;
       align-items: flex-start;
       gap: 6px;
-      padding: 4px 0;
+      padding: 5px 0;
       border-bottom: 1px solid rgba(255,255,255,0.05);
       font-size: 10px;
       color: var(--muted);
@@ -1205,12 +1475,14 @@
       white-space: nowrap;
       pointer-events: none;
       opacity: 0;
-      transition: opacity 0.3s ease;
+      transition: opacity 0.28s ease, transform 0.28s ease;
+      transform: translateX(-50%) translateY(8px);
       z-index: 20;
     }
 
     .intake-toast.is-visible {
       opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
 
     .intake-toast::before {
@@ -1226,6 +1498,11 @@
     @keyframes feed-in {
       from { opacity: 0; transform: translateX(6px); }
       to { opacity: 1; transform: none; }
+    }
+
+    @keyframes queued-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.55; }
     }
 
     @media (max-width: 900px) {
@@ -1253,8 +1530,37 @@
         width: min(280px, calc(100% - 24px));
       }
 
-      .scene-activity-feed {
+      .scene-workflow-panel {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        max-height: 34vh;
+        overflow: auto;
+      }
+
+      .scene-agent-panel {
+        left: 12px;
+        right: 12px;
+        width: auto;
+        top: 86px;
+        bottom: 188px;
+      }
+
+      .workflow-pipeline,
+      .workflow-agent-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .workflow-pipeline {
+        min-width: 0;
+      }
+
+      .wf-stage::after {
         display: none;
+      }
+
+      .scene-live {
+        bottom: 10px;
       }
     }
   </style>
@@ -1355,7 +1661,22 @@
         <div class="live-sub" id="live-sub" data-i18n="scene.loading">Loading office scene…</div>
       </div>
 
-      <div class="scene-activity-feed" id="scene-activity-feed" aria-live="polite"></div>
+      <div class="scene-workflow-panel" id="scene-workflow-panel" aria-live="polite">
+        <div class="workflow-head">
+          <div class="workflow-title">Incoming → Universal → Agent → Runtime → Result</div>
+          <div class="workflow-meta" id="workflow-meta">--</div>
+        </div>
+        <div class="workflow-pipeline" id="workflow-pipeline"></div>
+      </div>
+
+      <div class="scene-agent-panel" id="scene-agent-panel" aria-live="polite">
+        <div class="ops-panel-head">
+          <div class="ops-panel-title">AI Operations</div>
+          <div class="ops-panel-sub">Active agents / Recent activity</div>
+        </div>
+        <div class="workflow-agent-grid" id="workflow-agent-grid"></div>
+        <div class="scene-activity-feed" id="scene-activity-feed" aria-live="polite"></div>
+      </div>
       <div class="intake-toast" id="intake-toast" role="status" aria-live="polite"></div>
 
       <div class="scene-tooltip is-hidden" id="scene-tooltip" aria-hidden="true"></div>
@@ -2829,6 +3150,31 @@
       }
     }
 
+    async function loadRuntimeEventsState() {
+      try {
+        const r = await fetch("/api/runtime-events", { cache: "no-store" });
+        if (!r.ok) return { events: [], tasks: [] };
+        const payload = await r.json();
+        return {
+          events: Array.isArray(payload && payload.events) ? payload.events : [],
+          tasks: Array.isArray(payload && payload.tasks) ? payload.tasks : [],
+        };
+      } catch {
+        return { events: [], tasks: [] };
+      }
+    }
+
+    async function loadReplyDraftsState() {
+      try {
+        const r = await fetch("/api/reply-drafts", { cache: "no-store" });
+        if (!r.ok) return [];
+        const payload = await r.json();
+        return Array.isArray(payload && payload.drafts) ? payload.drafts : [];
+      } catch {
+        return [];
+      }
+    }
+
     const _FEED_STATE_COLOR = {
       researching: "#8bc5ff",
       executing: "#ffc46b",
@@ -2848,27 +3194,37 @@
       return "#9eb4d4";
     }
 
-    function resolveRuntimeUiStatus(data) {
+    function resolveRuntimeUiStatus(data, runtimeState = { events: [], tasks: [] }, focusTaskId = "") {
       const summary = data && data.summary ? data.summary : {};
       const intake = Array.isArray(data && data.intake) ? data.intake : [];
       const activity = Array.isArray(data && data.activity) ? data.activity : [];
-      const events = Array.isArray(data && data.events) ? data.events : [];
+      const localEvents = Array.isArray(data && data.events) ? data.events : [];
+      const runtimeEvents = Array.isArray(runtimeState && runtimeState.events) ? runtimeState.events : [];
+      const mergedEvents = [...runtimeEvents, ...localEvents];
+      const scopedEvents = focusTaskId
+        ? mergedEvents.filter((e) => String(e && e.task_id || "") === String(focusTaskId))
+        : mergedEvents;
 
-      const hasFailed = events.some((e) => /runtime\.(failed|error)|task\.failed|error/i.test(String(e && e.event_type || "")))
+      const hasFailed = scopedEvents.some((e) => /runtime\.(failed|error)|task\.failed|error/i.test(String(e && e.event_type || "")))
         || activity.some((a) => String(a && a.state || "").toLowerCase() === "error");
       if (hasFailed) return "failed";
 
+      const hasRetrying = scopedEvents.some((e) => /runtime\.retry_started|retrying/i.test(String(e && e.event_type || ""))
+        || String(e && e.runtime_status || "").toLowerCase() === "retrying");
+      if (hasRetrying) return "retrying";
+
       const hasRunning = Number(summary.active_tasks || 0) > 0
         || activity.some((a) => ["researching", "executing", "syncing", "routing", "writing"].includes(String(a && a.state || "").toLowerCase()))
-        || events.some((e) => /runtime\.(started|retrying|running)|task\.started/i.test(String(e && e.event_type || "")));
+        || scopedEvents.some((e) => /runtime\.(started|running)|task\.started/i.test(String(e && e.event_type || "")));
       if (hasRunning) return "running";
 
-      const hasQueued = events.some((e) => /runtime\.queued|queued|retry/i.test(String(e && e.event_type || "")))
+      const hasQueued = scopedEvents.some((e) => /runtime\.queued|queued/i.test(String(e && e.event_type || ""))
+        || String(e && e.runtime_status || "").toLowerCase() === "queued")
         || intake.some((item) => item && item.runtime_task_id && !item.reply_draft_content);
       if (hasQueued) return "queued";
 
       const hasCompleted = intake.some((item) => !!(item && item.reply_draft_content))
-        || events.some((e) => /reply|draft|completed|task\.done/i.test(String(e && e.event_type || "")));
+        || scopedEvents.some((e) => /runtime\.(completed|retry_completed)|reply|draft|completed|task\.done/i.test(String(e && e.event_type || "")));
       if (hasCompleted) return "completed";
 
       return "idle";
@@ -2879,10 +3235,10 @@
       return `runtime: ${normalized}`;
     }
 
-    function renderRuntimeStatus(data) {
+    function renderRuntimeStatus(data, runtimeState = { events: [], tasks: [] }, focusTaskId = "") {
       const row = document.getElementById("live-runtime-row");
       if (!row) return;
-      const status = resolveRuntimeUiStatus(data);
+      const status = resolveRuntimeUiStatus(data, runtimeState, focusTaskId);
       const statusClass = status === "running"
         ? "is-running"
         : status === "queued"
@@ -2891,6 +3247,8 @@
             ? "is-completed"
             : status === "failed"
               ? "is-failed"
+              : status === "retrying"
+                ? "is-running"
               : "";
       row.innerHTML = `<span class="rt-badge ${statusClass}"><span class="rt-dot"></span>${escapeHtml(runtimeStatusLabel(status))}</span>`;
       row.dataset.runtimeStatus = status;
@@ -2898,6 +3256,8 @@
 
     function mapEventToSafeMessage(item, runtimeStatus) {
       const eventType = String(item && item.event_type || "").toLowerCase();
+      if (/runtime\.retry_started/.test(eventType)) return "Sense available, retry started";
+      if (/runtime\.retry_completed/.test(eventType)) return "Retry completed";
       if (/runtime\.queued|queued/.test(eventType)) return "待機中のruntimeがあります";
       if (/runtime\.offline|offline/.test(eventType)) return "runtimeはオフラインのため待機しています";
       if (/retry/.test(eventType)) return "待機中タスクを再実行しています";
@@ -2912,32 +3272,232 @@
       return "runtimeは待機中です";
     }
 
-    function renderActivityFeed(data) {
+    function buildWorkflowModel(data, runtimeState, replyDrafts) {
+      const intake = Array.isArray(data && data.intake) ? data.intake : [];
+      const topIntake = intake[0] || null;
+      const taskId = topIntake && topIntake.runtime_task_id ? String(topIntake.runtime_task_id) : "";
+      const runtimeStatus = resolveRuntimeUiStatus(data, runtimeState, taskId);
+      const hasReplyDraft = !!(topIntake && topIntake.reply_draft_content)
+        || (Array.isArray(replyDrafts) && replyDrafts.some((d) => String(d && d.task_id || "") === taskId));
+      const intakeCount = intake.length;
+
+      let universalStatus = "standby";
+      let universalReason = "no pending intake";
+      if (topIntake && !taskId) {
+        universalStatus = "routing";
+        universalReason = "intake detected";
+      } else if (taskId && !hasReplyDraft) {
+        universalStatus = "routed";
+        universalReason = "document_request -> dev runtime";
+      } else if (hasReplyDraft) {
+        universalStatus = "standby";
+        universalReason = "latest inquiry processed";
+      }
+
+      const opsState = taskId
+        ? (hasReplyDraft ? "monitoring" : "forwarded to dev runtime")
+        : intakeCount > 0
+          ? "triaging"
+          : "monitoring";
+
+      const devState = runtimeStatus === "running"
+        ? "generating reply draft"
+        : runtimeStatus === "queued"
+          ? "waiting for Sense/Ollama"
+          : runtimeStatus === "retrying"
+            ? "retrying queued runtime"
+            : runtimeStatus === "completed"
+              ? "draft ready"
+              : runtimeStatus === "failed"
+                ? "runtime failed"
+                : "standby";
+
+      const researchState = "standby";
+
+      const pipeline = [
+        {
+          key: "incoming",
+          label: "Incoming",
+          status: intakeCount > 0 ? "active" : "idle",
+          text: intakeCount > 0 ? "new intake detected" : "waiting",
+          detail: intakeCount > 0 ? `${intakeCount} intake` : "no intake",
+        },
+        {
+          key: "router",
+          label: "Universal Router",
+          status: universalStatus === "routing" ? "active" : universalStatus === "routed" ? "completed" : "idle",
+          text: universalStatus,
+          detail: universalReason,
+        },
+        {
+          key: "agent",
+          label: "Ops / Dev / Research",
+          status: devState === "standby" && opsState === "monitoring" ? "idle" : "active",
+          text: `ops: ${opsState}`,
+          detail: `dev: ${devState}`,
+        },
+        {
+          key: "runtime",
+          label: "Runtime",
+          status: runtimeStatus === "failed" ? "failed" : runtimeStatus === "queued" ? "queued" : runtimeStatus === "completed" ? "completed" : runtimeStatus === "idle" ? "idle" : "active",
+          text: runtimeStatus,
+          detail: taskId || "no runtime task",
+        },
+        {
+          key: "result",
+          label: "Result",
+          status: hasReplyDraft ? "completed" : runtimeStatus === "failed" ? "failed" : "idle",
+          text: hasReplyDraft ? "reply draft ready" : "awaiting output",
+          detail: hasReplyDraft ? "ready for approval" : "not ready",
+        },
+      ];
+
+      const mergedEvents = Array.isArray(runtimeState && runtimeState.events) ? runtimeState.events : [];
+      const latestRuntimeEvent = taskId
+        ? mergedEvents.find((e) => String(e && e.task_id || "") === taskId)
+        : (mergedEvents[0] || null);
+
+      return {
+        intakeCount,
+        taskId,
+        runtimeStatus,
+        universalStatus,
+        universalReason,
+        hasReplyDraft,
+        opsState,
+        devState,
+        researchState,
+        latestRuntimeEvent,
+        pipeline,
+      };
+    }
+
+    function renderWorkflowPanel(model) {
+      const pipelineEl = document.getElementById("workflow-pipeline");
+      const agentGrid = document.getElementById("workflow-agent-grid");
+      const metaEl = document.getElementById("workflow-meta");
+      if (!pipelineEl || !agentGrid || !metaEl) return;
+
+      metaEl.textContent = model.taskId ? `runtime_task_id: ${model.taskId}` : "runtime_task_id: --";
+      pipelineEl.innerHTML = model.pipeline.map((stage) => {
+        const cls = stage.status === "active"
+          ? "is-active"
+          : stage.status === "queued"
+            ? "is-queued"
+            : stage.status === "completed"
+              ? "is-completed"
+              : stage.status === "failed"
+                ? "is-failed"
+                : "";
+        return `<div class="wf-stage ${cls}"><div class="wf-head"><span class="wf-dot"></span>${escapeHtml(stage.label)}</div><div class="wf-status">${escapeHtml(stage.text)}</div><div class="wf-detail">${escapeHtml(stage.detail)}</div></div>`;
+      }).join("");
+
+      function toTagList(capability) {
+        return String(capability || "")
+          .split(",")
+          .map((x) => x.trim())
+          .filter(Boolean)
+          .slice(0, 2);
+      }
+
+      function statusTone(status) {
+        const s = String(status || "").toLowerCase();
+        if (s.includes("fail") || s.includes("error")) return "is-failed";
+        if (s.includes("queue") || s.includes("waiting")) return "is-queued";
+        if (s.includes("ready") || s.includes("completed")) return "is-completed";
+        if (s.includes("running") || s.includes("triaging") || s.includes("generating") || s.includes("retry")) return "is-active";
+        return "";
+      }
+
+      const cards = [
+        {
+          name: "Universal Router",
+          status: model.universalStatus,
+          task: model.universalReason,
+          capability: "task intake, role routing, handoff coordination",
+          last: model.taskId ? `routed: ${model.taskId}` : "no active routing",
+          tone: model.universalStatus === "routing" ? "active" : "",
+        },
+        {
+          name: "Ops Agent",
+          status: model.opsState,
+          task: model.opsState === "triaging" ? "incoming inquiry triage" : "runtime queue monitor",
+          capability: "intake triage, connector health, queue monitor",
+          last: model.taskId ? "forward signal to dev runtime" : "monitoring intake",
+          tone: model.opsState === "triaging" || model.opsState === "forwarded to dev runtime" ? "active" : "",
+        },
+        {
+          name: "Dev Agent",
+          status: model.devState,
+          task: model.taskId ? `runtime task ${model.taskId}` : "waiting for task",
+          capability: "runtime execution, draft generation, task automation",
+          last: model.latestRuntimeEvent ? String(model.latestRuntimeEvent.event_type || "") : "no runtime event",
+          tone: model.runtimeStatus === "failed" ? "failed" : model.devState !== "standby" ? "active" : "",
+        },
+        {
+          name: "Research Agent",
+          status: model.researchState,
+          task: model.researchState === "standby" ? "standby" : "supporting analysis",
+          capability: "source scan, context enrichment, summary support",
+          last: "no current task",
+          tone: "",
+        },
+        {
+          name: "Runtime Worker",
+          status: model.runtimeStatus,
+          task: model.taskId || "idle",
+          capability: "queue/retry execution, result production",
+          last: model.latestRuntimeEvent ? String(model.latestRuntimeEvent.event_type || "") : "idle",
+          tone: model.runtimeStatus === "failed" ? "failed" : ["running", "queued", "retrying"].includes(model.runtimeStatus) ? "active" : "",
+        },
+      ];
+
+      agentGrid.innerHTML = cards.map((card) => {
+        const toneClass = card.tone === "active" ? "is-active" : card.tone === "failed" ? "is-failed" : "";
+        const statusClass = statusTone(card.status);
+        const tags = toTagList(card.capability).map((tag) => `<span class="af-tag">${escapeHtml(tag)}</span>`).join("");
+        return `<div class="agent-flow-card ${toneClass}"><div class="af-head"><span>${escapeHtml(card.name)}</span><span class="af-badge ${statusClass}">${escapeHtml(card.status)}</span></div><div class="af-task">${escapeHtml(card.task)}</div><div class="af-last">${escapeHtml(card.last)}</div><div class="af-cap">${tags}</div></div>`;
+      }).join("");
+    }
+
+    function renderActivityFeed(data, model, runtimeState) {
       const feed = document.getElementById("scene-activity-feed");
       if (!feed) return;
-      const runtimeStatus = resolveRuntimeUiStatus(data);
+      const runtimeStatus = model.runtimeStatus;
       const items = [];
 
       const intakeCount = Array.isArray(data && data.intake) ? data.intake.length : 0;
       if (intakeCount > 0) {
-        items.push({ message: "新しい問い合わせを検知", event_type: "intake.detected", state: "syncing" });
+        const firstIntake = data.intake && data.intake[0] ? data.intake[0] : {};
+        items.push({ message: "Incoming inquiry detected", event_type: "intake.detected", state: "syncing", timestamp: firstIntake.updated_at || "" });
       }
 
-      for (const eventItem of (Array.isArray(data && data.events) ? data.events : []).slice(0, 8)) {
+      if (model.taskId) {
+        items.push({ message: "Universal routed to Dev", event_type: "router.routed", state: "routing", timestamp: "" });
+      }
+
+      const runtimeEvents = Array.isArray(runtimeState && runtimeState.events) ? runtimeState.events : [];
+      const scopedEvents = model.taskId ? runtimeEvents.filter((e) => String(e && e.task_id || "") === model.taskId) : runtimeEvents;
+      for (const eventItem of scopedEvents.slice(0, 8)) {
         const message = mapEventToSafeMessage(eventItem, runtimeStatus);
-        if (!items.some((x) => x.message === message)) {
-          items.push({ message, event_type: eventItem.event_type, state: eventItem.state });
+        if (!items.some((x) => x.message === message && x.event_type === eventItem.event_type)) {
+          items.push({ message, event_type: eventItem.event_type, state: eventItem.state, timestamp: eventItem.timestamp || "" });
         }
         if (items.length >= 5) break;
       }
 
+      if (model.hasReplyDraft) {
+        items.push({ message: "Reply draft generated", event_type: "reply_draft.ready", state: "idle", timestamp: "" });
+      }
+
       if (!items.length) {
-        items.push({ message: "runtimeは待機中です", event_type: "runtime.idle", state: "idle" });
+        items.push({ message: "runtime is idle", event_type: "runtime.idle", state: "idle", timestamp: "" });
       }
 
       feed.innerHTML = items.slice(0, 5).map((row, idx) => {
         const color = _feedDotColor(row.event_type, row.state);
-        return `<div class="feed-row" style="animation-delay:${idx * 0.06}s"><span class="feed-dot" style="background:${escapeHtml(color)}"></span><span class="feed-text">${escapeHtml(row.message)}</span></div>`;
+        const ts = row.timestamp ? `${safeDate(row.timestamp)} ` : "";
+        return `<div class="feed-row" style="animation-delay:${idx * 0.06}s"><span class="feed-dot" style="background:${escapeHtml(color)}"></span><span class="feed-text">${escapeHtml(`${ts}${row.message}`)}</span></div>`;
       }).join("");
     }
 
@@ -2963,26 +3523,38 @@
 
     async function refreshScene() {
       try {
-        const [publicData, internalData] = await Promise.all([
+        const [publicData, internalData, runtimeData, replyDrafts] = await Promise.all([
           loadPublicState(),
           loadInternalState(),
+          loadRuntimeEventsState(),
+          loadReplyDraftsState(),
         ]);
         const agents = buildMapAgents((publicData && publicData.agents) || []);
         renderOperationsMap(publicData, agents);
         document.getElementById("live-sub").textContent = `${t("scene.updated", "Updated")} ${safeDate(publicData.health && publicData.health.latest_update)}`;
         if (internalData) {
-          renderRuntimeStatus(internalData);
-          renderActivityFeed(internalData);
+          const model = buildWorkflowModel(internalData, runtimeData, replyDrafts);
+          renderRuntimeStatus(internalData, runtimeData, model.taskId);
+          renderWorkflowPanel(model);
+          renderActivityFeed(internalData, model, runtimeData);
           maybeShowIntakeToast(internalData);
         } else {
-          renderRuntimeStatus({ summary: {}, intake: [], activity: [], events: [] });
-          renderActivityFeed({ summary: {}, intake: [], activity: [], events: [] });
+          const fallbackData = { summary: {}, intake: [], activity: [], events: [] };
+          const fallbackRuntime = { events: [], tasks: [] };
+          const fallbackModel = buildWorkflowModel(fallbackData, fallbackRuntime, []);
+          renderRuntimeStatus(fallbackData, fallbackRuntime, "");
+          renderWorkflowPanel(fallbackModel);
+          renderActivityFeed(fallbackData, fallbackModel, fallbackRuntime);
         }
       } catch (error) {
         document.getElementById("live-sub").textContent = t("scene.loading", "Loading office scene…");
         renderAgents([]);
-        renderRuntimeStatus({ summary: {}, intake: [], activity: [], events: [] });
-        renderActivityFeed({ summary: {}, intake: [], activity: [], events: [] });
+        const fallbackData = { summary: {}, intake: [], activity: [], events: [] };
+        const fallbackRuntime = { events: [], tasks: [] };
+        const fallbackModel = buildWorkflowModel(fallbackData, fallbackRuntime, []);
+        renderRuntimeStatus(fallbackData, fallbackRuntime, "");
+        renderWorkflowPanel(fallbackModel);
+        renderActivityFeed(fallbackData, fallbackModel, fallbackRuntime);
         console.error(error);
       }
     }
