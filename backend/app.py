@@ -30,7 +30,7 @@ from services.schemas import (
 )
 from services.source_adapters import RunsAdapter
 from services.runtime_events import build_runtime_task_summary, load_runtime_events
-from services.reply_drafts import load_reply_drafts, load_draft_actions, save_draft_action, VALID_ACTIONS
+from services.reply_drafts import load_reply_drafts, load_draft_actions, save_draft_action, VALID_ACTIONS, trigger_regenerate
 from store_utils import (
     load_agents_state as _store_load_agents_state,
     save_agents_state as _store_save_agents_state,
@@ -2349,9 +2349,11 @@ def api_reply_draft_reject(task_id: str):
 def api_reply_draft_regenerate(task_id: str):
     if not _TASK_ID_RE.match(task_id):
         return jsonify({"ok": False, "message": "invalid task_id"}), 400
-    save_draft_action(task_id, VALID_ACTIONS["regenerate"])
-    return jsonify({"ok": True, "task_id": task_id, "status": VALID_ACTIONS["regenerate"],
-                    "message": "再生成をリクエストしました"})
+    ok, message = trigger_regenerate(task_id)
+    if not ok:
+        return jsonify({"ok": False, "task_id": task_id, "message": message}), 422
+    return jsonify({"ok": True, "task_id": task_id, "status": "pending_regenerate",
+                    "message": message})
 
 
 @app.route("/api/internal/runs", methods=["GET"])
