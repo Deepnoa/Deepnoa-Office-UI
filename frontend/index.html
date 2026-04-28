@@ -1599,6 +1599,7 @@ manager カードの補足に使います。</div>
       `).join("");
     }
 
+    function renderAgents(items) {
       const target = document.getElementById("agentsList");
       if (!items || !items.length) return renderEmpty(target, t("empty.no_agent_records", "No Openclaw agent records available."));
       target.innerHTML = items.map((item) => `
