@@ -30,7 +30,7 @@ from services.schemas import (
 )
 from services.source_adapters import RunsAdapter
 from services.runtime_events import build_runtime_task_summary, load_runtime_events
-from services.reply_drafts import load_reply_drafts
+from services.reply_drafts import load_reply_drafts, load_draft_actions, save_draft_action, VALID_ACTIONS
 from store_utils import (
     load_agents_state as _store_load_agents_state,
     save_agents_state as _store_save_agents_state,
@@ -1125,13 +1125,16 @@ def build_internal_view_state() -> dict:
         },
     }
 
-    drafts_by_task = {d["task_id"]: d["content"] for d in load_reply_drafts() if d.get("task_id") and d.get("content")}
+    _all_drafts = load_reply_drafts()
+    drafts_by_task = {d["task_id"]: d for d in _all_drafts if d.get("task_id") and d.get("content")}
     enriched_intake = []
     for item in list(manager.get("intake") or []):
         entry = dict(item)
         task_id = entry.get("runtime_task_id")
         if task_id and task_id in drafts_by_task:
-            entry["reply_draft_content"] = drafts_by_task[task_id]
+            draft = drafts_by_task[task_id]
+            entry["reply_draft_content"] = draft["content"]
+            entry["reply_draft_status"] = draft.get("status", "")
         enriched_intake.append(entry)
     enriched_manager = dict(manager)
     enriched_manager["intake"] = enriched_intake
@@ -2313,6 +2316,36 @@ def api_reply_draft(task_id: str):
         if draft.get("task_id") == task_id:
             return jsonify({"ok": True, "task_id": task_id, "content": draft["content"]})
     return jsonify({"ok": False, "msg": "not found"}), 404
+
+
+_TASK_ID_RE = re.compile(r'^[a-zA-Z0-9_\-]{1,64}$')
+
+
+@app.route("/api/reply-drafts/<task_id>/approve", methods=["POST"])
+def api_reply_draft_approve(task_id: str):
+    if not _TASK_ID_RE.match(task_id):
+        return jsonify({"ok": False, "message": "invalid task_id"}), 400
+    save_draft_action(task_id, VALID_ACTIONS["approve"])
+    return jsonify({"ok": True, "task_id": task_id, "status": VALID_ACTIONS["approve"],
+                    "message": "承認しました"})
+
+
+@app.route("/api/reply-drafts/<task_id>/reject", methods=["POST"])
+def api_reply_draft_reject(task_id: str):
+    if not _TASK_ID_RE.match(task_id):
+        return jsonify({"ok": False, "message": "invalid task_id"}), 400
+    save_draft_action(task_id, VALID_ACTIONS["reject"])
+    return jsonify({"ok": True, "task_id": task_id, "status": VALID_ACTIONS["reject"],
+                    "message": "却下しました"})
+
+
+@app.route("/api/reply-drafts/<task_id>/regenerate", methods=["POST"])
+def api_reply_draft_regenerate(task_id: str):
+    if not _TASK_ID_RE.match(task_id):
+        return jsonify({"ok": False, "message": "invalid task_id"}), 400
+    save_draft_action(task_id, VALID_ACTIONS["regenerate"])
+    return jsonify({"ok": True, "task_id": task_id, "status": VALID_ACTIONS["regenerate"],
+                    "message": "再生成をリクエストしました"})
 
 
 @app.route("/api/internal/runs", methods=["GET"])
