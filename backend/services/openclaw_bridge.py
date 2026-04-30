@@ -47,6 +47,19 @@ INTERNAL_ACTIVITY_EVENT_TYPES = frozenset({
 })
 PUBLIC_EVENT_SOURCES = frozenset({"github", "cron", "public", "manager", "fallback", "ops", "research"})
 PUBLIC_EVENT_TYPES = frozenset({"task.started", "task.blocked", "task.completed", "task.failed", "connector.status.changed", "channel.message.received", "runtime.alert"})
+RUNTIME_EVENT_TYPES = frozenset({
+    "runtime.started",
+    "runtime.retry_started",
+    "runtime.retry_completed",
+    "runtime.retry_failed",
+    "runtime.completed",
+    "runtime.failed",
+    "runtime.queued",
+    "runtime.requeued",
+    "runtime.exit",
+    "runtime.spawned",
+    "runtime.stuck_warning",
+})
 
 
 def _parse_iso(value: str | None) -> datetime | None:
@@ -276,6 +289,40 @@ def _normalize_events(manager_state: dict, intake: list[dict], primary_state: di
     events.extend(manager_activity_events(manager_state))
     events.extend(intake_events(intake))
     events.extend(snapshot_events(primary_state, normalized_agents))
+    runtime_events = load_runtime_events(limit=EVENT_HISTORY_RETENTION)
+    for runtime_event in runtime_events:
+        event_type = str(runtime_event.get("event_type") or "").strip()
+        if event_type not in RUNTIME_EVENT_TYPES:
+            continue
+        task_id = str(runtime_event.get("task_id") or "").strip()
+        role = str(runtime_event.get("role") or "").strip()
+        normalized_runtime_event = {
+            "event_id": f"runtime-{event_type}-{runtime_event.get('timestamp') or ''}-{task_id or role or 'unknown'}",
+            "event_type": event_type,
+            "timestamp": str(runtime_event.get("timestamp") or ""),
+            "task_id": task_id,
+            "agent_id": role,
+            "source": "runtime",
+            "state": str(runtime_event.get("status") or ""),
+            "status": str(runtime_event.get("status") or ""),
+            "severity": "warning" if event_type == "runtime.stuck_warning" else ("error" if event_type in {"runtime.failed", "runtime.retry_failed"} else "info"),
+            "display_summary": f"runtime::{event_type}",
+            "raw_payload": {
+                "role": role,
+                "status": str(runtime_event.get("status") or ""),
+                "runtime_status": runtime_event.get("runtime_status"),
+                "route_reason": runtime_event.get("route_reason"),
+                "exit_code": runtime_event.get("exit_code"),
+            },
+            "runtime_status": runtime_event.get("runtime_status"),
+            "route_reason": runtime_event.get("route_reason"),
+            "exit_code": runtime_event.get("exit_code"),
+            "role": role,
+            "component": str(runtime_event.get("component") or ""),
+            "provenance": "actual",
+            "provenance_label": normalize_provenance("actual"),
+        }
+        events.append(normalized_runtime_event)
     events.extend(derive_missing_lifecycle(events))
     events = dedupe_events(events)
     return events[:EVENT_HISTORY_RETENTION]
