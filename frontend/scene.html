@@ -594,6 +594,7 @@
       lastData: null,         // cached for switcher re-renders
       fetchState: "ok",       // ok | degraded
       lastFetchWarnAt: 0,
+      refreshInFlight: false,
       taskEventMap: new Map(),
       taskStateMap: new Map(),
     };
@@ -1582,6 +1583,8 @@
 
     /* ── Fetch & poll ── */
     async function refresh() {
+      if (app.refreshInFlight) return;
+      app.refreshInFlight = true;
       const ac = new AbortController();
       const to = setTimeout(() => ac.abort(), FETCH_TIMEOUT_MS);
       try {
@@ -1599,11 +1602,11 @@
         const now = Date.now();
         if (now - (app.lastFetchWarnAt || 0) > FETCH_WARN_THROTTLE_MS) {
           app.lastFetchWarnAt = now;
-          const detail = err && err.name === "AbortError" ? "timeout" : (err && err.message) || String(err);
-          console.warn("[scene] state fetch failed", detail);
         }
         if (app.lastData) renderAll(app.lastData);
         else showFetchStaleUi();
+      } finally {
+        app.refreshInFlight = false;
       }
     }
     function startPoll() {
