@@ -77,6 +77,12 @@
       color: var(--orange); max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .header-time { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); min-width: 38px; text-align: right; }
+    .header-breakdown {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 9px;
+      color: var(--muted-hi);
+      white-space: nowrap;
+    }
 
     /* ── Main ── */
     .scene-main {
@@ -487,6 +493,7 @@
           <div class="stat-chip"><span class="stat-val" id="stat-tasks">—</span><span class="stat-lbl">task</span></div>
         </div>
         <div class="live-badge" id="live-badge"><span class="live-dot"></span><span id="live-badge-text">Live</span></div>
+        <div class="header-breakdown" id="stat-breakdown"></div>
         <span class="fetch-state-lbl is-hidden" id="fetch-state-lbl" aria-live="polite"></span>
         <div class="header-time" id="header-time">--:--</div>
       </div>
@@ -527,7 +534,8 @@
         "state.idle":"","state.queued":"待機中","state.active":"処理中","state.completed":"完了","state.failed":"異常",
         "k.count":"件数","k.cat":"カテゴリ","k.svc":"サービス","k.recv":"受信","k.role":"担当","k.why":"理由",
         "k.task":"task","k.stat":"状態","k.tools":"ツール","k.agent":"担当","k.reply":"返信","k.connector":"接続",
-        "k.dur":"所要","k.since":"経過","k.sub":"状態",
+        "k.dur":"所要","k.since":"経過","k.sub":"状態","k.done":"完了",
+        "k.path":"経路","k.instant":"即時",
         "role.dev":"情報システム","role.ops":"業務管理","role.research":"経営企画","role.main":"汎用","role.universal":"Universal",
         "astate.idle":"待機中","astate.executing":"実行中","astate.researching":"調査中","astate.syncing":"同期中",
         "astate.routing":"振り分け中","astate.writing":"作業中","astate.error":"異常","astate.available":"待機中",
@@ -541,11 +549,14 @@
         "status.waiting":"待機","status.processing":"処理中","status.done":"完了","status.attention":"要確認",
         "story.processing":"AIが処理中","story.completed":"返信案が完成","story.queued":"順番待ち","story.failed":"確認が必要です",
         "story.desc.analyzing":"お問い合わせ内容を分析しています","story.desc.drafting":"返信案を作成しています","story.desc.finishing":"返信案を仕上げています","story.desc.completed":"処理が完了しました","story.desc.queued":"処理の順番を待っています","story.desc.failed":"処理に問題が発生しました","story.desc.stuck":"処理が長時間続いています",
-        "story.now":"NOW","reply.badge.completed":"返信案が完成","reply.badge.pending":"返信案を生成中","reply.badge.failed":"返信案で要確認",
-        "feed.main.received":"お問い合わせを受け付けました","feed.main.started":"処理を開始しました","feed.main.completed":"処理が完了しました","feed.main.failed":"処理で問題が発生しました","feed.main.blocked":"確認待ちです","feed.main.alert":"実行環境でアラートを検知しました","feed.main.conn":"接続状態が変化しました","feed.main.analyzing":"お問い合わせ内容を分析しています","feed.main.drafting":"返信案を作成しています","feed.main.status":"処理状況を更新しました","feed.main.stuck":"処理が長時間続いています",
+        "story.now":"NOW","story.last_done":"LAST DONE","reply.badge.completed":"返信案が完成","reply.badge.pending":"返信案を生成中","reply.badge.failed":"返信案で要確認",
+        "feed.main.received":"お問い合わせを受け付けました","feed.main.started":"処理を開始しました","feed.main.completed":"処理が完了しました","feed.main.reply_completed":"返信案が完成しました","feed.main.failed":"処理で問題が発生しました","feed.main.blocked":"確認待ちです","feed.main.alert":"実行環境でアラートを検知しました","feed.main.conn":"接続状態が変化しました","feed.main.analyzing":"お問い合わせ内容を分析しています","feed.main.drafting":"返信案を作成しています","feed.main.status":"処理状況を更新しました","feed.main.stuck":"処理が長時間続いています",
         "feed.sub.role.active":"が対応しています","feed.sub.role.done":"が完了しました",
         "tp.task":"処理中タスク","tp.done":"✓ 完了","tp.done.sub":"対応完了",
         "tp.runtime":"実行","tp.reply":"返信",
+        "tp.current.active":"現在処理中",
+        "tp.current.none":"現在処理中のタスクはありません",
+        "tp.recent.done":"直近の完了",
         "office.name":"AI Operations",
         "fetch.checking":"接続確認中",
         "fetch.live":"Live",
@@ -555,7 +566,8 @@
         "state.idle":"","state.queued":"queued","state.active":"active","state.completed":"done","state.failed":"error",
         "k.count":"count","k.cat":"category","k.svc":"service","k.recv":"recv","k.role":"role","k.why":"reason",
         "k.task":"task","k.stat":"status","k.tools":"tools","k.agent":"agent","k.reply":"reply","k.connector":"conn",
-        "k.dur":"dur","k.since":"elapsed","k.sub":"sub",
+        "k.dur":"dur","k.since":"elapsed","k.sub":"sub","k.done":"done",
+        "k.path":"route","k.instant":"immediate",
         "role.dev":"Engineering","role.ops":"Operations","role.research":"Research","role.main":"Universal","role.universal":"Universal",
         "astate.idle":"standby","astate.executing":"executing","astate.researching":"researching","astate.syncing":"syncing",
         "astate.routing":"routing","astate.writing":"working","astate.error":"error","astate.available":"available",
@@ -569,11 +581,14 @@
         "status.waiting":"waiting","status.processing":"processing","status.done":"done","status.attention":"attention",
         "story.processing":"AI is working","story.completed":"Reply draft is ready","story.queued":"Waiting in queue","story.failed":"Needs attention",
         "story.desc.analyzing":"Analyzing the inquiry","story.desc.drafting":"Drafting a reply","story.desc.finishing":"Finishing the reply draft","story.desc.completed":"Processing is complete","story.desc.queued":"Waiting for its turn to run","story.desc.failed":"A processing issue was detected","story.desc.stuck":"Processing is taking longer than expected",
-        "story.now":"NOW","reply.badge.completed":"reply ready","reply.badge.pending":"drafting reply","reply.badge.failed":"reply needs attention",
-        "feed.main.received":"Inquiry received","feed.main.started":"Processing started","feed.main.completed":"Processing completed","feed.main.failed":"A processing issue occurred","feed.main.blocked":"Waiting for confirmation","feed.main.alert":"Runtime alert detected","feed.main.conn":"Connection status changed","feed.main.analyzing":"Analyzing the inquiry","feed.main.drafting":"Drafting a reply","feed.main.status":"Processing status updated","feed.main.stuck":"Processing is taking longer than expected",
+        "story.now":"NOW","story.last_done":"LAST DONE","reply.badge.completed":"reply ready","reply.badge.pending":"drafting reply","reply.badge.failed":"reply needs attention",
+        "feed.main.received":"Inquiry received","feed.main.started":"Processing started","feed.main.completed":"Processing completed","feed.main.reply_completed":"Reply draft is ready","feed.main.failed":"A processing issue occurred","feed.main.blocked":"Waiting for confirmation","feed.main.alert":"Runtime alert detected","feed.main.conn":"Connection status changed","feed.main.analyzing":"Analyzing the inquiry","feed.main.drafting":"Drafting a reply","feed.main.status":"Processing status updated","feed.main.stuck":"Processing is taking longer than expected",
         "feed.sub.role.active":"is handling this","feed.sub.role.done":"completed the task",
         "tp.task":"Current Task","tp.done":"✓ Done","tp.done.sub":"Completed",
         "tp.runtime":"runtime","tp.reply":"reply",
+        "tp.current.active":"Currently processing",
+        "tp.current.none":"No task is currently processing",
+        "tp.recent.done":"Recently completed",
         "office.name":"AI Operations",
         "fetch.checking":"Reconnecting…",
         "fetch.live":"Live",
@@ -601,6 +616,7 @@
 
     const FETCH_TIMEOUT_MS = 12000;
     const FETCH_WARN_THROTTLE_MS = 60000;
+    const DEBUG_MODE = params.get("debug") === "1";
 
     function resolveLang() {
       const c = String(params.get("lang") || localStorage.getItem("deepnoa_ui_lang") || "ja").toLowerCase();
@@ -651,6 +667,12 @@
       }
       return s || null;
     }
+    function normalizeRoleKey(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+    function displayRole(value) {
+      return normalizeRoleKey(value) || String(value || "");
+    }
     function shortId(id) {
       const s = String(id || "");
       return s.length > 14 ? s.slice(0, 14) + "…" : s;
@@ -695,7 +717,7 @@
       const ri = rp.raw_item || {};
       const meta = parseMeta(rp.summary || ri.summary || e.display_summary || "");
       const roleKey = ri.role || e.agent_id || "";
-      const roleLabel = roleKey ? t(`role.${roleKey}`, roleKey) : "";
+      const roleLabel = displayRole(roleKey);
       if (e.event_type === "channel.message.received") {
         return {
           main: t("feed.main.received"),
@@ -705,13 +727,19 @@
       if (e.event_type === "task.started") {
         return {
           main: t("feed.main.started"),
-          sub: roleLabel ? `${roleLabel} ${t("feed.sub.role.active")}` : "",
+          sub: "",
         };
       }
       if (e.event_type === "task.completed") {
         return {
-          main: t("feed.main.completed"),
-          sub: roleLabel ? `${roleLabel} ${t("feed.sub.role.done")}` : "",
+          main: t("feed.main.reply_completed"),
+          sub: "",
+        };
+      }
+      if (e.event_type === "runtime.completed") {
+        return {
+          main: t("feed.main.reply_completed"),
+          sub: "",
         };
       }
       if (e.event_type === "task.failed") return { main: t("feed.main.failed"), sub: roleLabel };
@@ -797,12 +825,157 @@
       return intakeTaskIds(intakeItem).has(String(eventTaskIdStr).trim());
     }
 
+    function taskMatchesSelection(task, selectedId) {
+      if (!task || !selectedId) return false;
+      const ids = intakeTaskIds(task);
+      return ids.has(String(selectedId).trim());
+    }
+
+    function enrichCompletedTaskIds(events) {
+      const completedIds = buildCompletedTaskIds(events);
+      for (const [tid, st] of (app.taskStateMap || new Map()).entries()) {
+        const et = String(st?.event_type || "");
+        if (isTaskCompletedByEventType(et)) completedIds.add(tid);
+      }
+      return completedIds;
+    }
+
+    function eventTsMs(e) {
+      const t = new Date(e?.timestamp || 0).getTime();
+      return isNaN(t) ? null : t;
+    }
+
+    /** Wall intake→done を使わず、実処理区間のみ（優先: rt起動→rt完了 > retry起動→retry完了 > task開始→task完了） */
+    function computeProcessingDurationMs(taskEvents) {
+      if (!taskEvents || !taskEvents.length) return null;
+      const sorted = [...taskEvents].filter(e => e && e.timestamp).sort((a, b) => (eventTsMs(a) || 0) - (eventTsMs(b) || 0));
+      if (!sorted.length) return null;
+
+      function pairMs(endType, startType) {
+        let endMs = null;
+        for (let i = sorted.length - 1; i >= 0; i--) {
+          if (String(sorted[i].event_type || "") === endType) {
+            endMs = eventTsMs(sorted[i]);
+            break;
+          }
+        }
+        if (endMs == null) return null;
+        let startMs = null;
+        for (let i = sorted.length - 1; i >= 0; i--) {
+          const t = eventTsMs(sorted[i]);
+          if (t == null || t >= endMs) continue;
+          if (String(sorted[i].event_type || "") === startType) {
+            startMs = t;
+            break;
+          }
+        }
+        if (startMs == null) return null;
+        const d = endMs - startMs;
+        return d > 0 ? d : null;
+      }
+
+      let ms = pairMs("runtime.completed", "runtime.started");
+      if (ms != null) return ms;
+      ms = pairMs("runtime.retry_completed", "runtime.retry_started");
+      if (ms != null) return ms;
+      ms = pairMs("task.completed", "task.started");
+      return ms;
+    }
+
     function intakeMatchesCompleted(item, completedIds) {
       if (!completedIds || !completedIds.size) return false;
       for (const id of intakeTaskIds(item)) {
         if (completedIds.has(id)) return true;
       }
       return false;
+    }
+
+    function isTaskCompletedByEventType(eventType) {
+      return eventType === "task.completed" || eventType === "runtime.completed" || eventType === "runtime.retry_completed";
+    }
+
+    function isIgnorableTask(task, events) {
+      if (DEBUG_MODE || !task) return false;
+      const ids = intakeTaskIds(task);
+      const taskEvents = (events || []).filter(e => ids.has(String(eventTaskId(e) || "").trim()));
+      const ageMs = Date.now() - new Date(task.updated_at || 0).getTime();
+      const hasRuntimeTask = !!String(task.runtime_task_id || "").trim();
+      const hasRuntimeEvent = taskEvents.some(e => String(e.event_type || "").startsWith("runtime."));
+      const hasSkipSignal = taskEvents.some(e => {
+        const ev = String(e.event_type || "").toLowerCase();
+        const rr = String(e.route_reason || (e.raw_payload || {}).route_reason || "").toLowerCase();
+        return ev === "task.skipped" || /skip|no_action/.test(rr);
+      });
+      if (hasSkipSignal) return true;
+      if (!hasRuntimeTask && !hasRuntimeEvent && ageMs > 180000) return true;
+      return false;
+    }
+
+    function visibleIntakeItems(intake, events) {
+      return (intake || []).filter(item => !isIgnorableTask(item, events));
+    }
+
+    function buildCompletedTaskIds(events) {
+      return new Set(
+        (events || [])
+          .filter(e => isTaskCompletedByEventType(String(e.event_type || "")))
+          .map(e => eventTaskId(e))
+          .filter(Boolean)
+      );
+    }
+
+    function isCompletedIntakeItem(item, completedIds) {
+      return (
+        intakeMatchesCompleted(item, completedIds)
+        || item.reply_draft_status === "completed"
+        || item.runtime_status === "completed"
+      );
+    }
+
+    function pickAutoOpenTask(intake, events) {
+      const completedIds = enrichCompletedTaskIds(events);
+      const open = (intake || []).filter(item => !isCompletedIntakeItem(item, completedIds));
+      open.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
+      return open[0] || null;
+    }
+
+    function pickDisplayTask(intake, events) {
+      const completedIds = enrichCompletedTaskIds(events);
+      const sel = app.selectedTaskId ? String(app.selectedTaskId).trim() : "";
+      if (sel) {
+        const manual = (intake || []).find(i => taskMatchesSelection(i, sel));
+        if (manual) {
+          return { task: manual, isActive: !isCompletedIntakeItem(manual, completedIds) };
+        }
+        app.selectedTaskId = null;
+      }
+      const autoOpen = pickAutoOpenTask(intake, events);
+      if (autoOpen) return { task: autoOpen, isActive: true };
+      const completed = (intake || [])
+        .filter(item => isCompletedIntakeItem(item, completedIds))
+        .sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0))[0] || null;
+      if (completed) return { task: completed, isActive: false };
+      return { task: null, isActive: false };
+    }
+
+    function buildTaskBreakdown(allIntake, events) {
+      const completedIds = buildCompletedTaskIds(events);
+      for (const [tid, st] of (app.taskStateMap || new Map()).entries()) {
+        const et = String(st?.event_type || "");
+        if (isTaskCompletedByEventType(et)) completedIds.add(tid);
+      }
+      let processing = 0;
+      let completed = 0;
+      let ignored = 0;
+      for (const item of (allIntake || [])) {
+        if (isIgnorableTask(item, events)) {
+          ignored += 1;
+          continue;
+        }
+        if (isCompletedIntakeItem(item, completedIds)) completed += 1;
+        else processing += 1;
+      }
+      return { total: (allIntake || []).length, processing, completed, ignored };
     }
 
     function taskItemStatus(item, completedIds) {
@@ -812,38 +985,9 @@
       return "old";
     }
 
-    /* ── Pick the best "current" task ── */
-    /* Priority: not-completed → most recent updated_at → fallback intake[0] */
+    /* Pipeline / Activity / Agent と同じ「フォーカス中」タスク（手動選択を含む） */
     function pickCurrentTask(intake, events) {
-      /* Honour manual selection if task still exists */
-      if (app.selectedTaskId) {
-        const manual = intake.find(i => intakeTaskIds(i).has(app.selectedTaskId));
-        if (manual) return manual;
-        app.selectedTaskId = null; /* gone from list — clear override */
-      }
-
-      /* IDs that have a task.completed event */
-      const completedIds = new Set(
-        (events || []).filter(e => e.event_type === "task.completed")
-          .map(e => eventTaskId(e)).filter(Boolean)
-      );
-      for (const [tid, st] of (app.taskStateMap || new Map()).entries()) {
-        const et = String(st?.event_type || "");
-        if (et === "task.completed" || et === "runtime.completed") completedIds.add(tid);
-      }
-
-      /* Filter: exclude tasks that are definitively done */
-      const open = intake.filter(item => {
-        if (intakeMatchesCompleted(item, completedIds)) return false;
-        if (item.reply_draft_status === "completed") return false;
-        if (item.runtime_status   === "completed") return false;
-        return true;
-      });
-
-      /* Sort open tasks: most recent first */
-      open.sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
-
-      return open[0] || intake[0] || null;
+      return pickDisplayTask(intake, events).task;
     }
 
     function taskEventsFor(events, intakeItem) {
@@ -930,7 +1074,9 @@
       const connectors = data.connectors || [];
       const manager    = data.manager    || {};
 
-      const latest  = pickCurrentTask(intake, events);
+      const picked  = pickDisplayTask(intake, events);
+      const latest  = picked.task;
+      const activeTaskMode = !!picked.isActive;
       const meta    = parseMeta(latest?.summary || "");
       const rTaskId = taskKey(latest) || null;
       const rRole   = latest?.role || null;
@@ -954,7 +1100,7 @@
       const startTs   = startEvt ? new Date(startEvt.timestamp).getTime() : null;
 
       /* task.completed nearest to start */
-      const doneEvt   = taskEvents.find(e => e.event_type === "task.completed" || e.event_type === "runtime.completed") || null;
+      const doneEvt   = taskEvents.find(e => isTaskCompletedByEventType(String(e.event_type || ""))) || null;
       const doneTs    = doneEvt  ? new Date(doneEvt.timestamp).getTime()   : null;
       const isStuck   = isTaskStuck(taskEvents);
 
@@ -963,17 +1109,25 @@
       const agentDurMs   = startTs ? (doneTs ? doneTs - startTs : now - startTs) : null;
       const totalDurMs   = intakeTs ? (doneTs ? doneTs - intakeTs : now - intakeTs) : null;
       const agentDone    = !!doneTs;
+      const processingMs = computeProcessingDurationMs(taskEvents);
 
       /* ── State derivation ── */
-      const intakeState  = (intake.length > 0 || recentEvt("channel.message.received", 120)) ? "active" : "idle";
-      const routeState   = recentEvt("task.started", 70) ? "active" : "idle";
-      const agentState   = recentEvt("task.failed", 300) ? "failed" : (startEvt && !doneEvt ? "active" : "idle");
+      let intakeState  = (intake.length > 0 || recentEvt("channel.message.received", 120)) ? "active" : "idle";
+      let routeState   = recentEvt("task.started", 70) ? "active" : "idle";
+      let agentState   = recentEvt("task.failed", 300) ? "failed" : (startEvt && !doneEvt ? "active" : "idle");
       const connStat     = connStatus(connectors);
       const connOk       = !connStat || connStat.cls !== "danger";
-      const runtimeState = isStuck ? "failed" : (!connOk ? "failed" : (startEvt && !doneEvt) ? "active" : (rReply || doneEvt) ? "completed" : "idle");
-      const resultState  = recentEvt("task.failed", 90) ? "failed"
+      let runtimeState = isStuck ? "failed" : (!connOk ? "failed" : (startEvt && !doneEvt) ? "active" : (rReply || doneEvt) ? "completed" : "idle");
+      let resultState  = recentEvt("task.failed", 90) ? "failed"
                          : (rReply === "completed" || doneEvt) ? "completed"
                          : rReply ? "active" : "idle";
+      if (latest && !activeTaskMode) {
+        intakeState = "completed";
+        routeState = "completed";
+        agentState = "completed";
+        runtimeState = "completed";
+        resultState = "completed";
+      }
 
       /* ── Runtime sub-state ── */
       let runtimeSubState = null;
@@ -988,8 +1142,8 @@
           runtimeSubState = "generating";
       }
 
-      const routeAgentLabel = (rRole || routeEvent?.agent_id || latestEvt?.agent_id || "").toLowerCase();
-      const agentLabel = (latestEvt?.agent_id || rRole || "").toLowerCase();
+      const routeAgentLabel = displayRole(rRole || routeEvent?.agent_id || latestEvt?.agent_id || "");
+      const agentLabel = displayRole(latestEvt?.agent_id || rRole || "");
 
       const taskActiveStates = new Set(["active","queued","completed"]);
 
@@ -1000,63 +1154,52 @@
         return { k, v: str, cls: ms > 180000 ? "danger" : done ? "blue" : "orange" };
       }
 
+      const incomingRows = [
+        intake.length      ? { k:t("k.count"), v:`${intake.length}件`, cls:"accent" } : null,
+        meta.category      ? { k:t("k.cat"),   v:meta.category } : null,
+        meta.service       ? { k:t("k.svc"),   v:meta.service  } : null,
+        latest?.updated_at ? { k:t("k.recv"),  v:timeStr(latest.updated_at), cls:"mono" } : null,
+        (activeTaskMode && totalDurMs !== null && intakeState !== "idle") ? durRow(t("k.since"), totalDurMs, agentDone) : null,
+      ].filter(Boolean);
+
+      const routingRows = [
+        routeAgentLabel ? { k:t("k.role"), v:routeAgentLabel } : null,
+        routeReason     ? { k:t("k.why"),  v:routeReason, cls:"mono" } : null,
+        (activeTaskMode && manager?.gateway?.status) ? { k:t("k.stat"), v:String(manager.gateway.status) } : (!activeTaskMode ? { k:t("k.stat"), v:t("state.completed") } : null),
+        (activeTaskMode && routingDurMs !== null && routeState !== "idle") ? durRow(t("k.dur"), routingDurMs, !!startTs) : null,
+        (!activeTaskMode && routeState !== "idle") ? { k:t("k.path"), v:t("k.instant"), cls:"muted" } : null,
+      ].filter(Boolean);
+
+      const agentRows = [
+        agentLabel      ? { k:t("k.agent"), v:agentLabel } : null,
+        latestEvt?.status ? { k:t("k.stat"),  v:(String(latestEvt.status) === "completed" ? t("state.completed") : String(latestEvt.status)) } : null,
+        (latest?.service || taskMeta.service || meta.service) ? { k:t("k.svc"), v: latest?.service || taskMeta.service || meta.service } : null,
+        (activeTaskMode && agentDurMs !== null && agentState !== "idle") ? durRow(t("k.since"), agentDurMs, agentDone) : null,
+        (!activeTaskMode && agentState !== "idle" && processingMs != null) ? durRow(t("k.dur"), processingMs, true) : null,
+      ].filter(Boolean);
+
+      const runtimeRows = [
+        runtimeSubState ? { k:t("k.sub"), v: runtimeSubState === "stuck" ? t("status.attention") : t(`rs.${runtimeSubState}`, runtimeSubState), cls: runtimeSubState === "stuck" ? "danger" : runtimeSubState === "completed" ? "blue" : runtimeSubState === "planning" ? "purple" : "orange" } : null,
+        rReply   ? { k:t("k.reply"),     v:t(`reply.${rReply}`, rReply), cls: rReply === "completed" ? "blue" : "muted" } : null,
+        connStat ? { k:t("k.connector"), v:connStat.label, cls:connStat.cls } : null,
+        (activeTaskMode && agentDurMs !== null && runtimeState !== "idle") ? durRow(t("k.dur"), agentDurMs, agentDone) : null,
+        (!activeTaskMode && runtimeState !== "idle" && processingMs != null) ? durRow(t("k.dur"), processingMs, true) : null,
+      ].filter(Boolean);
+
+      const resultRows = [
+        rReply       ? { k:t("k.reply"), v:t(`reply.${rReply}`, rReply), cls: rReply === "completed" ? "blue" : "muted" } : null,
+        rRole        ? { k:t("k.role"),  v:displayRole(rRole) } : null,
+        latest?.updated_at ? { k:t("k.recv"), v:timeStr(latest.updated_at), cls:"mono" } : null,
+        (activeTaskMode && totalDurMs !== null && resultState !== "idle") ? durRow(t("k.dur"), totalDurMs, resultState === "completed") : null,
+        (!activeTaskMode && resultState !== "idle" && processingMs != null) ? durRow(t("k.dur"), processingMs, resultState === "completed") : null,
+      ].filter(Boolean);
+
       const STAGES = [
-        {
-          id: "incoming", sym: "↓", state: intakeState,
-          taskId: intakeState !== "idle" ? rTaskId : null,
-          rows: [
-            intake.length      ? { k:t("k.count"), v:`${intake.length}件`, cls:"accent" } : null,
-            meta.category      ? { k:t("k.cat"),   v:meta.category } : null,
-            meta.service       ? { k:t("k.svc"),   v:meta.service  } : null,
-            latest?.updated_at ? { k:t("k.recv"),  v:timeStr(latest.updated_at), cls:"mono" } : null,
-            /* Elapsed since intake (always counting up while active) */
-            (totalDurMs !== null && intakeState !== "idle") ? durRow(t("k.since"), totalDurMs, agentDone) : null,
-          ].filter(Boolean), tools: [],
-        },
-        {
-          id: "routing", sym: "⇄", state: routeState,
-          taskId: taskActiveStates.has(routeState) ? rTaskId : null,
-          rows: [
-            routeAgentLabel ? { k:t("k.role"), v:t(`role.${routeAgentLabel}`, routeAgentLabel) } : null,
-            routeReason     ? { k:t("k.why"),  v:routeReason, cls:"mono" } : null,
-            manager?.gateway?.status ? { k:t("k.stat"), v:String(manager.gateway.status) } : null,
-            /* Routing duration — show even if ~0 when routing completed */
-            (routingDurMs !== null && routeState !== "idle") ? durRow(t("k.dur"), routingDurMs, !!startTs) : null,
-          ].filter(Boolean), tools: [],
-        },
-        {
-          id: "agent", sym: "◉", state: agentState,
-          taskId: taskActiveStates.has(agentState) ? rTaskId : null,
-          rows: [
-            agentLabel      ? { k:t("k.agent"), v:t(`role.${agentLabel}`, agentLabel) } : null,
-            latestEvt?.status ? { k:t("k.stat"),  v:String(latestEvt.status) } : null,
-            (latest?.service || taskMeta.service || meta.service) ? { k:t("k.svc"), v: latest?.service || taskMeta.service || meta.service } : null,
-            /* Agent time since task started */
-            (agentDurMs !== null && agentState !== "idle") ? durRow(t("k.since"), agentDurMs, agentDone) : null,
-          ].filter(Boolean), tools: [],
-        },
-        {
-          id: "runtime", sym: "▶", state: runtimeState,
-          taskId: taskActiveStates.has(runtimeState) ? rTaskId : null,
-          rows: [
-            /* Sub-state row — this is the key "where in processing" indicator */
-            runtimeSubState ? { k:t("k.sub"), v: runtimeSubState === "stuck" ? t("status.attention") : t(`rs.${runtimeSubState}`, runtimeSubState), cls: runtimeSubState === "stuck" ? "danger" : runtimeSubState === "completed" ? "blue" : runtimeSubState === "planning" ? "purple" : "orange" } : null,
-            rReply   ? { k:t("k.reply"),     v:t(`reply.${rReply}`, rReply), cls: rReply === "completed" ? "blue" : "muted" } : null,
-            connStat ? { k:t("k.connector"), v:connStat.label, cls:connStat.cls } : null,
-            (agentDurMs !== null && runtimeState !== "idle") ? durRow(t("k.dur"), agentDurMs, agentDone) : null,
-          ].filter(Boolean), tools: [],
-        },
-        {
-          id: "result", sym: "✓", state: resultState,
-          taskId: resultState !== "idle" ? rTaskId : null,
-          rows: [
-            rReply       ? { k:t("k.reply"), v:t(`reply.${rReply}`, rReply), cls: rReply === "completed" ? "blue" : "muted" } : null,
-            rRole        ? { k:t("k.role"),  v:t(`role.${rRole}`, rRole) } : null,
-            latest?.updated_at ? { k:t("k.recv"), v:timeStr(latest.updated_at), cls:"mono" } : null,
-            /* Total duration on completion */
-            (totalDurMs !== null && resultState !== "idle") ? durRow(t("k.dur"), totalDurMs, resultState === "completed") : null,
-          ].filter(Boolean), tools: [],
-        },
+        { id: "incoming", sym: "↓", state: intakeState, taskId: intakeState !== "idle" ? rTaskId : null, rows: incomingRows, tools: [] },
+        { id: "routing", sym: "⇄", state: routeState, taskId: taskActiveStates.has(routeState) ? rTaskId : null, rows: routingRows, tools: [] },
+        { id: "agent", sym: "◉", state: agentState, taskId: taskActiveStates.has(agentState) ? rTaskId : null, rows: agentRows, tools: [] },
+        { id: "runtime", sym: "▶", state: runtimeState, taskId: taskActiveStates.has(runtimeState) ? rTaskId : null, rows: runtimeRows, tools: [] },
+        { id: "result", sym: "✓", state: resultState, taskId: resultState !== "idle" ? rTaskId : null, rows: resultRows, tools: [] },
       ];
 
       const connectorActive = STAGES.slice(0,-1).map((s,i) => {
@@ -1124,9 +1267,20 @@
       const events   = (data.events || []).slice(0, 60);
 
       /* Use smart selection — respects manual override */
-      const latest   = pickCurrentTask(intake, events);
+      const picked   = pickDisplayTask(intake, events);
+      const latest   = picked.task;
+      const isActiveTask = !!picked.isActive;
       const rTaskId  = taskKey(latest) || null;
-      if (!latest || !rTaskId) { panel.classList.add("is-hidden"); return; }
+      if (!latest || !rTaskId) {
+        panel.className = "task-panel tp-active";
+        panel.innerHTML =
+          `<div class="tp-id-col">` +
+          `<span class="tp-id-label">${esc(t("tp.current.none"))}</span>` +
+          `<span class="tp-id-val">—</span>` +
+          `</div>` +
+          `<div class="tp-story"><span class="tp-story-kicker">${esc(t("story.now"))}</span><div class="tp-story-title">${esc(t("tp.current.none"))}</div><div class="tp-story-desc">${esc(t("no.data"))}</div></div>`;
+        return;
+      }
 
       const isManual = !!app.selectedTaskId;
 
@@ -1138,7 +1292,7 @@
       const eventMeta = parseMeta(latestEvt?.raw_payload?.summary || latestEvt?.display_summary || "");
 
       const connectors = data.connectors || [];
-      const doneEvt     = taskEvents.find(e => e.event_type === "task.completed" || e.event_type === "runtime.completed") || null;
+      const doneEvt     = taskEvents.find(e => isTaskCompletedByEventType(String(e.event_type || ""))) || null;
       const connStat    = connStatus(connectors);
       const connOk      = !connStat || connStat.cls !== "danger";
       const isStuck     = isTaskStuck(taskEvents);
@@ -1147,10 +1301,13 @@
       const now      = Date.now();
       const intakeTs = latest.updated_at ? new Date(latest.updated_at).getTime() : null;
       const doneTs   = doneEvt ? new Date(doneEvt.timestamp).getTime() : null;
-      const totalMs  = intakeTs ? (doneTs || now) - intakeTs : null;
+      const elapsedActiveMs = isActiveTask && intakeTs ? (now - intakeTs) : null;
+      const procDoneMs = !isActiveTask ? computeProcessingDurationMs(taskEvents) : null;
       const isCompleted = (rReply === "completed") || !!doneEvt;
 
-      const taskUx = deriveTaskUx(latest, connOk, taskEvents, isStuck);
+      const taskUx = isActiveTask
+        ? deriveTaskUx(latest, connOk, taskEvents, isStuck)
+        : { badgeLabel: t("status.done"), badgeCls: "b-done", title: `${t("tp.recent.done")}: ${shortId(rTaskId)}`, desc: t("story.completed") };
       const runtimeBadge = { label: taskUx.badgeLabel, cls: taskUx.badgeCls };
 
       let replyBadge = null;
@@ -1159,21 +1316,27 @@
         replyBadge = { label: replyBadgeLabel(rReply), cls };
       }
 
-      const panelMod = isCompleted ? "tp-done" : rReply === "failed" ? "tp-failed" : "tp-active";
-      const idCls    = isCompleted ? "tp-id-done" : rReply === "failed" ? "tp-id-failed" : "";
+      const panelMod = !isActiveTask ? "tp-done" : (isCompleted ? "tp-done" : rReply === "failed" ? "tp-failed" : "tp-active");
+      const idCls    = !isActiveTask ? "tp-id-done" : (isCompleted ? "tp-id-done" : rReply === "failed" ? "tp-id-failed" : "");
 
       /* Completion banner (shown left of task_id when done) */
-      const doneBannerHtml = isCompleted
+      const doneBannerHtml = (!isActiveTask || isCompleted)
         ? `<div class="tp-done-banner"><span class="tp-done-mark">✓</span><span class="tp-done-label">${esc(t("tp.done.sub"))}</span></div>` : "";
 
-      /* Fields */
-      const durStr = totalMs !== null ? fmtDur(totalMs) : null;
-      const fields = [
-        meta.category ? { k:t("k.cat"),   v:meta.category, cls:"" } : null,
-        (latest?.service || meta.service || eventMeta.service) ? { k:t("k.svc"), v: (latest?.service || meta.service || eventMeta.service), cls:"" } : { k:t("k.svc"), v:"—", cls:"tv-muted" },
-        rRole         ? { k:t("k.role"),   v:t(`role.${rRole}`, rRole), cls:"" } : null,
-        durStr        ? { k:t("k.since"),  v:durStr, cls:"tv-orange" } : null,
-      ].filter(Boolean);
+      /* Fields — 未完了は経過のみ、完了は実処理所要+受信のみ */
+      const durStrActive = elapsedActiveMs != null ? fmtDur(elapsedActiveMs) : null;
+      const durStrDone   = procDoneMs != null ? fmtDur(procDoneMs) : null;
+      const fields = isActiveTask
+        ? [
+            meta.category ? { k:t("k.cat"),   v:meta.category, cls:"" } : null,
+            (latest?.service || meta.service || eventMeta.service) ? { k:t("k.svc"), v: (latest?.service || meta.service || eventMeta.service), cls:"" } : { k:t("k.svc"), v:"—", cls:"tv-muted" },
+            rRole         ? { k:t("k.role"),   v:displayRole(rRole), cls:"" } : null,
+            durStrActive   ? { k:t("k.since"),  v:durStrActive, cls:"tv-orange" } : null,
+          ].filter(Boolean)
+        : [
+            durStrDone     ? { k:t("k.dur"),  v:durStrDone, cls:"tv-blue" } : null,
+            latest?.updated_at ? { k:t("k.recv"), v:timeStr(latest.updated_at), cls:"tv-muted" } : null,
+          ].filter(Boolean);
 
       const fieldsHtml = fields.map(f =>
         `<div class="tp-field"><span class="tp-k">${esc(f.k)}</span><span class="tp-v ${f.cls}">${esc(f.v)}</span></div>`
@@ -1186,7 +1349,7 @@
 
       const storyHtml =
         `<div class="tp-story">` +
-        `<span class="tp-story-kicker">${esc(t("story.now"))}</span>` +
+        `<span class="tp-story-kicker">${esc(isActiveTask ? t("story.now") : t("story.last_done"))}</span>` +
         `<div class="tp-story-title">${esc(taskUx.title)}</div>` +
         `<div class="tp-story-desc">${esc(taskUx.desc)}</div>` +
         `</div>`;
@@ -1198,7 +1361,7 @@
         ? `${openCount}件処理中 / ${totalCount}件`
         : `${openCount} open / ${totalCount}`;
       const manualTag   = isManual
-        ? `<span class="tp-manual-tag">${app.lang === "ja" ? "手動選択" : "manual"}</span>` : "";
+        ? `<span class="tp-manual-tag">${app.lang === "ja" ? "手動選択" : "manual"} · ${esc(shortId(app.selectedTaskId))}</span>` : "";
       const countChipHtml =
         `<span class="tp-count-chip${app.taskListOpen?" is-open":""}" id="task-count-chip" onclick="toggleTaskSwitcher()">` +
         `☰ ${esc(countLabel)}` +
@@ -1208,7 +1371,7 @@
       panel.innerHTML =
         doneBannerHtml +
         `<div class="tp-id-col">` +
-        `<span class="tp-id-label">${esc(t("tp.task"))}</span>` +
+        `<span class="tp-id-label">${esc(isActiveTask ? t("tp.current.active") : t("tp.current.none"))}</span>` +
         `<span class="tp-id-val ${idCls}">${esc(shortId(rTaskId))}</span>` +
         `</div>` +
         storyHtml +
@@ -1224,15 +1387,11 @@
       const intake  = app.lastData.intake || [];
       const events  = (app.lastData.events || []).slice(0, 60);
 
-      const autoTask     = pickCurrentTask(intake, events);
+      const autoTask     = pickAutoOpenTask(intake, events);
       const autoId       = autoTask ? taskKey(autoTask) : null;
-      const selectedId   = app.selectedTaskId;
+      const selectedId   = app.selectedTaskId ? String(app.selectedTaskId).trim() : null;
 
-      /* Build completed-id set */
-      const completedIds = new Set(
-        events.filter(e => e.event_type === "task.completed")
-          .map(e => eventTaskId(e)).filter(Boolean)
-      );
+      const completedIds = enrichCompletedTaskIds(events);
 
       /* Sort: active first (not done), then by recency */
       const sorted = [...intake].sort((a, b) => {
@@ -1251,7 +1410,7 @@
         const meta    = parseMeta(item.summary || "");
         const isAuto  = id === autoId && !selectedId;
         const isSel   = !!(selectedId && intakeTaskIds(item).has(selectedId));
-        const role    = t(`role.${item.role}`, item.role || "");
+        const role    = displayRole(item.role || "");
         const metaStr = [meta.category, meta.service].filter(Boolean).join(" / ");
         const dotCls  = status === "active" ? "d-active" : status === "done" ? "d-done" : "d-old";
         const badgeCls = status === "active" ? "tb-active" : status === "done" ? "tb-done" : "tb-old";
@@ -1346,10 +1505,12 @@
     }
 
     function selectTask(taskId) {
-      if (app.selectedTaskId === taskId) {
+      const tid = String(taskId || "").trim();
+      if (!tid) return;
+      if (app.selectedTaskId && String(app.selectedTaskId).trim() === tid) {
         app.selectedTaskId = null; /* toggle off */
       } else {
-        app.selectedTaskId = taskId;
+        app.selectedTaskId = tid;
       }
       if (app.lastData) renderAll(app.lastData);
       renderTaskSwitcher();
@@ -1384,14 +1545,14 @@
 
       const cards = [];
       const gw = manager.gateway || {}, fw = manager.fallback_worker || {};
-      cards.push({ name: fw.name || "Universal Router", role: t("role.universal"), state: gw.status || "受付中", dot: "s-universal", detail: gw.detail || fw.profile || "", tools: fw.allowed_tools || [], taskId: null, isActiveTask: false });
+      cards.push({ name: fw.name || "Universal Router", role: "universal", state: gw.status || "受付中", dot: "s-universal", detail: gw.detail || fw.profile || "", tools: fw.allowed_tools || [], taskId: null, isActiveTask: false });
 
       const priority = ["research","dev","ops"];
       for (const r of [...roles].sort((a,b) => priority.indexOf(a.key) - priority.indexOf(b.key))) {
         const safeD    = safeDetail(r.detail || "");
         const rTaskId  = r.key === latest?.role ? activeTaskId : null;
         const isActive = ["executing","researching","writing"].includes(r.state);
-        cards.push({ name: r.name || t(`role.${r.key}`, r.key), role: t(`role.${r.key}`, r.key), state: t(`astate.${r.state}`, r.state), dot: dotClass(r.state), detail: safeD, tools: (r.allowed_tools || []).slice(0, 3), taskId: rTaskId, isActiveTask: isActive && !!rTaskId });
+        cards.push({ name: r.name || displayRole(r.key), role: displayRole(r.key), state: t(`astate.${r.state}`, r.state), dot: dotClass(r.state), detail: safeD, tools: (r.allowed_tools || []).slice(0, 3), taskId: rTaskId, isActiveTask: isActive && !!rTaskId });
       }
 
       scroll.innerHTML = cards.map(c => {
@@ -1413,6 +1574,7 @@
       "channel.message.received": { lbl:"feed.recv",  cls:"t-recv"  },
       "task.started":             { lbl:"feed.start", cls:"t-start" },
       "task.completed":           { lbl:"feed.done",  cls:"t-done"  },
+      "runtime.completed":        { lbl:"feed.done",  cls:"t-done"  },
       "task.blocked":             { lbl:"feed.block", cls:"t-block" },
       "task.failed":              { lbl:"feed.fail",  cls:"t-fail"  },
       "connector.status.changed": { lbl:"feed.conn",  cls:""        },
@@ -1425,6 +1587,10 @@
       const ft = FEED_TYPE[e.event_type];
       if (!ft) return null;
       const { main, sub } = describeFeedEvent(e);
+      const tid = eventTaskId(e);
+      const meta = parseMeta((e.raw_payload || {}).summary || e.display_summary || "");
+      const fallbackLabel = [meta.category, meta.service].filter(Boolean).join(" / ");
+      const mainWithTask = tid ? `[⊢ ${shortId(tid)}] ${main}` : (fallbackLabel ? `[${fallbackLabel}] ${main}` : main);
 
       const isDone = e.event_type === "task.completed";
       const extraCls = isDone ? " is-done-row" : isActiveTask ? " is-active-task" : "";
@@ -1439,7 +1605,7 @@
         `<span class="feed-time">${esc(timeStr(e.timestamp))}</span>` +
         `<span class="feed-type ${ft.cls}">${esc(t(ft.lbl))}</span>` +
         `<div class="feed-body">` +
-        `<div class="feed-main">${esc(main)}</div>` +
+        `<div class="feed-main">${esc(mainWithTask)}</div>` +
         (sub ? `<div class="feed-sub">${esc(sub)}</div>` : "") +
         `</div>` +
         deltaHtml +
@@ -1467,7 +1633,14 @@
       }
 
       const parts = [];
+      const visibleTaskIdSet = new Set();
+      for (const item of intake) {
+        for (const id of intakeTaskIds(item)) {
+          if (id) visibleTaskIdSet.add(id);
+        }
+      }
       for (const g of groups) {
+        if (g.taskId && !visibleTaskIdSet.has(g.taskId)) continue;
         const isActiveGroup = !!(g.taskId && currentTask && intakeMatchesEventTask(currentTask, g.taskId));
         const hasMulti = g.evts.length > 1;
 
@@ -1514,6 +1687,11 @@
       if (el("stat-active")) el("stat-active").textContent = s.active_agents ?? "—";
       if (el("stat-intake")) el("stat-intake").textContent = (data.intake || []).length || "0";
       if (el("stat-tasks"))  el("stat-tasks").textContent  = s.active_tasks ?? "—";
+      const breakdownEl = el("stat-breakdown");
+      const breakdown = data._taskBreakdown || { processing: 0, completed: 0, ignored: 0 };
+      if (breakdownEl) {
+        breakdownEl.textContent = `処理中:${breakdown.processing} 完了:${breakdown.completed} 対象外:${breakdown.ignored}`;
+      }
     }
 
     /* ── Toast ── */
@@ -1533,12 +1711,15 @@
 
     /* ── Full render ── */
     function renderAll(data) {
-      app.lastData = data; /* cache for switcher */
+      const breakdown = buildTaskBreakdown(data.intake || [], data.events || []);
+      const intakeVisible = visibleIntakeItems(data.intake || [], data.events || []);
+      const viewData = { ...data, intake: intakeVisible, _taskBreakdown: breakdown };
+      app.lastData = viewData; /* cache for switcher */
       const incomingMap = buildTaskEventMap(data.events || []);
       app.taskEventMap = mergeTaskEventMaps(app.taskEventMap, incomingMap);
       app.taskStateMap = buildTaskStateMap(app.taskEventMap);
 
-      const derived = deriveStages(data);
+      const derived = deriveStages(viewData);
 
       /* Detect completion transition → trigger glow */
       const wasCompleted = app.prevResultState === "completed";
@@ -1549,11 +1730,11 @@
       app.prevResultState = derived.resultState;
 
       renderPipeline(derived);
-      renderTaskPanel(data);
-      renderAgentCards(data);
-      renderFeed(data);
-      renderHeader(data);
-      checkToast(data.intake);
+      renderTaskPanel(viewData);
+      renderAgentCards(viewData);
+      renderFeed(viewData);
+      renderHeader(viewData);
+      checkToast(viewData.intake);
 
       /* Keep switcher content fresh while open */
       if (app.taskListOpen) renderTaskSwitcher();
